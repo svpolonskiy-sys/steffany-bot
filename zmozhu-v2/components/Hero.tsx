@@ -194,7 +194,7 @@ export default function Hero() {
               animate={{ opacity: 1, x: 0, rotate: -2 }}
               whileHover={{ rotate: 0, scale: 1.02 }}
               transition={{ duration: 0.9, delay: 1.0, ease }}
-              className="absolute left-2 top-3 max-w-[230px] rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 shadow-lift backdrop-blur-xl sm:max-w-[270px] md:-right-3 md:left-auto md:top-[14%] lg:-right-8"
+              className="absolute left-2 top-3 max-w-[230px] rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 shadow-lift backdrop-blur-xl sm:max-w-[270px] md:-left-6 md:top-[4%] lg:-left-10"
             >
               <p className="flex items-center gap-2 text-[14px] font-bold text-teal-deep">
                 <span className="relative flex h-2 w-2" aria-hidden="true">

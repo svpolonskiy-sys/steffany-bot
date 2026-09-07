@@ -74,12 +74,12 @@ export default function Investment() {
             <span className="inline-flex rounded-pill bg-rose px-3 py-1 font-sans text-[13px] font-bold text-coral-text">01</span>
             <h4 className="mt-4 text-[20px] font-bold leading-snug text-teal-deep">Знизити вагу на 4%</h4>
             <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">
-              Від стартової ваги. Фінальний результат визначаємо за середнім значенням останніх 3 зважувань.
+              Від стартової ваги. Фінальний результат визначаємо за вагою на 30-й день.
             </p>
             <div className="mt-5 border-t border-line pt-4">
               <div className="flex items-end justify-between">
                 <span className="font-sans text-[40px] font-extrabold leading-none tracking-[-0.05em] text-teal">−4%</span>
-                <span className="text-[12px] text-ink-soft">середнє за 3 останні дні</span>
+                <span className="text-[12px] text-ink-soft">вага на 30-й день</span>
               </div>
               <div className="mt-3 h-2 overflow-hidden rounded-pill bg-sand" aria-hidden="true">
                 <div className="h-full w-[40%] rounded-pill bg-gradient-to-r from-teal to-coral" />

@@ -75,11 +75,19 @@ const codeText = walk(NEW).map((f) => fs.readFileSync(f, "utf8")).join("\n");
 const newSrc = norm(htmlText + "\n" + codeText);
 console.log(`Порівняння: зібраний HTML (${built.length} файлів) + вихідний код`);
 
+// Фрагменти, змінені за вказівкою власника (07.09.2026): фінальний результат —
+// вага на 30-й день, а не середнє за три останні дні.
+const CHANGED = [
+  "Від стартової ваги. Фінальний результат визначаємо за середнім значенням останніх 3 зважувань.",
+  "зниження ваги мінімум на 4% від ваги на старті, без різких стрибків у графіку (фінальний результат рахується як середнє за три останні дні зважувань);",
+  "від ваги на старті, без різких стрибків у графіку. Фінальний результат обчислюється як середнє значення за три останні дні зважувань.",
+];
 let missing = 0;
 let total = 0;
 for (const f of oldFiles) {
   for (const t of fragments(fs.readFileSync(f, "utf8"))) {
     total++;
+    if (CHANGED.includes(t)) continue;
     if (!newSrc.includes(t)) {
       missing++;
       console.log(`MISSING [${path.relative(OLD, f)}]: ${t}`);
