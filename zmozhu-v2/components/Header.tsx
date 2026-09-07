@@ -55,15 +55,11 @@ export default function Header() {
         <Link
           href="/"
           onClick={() => setOpen(false)}
-          className="flex items-center gap-2.5 font-sans text-[20px] font-extrabold tracking-[-0.06em] text-teal-deep"
+          className="flex items-center gap-1.5 font-sans text-[20px] font-extrabold tracking-[-0.06em] text-teal-deep"
           aria-label="ZMOZHU — на головну"
         >
-          <span className="relative flex h-8 w-8 items-center justify-center rounded-[10px] bg-teal text-apricot">
-            <svg width="16" height="16" viewBox="0 0 64 64" aria-hidden="true">
-              <path d="M19 20h26v5.2L27.8 43H45v5H19v-5.2L36.2 25H19z" fill="currentColor" />
-            </svg>
-          </span>
           ZMOZHU
+          <span className="mt-1 h-2 w-2 rounded-full bg-coral" aria-hidden="true" />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Розділи сторінки">
