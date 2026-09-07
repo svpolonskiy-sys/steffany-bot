@@ -1,0 +1,241 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #faf7f1;
+  --sand: #f1ebe1;
+  --mist: #e4eeea;
+  --rose: #f7e6de;
+  --ink: #15252a;
+  --ink-soft: #53656b;
+  --teal: #0f4c4c;
+  --teal-deep: #0a3636;
+  --teal-mid: #1e6b66;
+  --teal-soft: #cfe1db;
+  --coral: #e9765a;
+  --coral-text: #b0462b;
+  --apricot: #f7c2a0;
+  --line: #e4ddd1;
+  --header-h: 76px;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-feature-settings: "kern", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--apricot);
+  color: var(--teal-deep);
+}
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Layout helpers ---------- */
+.wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+@media (min-width: 768px) {
+  .wrap {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+.section {
+  padding-top: clamp(72px, 9vw, 128px);
+  padding-bottom: clamp(72px, 9vw, 128px);
+  scroll-margin-top: var(--header-h);
+}
+
+/* Дрібний надзаголовок із рискою — фірмовий елемент навігації по сторінці */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--coral-text);
+}
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.8;
+}
+.eyebrow--light {
+  color: var(--apricot);
+}
+
+/* Заголовки: displayed serif із щільним трекінгом */
+.display {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+.display em,
+.display .accent {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--coral-text);
+}
+.on-dark .display .accent,
+.on-dark .display em {
+  color: var(--apricot);
+}
+
+/* Паперова текстура — знімає «пластиковість» плоских фонів */
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.grain > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* М'які кольорові плями за героєм */
+.blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+/* Marquee-стрічка */
+.marquee {
+  display: flex;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee__track {
+  display: flex;
+  flex-shrink: 0;
+  min-width: 100%;
+  gap: 0;
+  will-change: transform;
+}
+
+/* Кнопка з «відблиском» */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  width: 34%;
+  left: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+}
+.btn-shine:hover::after {
+  animation: shine 1s ease-in-out 1;
+}
+
+/* Картка-«скло» на темному */
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Юридичні сторінки */
+.legal h2 {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1.2;
+  color: var(--teal-deep);
+  margin-top: 2.25rem;
+  margin-bottom: 0.75rem;
+}
+.legal h3 {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--teal-deep);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.legal p {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+  margin-bottom: 1rem;
+}
+.legal ul {
+  list-style: disc;
+  padding-left: 1.4rem;
+  margin-bottom: 1rem;
+}
+.legal li {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+.legal strong {
+  color: var(--teal-deep);
+  font-weight: 700;
+}
+.legal a {
+  color: var(--coral-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Зменшений рух: усе статичне */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
