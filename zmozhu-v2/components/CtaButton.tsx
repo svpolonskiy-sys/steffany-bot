@@ -10,7 +10,7 @@ type CtaButtonProps = {
 };
 
 const base =
-  "group inline-flex items-center justify-center gap-3 rounded-pill font-semibold select-none transition-[transform,box-shadow,background-color] duration-300 ease-out active:scale-[0.98]";
+  "group inline-flex items-center justify-center gap-3 whitespace-nowrap rounded-pill font-semibold select-none transition-[transform,box-shadow,background-color] duration-300 ease-out active:scale-[0.98]";
 
 const sizes = {
   md: "px-7 py-3.5 text-[15px]",

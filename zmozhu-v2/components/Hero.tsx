@@ -116,7 +116,7 @@ export default function Hero() {
               initial={reduce ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.15, ease }}
-              className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
+              className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
             >
               <CtaButton className="w-full sm:w-auto">Я ЗМОЖУ</CtaButton>
               <CtaButton href="#how" variant="ghost" className="w-full sm:w-auto">
@@ -167,7 +167,7 @@ export default function Hero() {
               initial={reduce ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.9, ease }}
-              className="mb-4 flex items-start gap-2.5 md:hidden"
+              className="mb-4 flex items-start gap-2.5 lg:hidden"
             >
               <span className="relative mt-[6px] flex h-2 w-2 shrink-0" aria-hidden="true">
                 <span className="absolute inline-flex h-full w-full animate-pulseRing rounded-full bg-teal" />
@@ -201,7 +201,7 @@ export default function Hero() {
               animate={{ opacity: 1, x: 0, rotate: -2 }}
               whileHover={{ rotate: 0, scale: 1.02 }}
               transition={{ duration: 0.9, delay: 1.0, ease }}
-              className="absolute -left-6 top-[4%] hidden max-w-[270px] rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 shadow-lift backdrop-blur-xl md:block lg:-left-10"
+              className="absolute top-[4%] hidden max-w-[270px] rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 shadow-lift backdrop-blur-xl lg:-left-10 lg:block"
             >
               <p className="flex items-center gap-2 text-[14px] font-bold text-teal-deep">
                 <span className="relative flex h-2 w-2" aria-hidden="true">
@@ -216,7 +216,7 @@ export default function Hero() {
             </motion.div>
 
             {/* Картка внеску: перекриває нижній край фото */}
-            <DepositCard className="relative z-10 mx-auto -mt-16 w-full max-w-[460px] md:absolute md:-bottom-8 md:-left-6 md:mt-0 md:w-[min(440px,88%)] lg:-left-14" />
+            <DepositCard className="relative z-10 mx-auto -mt-16 w-full max-w-[460px] md:-mt-10 lg:absolute lg:-bottom-8 lg:-left-14 lg:mt-0 lg:w-[min(440px,88%)]" />
           </motion.div>
         </div>
       </div>

@@ -43,7 +43,7 @@ export default function DepositCard({ className = "" }: { className?: string }) 
 
       <div className="mt-4 grid grid-cols-1 items-center gap-3 min-[380px]:grid-cols-[auto_1fr_auto] min-[380px]:gap-2 sm:gap-3">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-ink-soft sm:text-[11px] sm:tracking-[0.08em]">Внесок на старті</p>
+          <p className="whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.06em] text-ink-soft sm:text-[11px] sm:tracking-[0.08em]">Внесок на старті</p>
           <p className="mt-1 font-sans text-[24px] sm:text-[30px] font-extrabold leading-none tracking-[-0.04em] text-teal-deep">
             2000 <span className="text-[13px] font-semibold tracking-normal text-ink-soft">грн</span>
           </p>
