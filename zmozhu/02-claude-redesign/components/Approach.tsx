@@ -114,9 +114,13 @@ export default function Approach() {
                 <p className="mt-2 text-[14px] text-ink-soft">від стартової ваги за 30 днів</p>
               </div>
               <div className="md:pt-3">
-                <p className="text-[17px] leading-[1.7] text-ink">
-                  Бо наша мета — не максимальна цифра на вагах за короткий час. А
-                  результат, який можна пройти без крайнощів.
+                <p className="display text-[clamp(26px,3vw,40px)] leading-[1.12] text-teal-deep">
+                  Достатньо, щоб побачити результат.{" "}
+                  <span className="accent">Реалістично, щоб пройти шлях до кінця.</span>
+                </p>
+                <p className="mt-6 text-[17px] leading-[1.7] text-ink">
+                  Бо наша мета — не найменша цифра на вагах будь-якою ціною. А
+                  нові звички, які працюють на Тебе.
                 </p>
                 <ul className="mt-5 space-y-2.5">
                   {[
@@ -134,10 +138,6 @@ export default function Approach() {
                     </li>
                   ))}
                 </ul>
-                <p className="display mt-7 text-[clamp(22px,2.4vw,30px)] leading-[1.15] text-teal-deep">
-                  Достатньо, щоб побачити результат. Реалістично, щоб пройти шлях
-                  до кінця.
-                </p>
               </div>
             </div>
           </div>

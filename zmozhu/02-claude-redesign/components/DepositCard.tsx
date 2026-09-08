@@ -93,9 +93,6 @@ export default function DepositCard({ className = "" }: { className?: string }) 
         <p className="text-[13px] font-medium text-ink">−4% ваги · ранкові й вечірні чекіни · зважування</p>
       </div>
 
-      <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
-        Якщо хоча б одна умова не виконана, <strong className="font-semibold text-ink">внесок не повертається</strong>. Підтримка триває до кінця 30 днів.
-      </p>
       <a
         href="#how"
         className="mt-2 inline-flex min-h-[36px] items-center gap-1.5 text-[13px] font-semibold text-teal underline decoration-teal/30 underline-offset-4 transition-colors hover:text-coral-text hover:decoration-coral/40"
