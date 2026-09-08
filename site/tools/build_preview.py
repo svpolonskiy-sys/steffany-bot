@@ -164,7 +164,7 @@ RUNTIME = """
 """
 
 
-def build(out_path):
+def build(out_path, artifact=False):
     global LOGO, HERO
     LOGO = data_uri("assets/img/logo.svg", "image/svg+xml")
     HERO = data_uri("assets/img/hero-placeholder.svg", "image/svg+xml")
@@ -179,12 +179,18 @@ def build(out_path):
             % (slug, "" if slug == "index" else " hidden", page_body(slug))
         )
 
-    html = """<!doctype html>
+    # У режимі artifact обгортка <html>/<head>/<body> додається хостом,
+    # тому віддаємо лише вміст сторінки.
+    open_tags = "" if artifact else """<!doctype html>
 <html lang="uk">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dormeza — прев'ю сайту</title>
+"""
+    close_tags = "" if artifact else "</body>\n</html>\n"
+    mid_tags = "" if artifact else "</head>\n<body>"
+
+    html = """%s<title>Dormeza</title>
 <style>
 %s
 
@@ -204,8 +210,7 @@ def build(out_path):
 .preview-page > .header { top: 56px; }
 @media (max-width: 640px) { .preview-page > .header { top: 88px; } }
 </style>
-</head>
-<body>
+%s
 <div class="preview-bar">
   <strong>Прев'ю Dormeza</strong>
   <label for="preview-bar-select" class="visually-hidden">Сторінка</label>
@@ -218,9 +223,7 @@ def build(out_path):
 %s
 
 %s
-</body>
-</html>
-""" % (inline_css(), options, "\n\n".join(bodies), RUNTIME)
+%s""" % (open_tags, inline_css(), mid_tags, options, "\n\n".join(bodies), RUNTIME, close_tags)
 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html)
@@ -228,4 +231,6 @@ def build(out_path):
 
 
 if __name__ == "__main__":
-    build(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "dormeza-preview.html"))
+    args = [a for a in sys.argv[1:] if a != "--artifact"]
+    build(args[0] if args else os.path.join(ROOT, "dormeza-preview.html"),
+          artifact="--artifact" in sys.argv)
