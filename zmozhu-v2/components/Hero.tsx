@@ -49,15 +49,6 @@ const chips = [
     ),
     label: "Близько 15 хвилин на день",
   },
-  {
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-        <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-    label: "Оплата через захищений WayForPay",
-  },
 ];
 
 export default function Hero() {
@@ -171,6 +162,22 @@ export default function Hero() {
 
           {/* ---------- Візуал ---------- */}
           <motion.div style={{ y: photoY }} className="relative md:pl-4">
+            {/* Мобільний підпис: окремим рядком над фото, щоб нічого не перекривати */}
+            <motion.div
+              initial={reduce ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.9, ease }}
+              className="mb-4 flex items-start gap-2.5 md:hidden"
+            >
+              <span className="relative mt-[6px] flex h-2 w-2 shrink-0" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-pulseRing rounded-full bg-teal" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
+              </span>
+              <p className="text-[14px] leading-snug text-ink">
+                <span className="font-bold text-teal-deep">Тетяна — реальна учасниця.</span>{" "}
+                <span className="text-ink-soft">Проходить ці 30 днів прямо зараз, разом із Тобою.</span>
+              </p>
+            </motion.div>
             <motion.figure
               initial={reduce ? false : { clipPath: "inset(12% 8% 12% 8% round 200px 200px 28px 28px)", opacity: 0, scale: 1.04 }}
               animate={{ clipPath: "inset(0% 0% 0% 0% round 200px 200px 28px 28px)", opacity: 1, scale: 1 }}
@@ -194,7 +201,7 @@ export default function Hero() {
               animate={{ opacity: 1, x: 0, rotate: -2 }}
               whileHover={{ rotate: 0, scale: 1.02 }}
               transition={{ duration: 0.9, delay: 1.0, ease }}
-              className="absolute left-2 top-3 max-w-[230px] rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 shadow-lift backdrop-blur-xl sm:max-w-[270px] md:-left-6 md:top-[4%] lg:-left-10"
+              className="absolute -left-6 top-[4%] hidden max-w-[270px] rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 shadow-lift backdrop-blur-xl md:block lg:-left-10"
             >
               <p className="flex items-center gap-2 text-[14px] font-bold text-teal-deep">
                 <span className="relative flex h-2 w-2" aria-hidden="true">

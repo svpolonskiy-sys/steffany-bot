@@ -31,9 +31,9 @@ export default function Pillars() {
                 Вона не оцінює. <span className="accent">Вона допомагає залишатися в русі.</span>
               </p>
             </div>
-            <div className="grain relative flex items-end justify-center bg-mist px-6 pt-10 md:pt-14">
+            <div className="grain relative flex items-end justify-center bg-mist px-6 pb-8 pt-10 md:pb-0 md:pt-14">
               <div className="blob left-[10%] top-[10%] h-64 w-64 bg-teal-soft" aria-hidden="true" />
-              <div className="relative -mb-10 w-full max-w-[320px] translate-y-2 transition-transform duration-700 hover:-translate-y-1">
+              <div className="relative w-full max-w-[320px] transition-transform duration-700 hover:-translate-y-1 md:-mb-10 md:translate-y-2">
                 <MiraChat />
               </div>
             </div>
@@ -42,34 +42,33 @@ export default function Pillars() {
 
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           {/* Опора 2 — Анастасія */}
-          <Reveal as="article" delay={0.05} className="group overflow-hidden rounded-card border border-line bg-white">
-            <div className="grid grid-cols-[112px_1fr] gap-5 p-7 sm:grid-cols-[150px_1fr] sm:gap-7 sm:p-9">
-              <div className="overflow-hidden rounded-[20px]">
-                <Portrait
-                  src="/images/nastya.jpg"
-                  alt="Анастасія — експертка з харчування у програмі"
-                  name="Анастасія"
-                  sizes="150px"
-                  className="aspect-[4/5]"
-                  imgClassName="object-[center_top] transition-transform duration-[1.2s] group-hover:scale-105"
-                />
-              </div>
-              <div>
-                <p className="eyebrow">Експертка з харчування</p>
-                <h3 className="display mt-2 text-[clamp(32px,3.4vw,44px)] text-teal-deep">Анастасія</h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
-                  Науковиця, понад 10 років досвіду. Співзасновниця школи
-                  Nodiet School, авторка подкасту «Що в меню».
-                </p>
+          <Reveal as="article" delay={0.05} className="group grid overflow-hidden rounded-card border border-line bg-white sm:grid-cols-[0.95fr_1.05fr]">
+            {/* Фото на всю висоту картки (планшет і десктоп) або на всю ширину (мобільний) */}
+            <div className="relative min-h-[320px] overflow-hidden sm:min-h-0">
+              <Portrait
+                src="/images/nastya.jpg"
+                alt="Анастасія — експертка з харчування у програмі"
+                name="Анастасія"
+                sizes="(max-width: 640px) 100vw, 320px"
+                className="aspect-[4/5] sm:absolute sm:inset-0 sm:aspect-auto sm:h-full"
+                imgClassName="object-[center_20%] transition-transform duration-[1.2s] group-hover:scale-[1.04]"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-teal-deep/80 to-transparent px-5 pb-5 pt-14 text-white">
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-apricot">Експертка з харчування</p>
+                <p className="mt-1 font-display text-[34px] font-semibold leading-none">Анастасія</p>
               </div>
             </div>
-            <div className="px-7 pb-8 sm:px-9 sm:pb-9">
-              <p className="text-[16px] leading-[1.7] text-ink">
+            <div className="flex flex-col p-7 sm:p-9">
+              <p className="text-[14px] leading-relaxed text-ink-soft">
+                Науковиця, понад 10 років досвіду. Співзасновниця школи
+                Nodiet School, авторка подкасту «Що в меню».
+              </p>
+              <p className="mt-5 text-[16px] leading-[1.7] text-ink">
                 Коротко й зрозуміло пояснює, що відбувається з тілом, апетитом
                 і звичками — та як застосувати це у звичайному житті без
                 жорстких заборон.
               </p>
-              <p className="display mt-5 text-[clamp(22px,2.2vw,28px)] leading-[1.15] text-teal-deep">
+              <p className="display mt-auto pt-6 text-[clamp(22px,2.2vw,28px)] leading-[1.15] text-teal-deep">
                 Менше теорії. <span className="accent">Більше того, що можна використати сьогодні.</span>
               </p>
             </div>
