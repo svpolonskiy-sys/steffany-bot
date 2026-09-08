@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Стилізована ілюстрація ранкового світла у кімнаті">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7FAFC"/>
+      <stop offset="1" stop-color="#E8F3F7"/>
+    </linearGradient>
+    <linearGradient id="light" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#F5F0EA" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#F5F0EA" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="800" height="1000" rx="24"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="800" height="1000" fill="url(#sky)"/>
+    <circle cx="600" cy="250" r="150" fill="#F5F0EA"/>
+    <circle cx="600" cy="250" r="96" fill="#FBF7F1"/>
+    <path d="M0 420 L800 180 L800 1000 L0 1000 Z" fill="url(#light)"/>
+    <rect x="90" y="300" width="300" height="440" rx="18" fill="#FFFFFF" stroke="#D8E3EA" stroke-width="3"/>
+    <line x1="240" y1="300" x2="240" y2="740" stroke="#D8E3EA" stroke-width="3"/>
+    <line x1="90" y1="520" x2="390" y2="520" stroke="#D8E3EA" stroke-width="3"/>
+    <rect x="120" y="800" width="560" height="150" rx="26" fill="#E8F5F2"/>
+    <rect x="150" y="760" width="180" height="60" rx="22" fill="#FFFFFF" stroke="#D8E3EA" stroke-width="3"/>
+    <g stroke="#006D77" stroke-width="4" fill="none" stroke-linecap="round">
+      <path d="M470 700 q40 -60 80 0 t80 0"/>
+      <path d="M470 640 q40 -46 80 0 t80 0" opacity="0.5"/>
+    </g>
+    <circle cx="700" cy="860" r="34" fill="#006D77" opacity="0.12"/>
+  </g>
+</svg>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="Dormeza">
+  <rect width="40" height="40" rx="11" fill="#006D77"/>
+  <path d="M11 27.5V12.5h6.2c4.6 0 7.6 2.9 7.6 7.5s-3 7.5-7.6 7.5H11Zm3.4-3h2.6c2.7 0 4.4-1.7 4.4-4.5s-1.7-4.5-4.4-4.5h-2.6v9Z" fill="#fff"/>
+  <circle cx="29.5" cy="14" r="2.4" fill="#8FD8DE"/>
+</svg>
