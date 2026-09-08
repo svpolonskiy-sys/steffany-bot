@@ -176,7 +176,7 @@ export default function Hero() {
               </span>
               <p className="text-[14px] leading-snug text-ink">
                 <span className="font-bold text-teal-deep">Тетяна — реальна учасниця.</span>{" "}
-                <span className="text-ink-soft">Проходить ці 30 днів прямо зараз, разом із Тобою.</span>
+                <span className="text-ink-soft">Проходить ті самі 30 днів разом із Тобою, день у день.</span>
               </p>
             </motion.div>
             <motion.figure
@@ -212,7 +212,7 @@ export default function Hero() {
                 Тетяна — реальна учасниця
               </p>
               <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">
-                Проходить ці 30 днів прямо зараз, разом із Тобою.
+                Проходить ті самі 30 днів разом із Тобою, день у день.
               </p>
             </motion.div>
 

@@ -11,7 +11,8 @@ zmozhu/
                               Версія вказана в package.json і на початку README.
   archives/
     01-original-2026-09-06.zip           Вихідний архів як був завантажений.
-    02-claude-redesign-2026-09-08.zip    Знімок редизайну на 8 вересня 2026 (v2.1).
+    02-claude-redesign-2026-09-08-v2.1.zip   Знімок редизайну, 8 вересня 2026, v2.1.
+    02-claude-redesign-2026-09-08-v2.2.zip   Знімок редизайну, 8 вересня 2026, v2.2 (найновіший).
 ```
 
 ## Як користуватися
@@ -26,6 +27,7 @@ zmozhu/
 |---|---|---|
 | v2.0 | 2026-09-07 | Нова структура, палітра (теал + папір + корал), шрифти Cormorant Garamond + Manrope, анімації, JSON-LD. Усі тексти й фото з оригіналу збережені. |
 | v2.1 | 2026-09-08 | Прибрано квадрат із літерою; фінальний результат = вага на 30-й день; плашки на першому екрані зсунуто на краї фото; фото Анастасії на всю картку; чіп про оплату прибрано з першого екрана; кути темних карток на фоні сусідніх блоків; виділено ключові тези. |
+| v2.2 | 2026-09-08 | Усі суми в гривнях (без «$0»); повернення лише повне; підпис до фото Тетяни «день у день»; строк повернення до 5 робочих днів у Питаннях; посилання на дослідження JAMA/PubMed у футері. |
 
 ## Як зробити новий знімок
 
@@ -35,7 +37,7 @@ cd zmozhu/02-claude-redesign && npm run build && cd ../..
 python3 - <<'PY'
 import zipfile, os, datetime
 root="zmozhu/02-claude-redesign"; skip={"node_modules",".next","out"}
-name=f"zmozhu/archives/02-claude-redesign-{datetime.date.today()}.zip"
+name=f"zmozhu/archives/02-claude-redesign-{datetime.date.today()}-vX.Y.zip"  # підставте версію з package.json
 z=zipfile.ZipFile(name,"w",zipfile.ZIP_DEFLATED)
 for d,dirs,files in os.walk(root):
     dirs[:]=[x for x in dirs if x not in skip]

@@ -136,6 +136,36 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Джерела дослідження про фінансову мотивацію. Свідомо тут, а не в розділі
+            «Дослідження»: зовнішні посилання посеред сторінки відводять увагу від дії. */}
+        <div className="mt-8 border-t border-line pt-6">
+          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-ink-soft">
+            Джерела дослідження
+          </p>
+          <p className="mt-3 max-w-[720px] text-[13px] leading-relaxed text-ink-soft">
+            Volpp K.G., John L.K., Troxel A.B. та ін. Financial incentive-based
+            approaches for weight loss: a randomized trial. JAMA. 2008;300(22):2631–2637.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
+            <a
+              href="https://doi.org/10.1001/jama.2008.804"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-teal-deep underline underline-offset-4 transition-opacity hover:opacity-70"
+            >
+              Стаття в JAMA (DOI)
+            </a>
+            <a
+              href="https://pubmed.ncbi.nlm.nih.gov/19066383/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-teal-deep underline underline-offset-4 transition-opacity hover:opacity-70"
+            >
+              PubMed
+            </a>
+          </div>
+        </div>
+
         <div className="mt-8 space-y-2 border-t border-line pt-6 text-[12px] text-ink-soft">
           <p>
             Оплата здійснюється через захищений сервіс WayForPay. Ми не зберігаємо

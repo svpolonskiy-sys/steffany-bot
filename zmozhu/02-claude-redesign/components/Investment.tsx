@@ -37,7 +37,7 @@ export default function Investment() {
             <Reveal delay={0.15} className="mt-8 max-w-[600px]">
               <p className="display text-[clamp(24px,2.7vw,34px)] leading-[1.15] text-teal-deep">
                 Внесок повернувся — участь фактично коштувала Тобі{" "}
-                <span className="accent">$0.</span>
+                <span className="accent">0 грн.</span>
               </p>
             </Reveal>
           </div>
