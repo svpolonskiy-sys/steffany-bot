@@ -167,7 +167,7 @@ export default function Hero() {
               initial={reduce ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.9, ease }}
-              className="mb-4 flex items-start gap-2.5 lg:hidden"
+              className="mb-4 flex items-start gap-2.5"
             >
               <span className="relative mt-[6px] flex h-2 w-2 shrink-0" aria-hidden="true">
                 <span className="absolute inline-flex h-full w-full animate-pulseRing rounded-full bg-teal" />
@@ -195,28 +195,8 @@ export default function Hero() {
               />
             </motion.figure>
 
-            {/* Підпис до фото */}
-            <motion.div
-              initial={reduce ? false : { opacity: 0, x: 24, rotate: 0 }}
-              animate={{ opacity: 1, x: 0, rotate: -2 }}
-              whileHover={{ rotate: 0, scale: 1.02 }}
-              transition={{ duration: 0.9, delay: 1.0, ease }}
-              className="absolute top-[4%] hidden max-w-[270px] rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 shadow-lift backdrop-blur-xl lg:-left-10 lg:block"
-            >
-              <p className="flex items-center gap-2 text-[14px] font-bold text-teal-deep">
-                <span className="relative flex h-2 w-2" aria-hidden="true">
-                  <span className="absolute inline-flex h-full w-full animate-pulseRing rounded-full bg-teal" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
-                </span>
-                Тетяна — реальна учасниця
-              </p>
-              <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">
-                Проходить ці 30 днів прямо зараз, разом із Тобою.
-              </p>
-            </motion.div>
-
-            {/* Картка внеску: перекриває нижній край фото */}
-            <DepositCard className="relative z-10 mx-auto -mt-16 w-full max-w-[460px] md:-mt-10 lg:absolute lg:-bottom-8 lg:-left-14 lg:mt-0 lg:w-[min(440px,88%)]" />
+            {/* Картка внеску: під фото, нічого не перекриває */}
+            <DepositCard className="relative z-10 mx-auto -mt-16 w-full max-w-[460px] md:mt-5 md:max-w-[520px]" />
           </motion.div>
         </div>
       </div>
