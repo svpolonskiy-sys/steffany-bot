@@ -70,7 +70,7 @@ export default function Hero() {
       <div className="blob right-[-8%] top-[10%] h-[560px] w-[560px] bg-mist" aria-hidden="true" />
       <div className="blob bottom-[-20%] left-[30%] h-[420px] w-[420px] bg-apricot/40" aria-hidden="true" />
 
-      <div className="wrap relative pb-16 md:pb-24">
+      <div className="wrap relative pb-16 md:pb-24 lg:pb-36">
         <div className="grid items-start gap-12 md:grid-cols-[1.05fr_0.95fr] md:gap-10 lg:gap-16">
           {/* ---------- Копі ---------- */}
           <motion.div style={{ y: copyY, opacity: fade }} className="relative z-10 pt-2 md:pt-8">
@@ -105,7 +105,7 @@ export default function Hero() {
               initial={reduce ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.0, ease }}
-              className="mt-3 max-w-[540px] text-[17px] leading-[1.6] text-ink sm:text-[18px]"
+              className="mt-3 max-w-[520px] text-[17px] leading-[1.6] text-ink sm:text-[18px]"
             >
               ZMOZHU допомагає пройти ці 30 днів до кінця без жорстких дієт і
               заборон. Щоденна підтримка і контроль, щоб один складний день не
@@ -151,7 +151,7 @@ export default function Hero() {
               initial={reduce ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1, delay: 1.6 }}
-              className="mt-10 max-w-[520px] border-l-2 border-coral/60 pl-5"
+              className="mt-10 max-w-[420px] border-l-2 border-coral/60 pl-5"
             >
               <p className="display text-[clamp(24px,2.6vw,32px)] leading-[1.15] text-teal-deep">
                 Мотивація закінчується —{" "}
@@ -167,7 +167,7 @@ export default function Hero() {
               initial={reduce ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.9, ease }}
-              className="mb-4 flex items-start gap-2.5"
+              className="mb-4 flex items-start gap-2.5 lg:hidden"
             >
               <span className="relative mt-[6px] flex h-2 w-2 shrink-0" aria-hidden="true">
                 <span className="absolute inline-flex h-full w-full animate-pulseRing rounded-full bg-teal" />
@@ -182,7 +182,7 @@ export default function Hero() {
               initial={reduce ? false : { clipPath: "inset(12% 8% 12% 8% round 200px 200px 28px 28px)", opacity: 0, scale: 1.04 }}
               animate={{ clipPath: "inset(0% 0% 0% 0% round 200px 200px 28px 28px)", opacity: 1, scale: 1 }}
               transition={{ duration: 1.3, delay: 0.3, ease }}
-              className="relative mx-auto w-full max-w-[520px]"
+              className="relative mx-auto w-full max-w-[520px] lg:max-w-[480px]"
               style={{ clipPath: "inset(0% 0% 0% 0% round 200px 200px 28px 28px)" }}
             >
               <Portrait
@@ -195,8 +195,28 @@ export default function Hero() {
               />
             </motion.figure>
 
-            {/* Картка внеску: під фото, нічого не перекриває */}
-            <DepositCard className="relative z-10 mx-auto -mt-16 w-full max-w-[460px] md:mt-5 md:max-w-[520px]" />
+            {/* Підпис до фото (lg+): чіпляється за верхній лівий кут арки, майже не заходячи на фото */}
+            <motion.div
+              initial={reduce ? false : { opacity: 0, x: 24, rotate: 0 }}
+              animate={{ opacity: 1, x: 0, rotate: -2 }}
+              whileHover={{ rotate: 0, scale: 1.02 }}
+              transition={{ duration: 0.9, delay: 1.0, ease }}
+              className="absolute top-[6%] hidden max-w-[270px] rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 shadow-lift backdrop-blur-xl lg:-left-24 lg:block xl:-left-28"
+            >
+              <p className="flex items-center gap-2 text-[14px] font-bold text-teal-deep">
+                <span className="relative flex h-2 w-2" aria-hidden="true">
+                  <span className="absolute inline-flex h-full w-full animate-pulseRing rounded-full bg-teal" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-teal" />
+                </span>
+                Тетяна — реальна учасниця
+              </p>
+              <p className="mt-1 text-[12.5px] leading-snug text-ink-soft">
+                Проходить ці 30 днів прямо зараз, разом із Тобою.
+              </p>
+            </motion.div>
+
+            {/* Картка внеску: на lg+ звисає з нижнього лівого кута фото в бік порожнього простору */}
+            <DepositCard className="relative z-10 mx-auto -mt-16 w-full max-w-[460px] md:mt-5 md:max-w-[520px] lg:absolute lg:-bottom-24 lg:-left-10 lg:mt-0 lg:w-[400px] xl:-left-20 xl:w-[420px]" />
           </motion.div>
         </div>
       </div>
