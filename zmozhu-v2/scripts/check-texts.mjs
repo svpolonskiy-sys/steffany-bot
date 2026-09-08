@@ -68,7 +68,7 @@ const htmlText = built
   .map((f) => {
     const h = fs.readFileSync(f, "utf8").replace(/<script[\s\S]*?<\/script>/g, " ");
     const attrs = [...h.matchAll(/="([^"]*)"/g)].map((m) => m[1]).join("\n");
-    return decodeEntities(h.replace(/<[^>]+>/g, " ") + "\n" + attrs);
+    return decodeEntities(h.replace(/<\/?(p|div|li|h[1-6]|section|article|footer|header|ul|main|nav|figure|blockquote)\b[^>]*>/g, " ").replace(/<[^>]+>/g, "") + "\n" + attrs);
   })
   .join("\n");
 const codeText = walk(NEW).map((f) => fs.readFileSync(f, "utf8")).join("\n");

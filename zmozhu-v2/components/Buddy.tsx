@@ -51,7 +51,7 @@ export default function Buddy() {
               хоче все кинути.
             </p>
             <p className="text-[17px] leading-[1.7] text-ink md:text-[18px]">
-              Щодня Тетяна ділиться коротким відео — показує, що в неї
+              <strong className="font-semibold text-teal-deep">Щодня Тетяна ділиться коротким відео</strong> — показує, що в неї
               виходить, а де буває складно.
             </p>
           </Reveal>

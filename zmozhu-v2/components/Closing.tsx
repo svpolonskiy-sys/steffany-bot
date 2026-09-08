@@ -3,7 +3,7 @@ import Reveal from "@/components/Reveal";
 
 export default function Closing() {
   return (
-    <section id="closing" className="px-3 pb-3 md:px-5" aria-labelledby="closing-title">
+    <section id="closing" className="bg-sand px-3 pb-3 md:px-5" aria-labelledby="closing-title">
       <div className="on-dark grain relative overflow-hidden rounded-[32px] bg-teal-deep text-white md:rounded-[40px]">
         <div className="blob left-[-10%] top-[-10%] h-[520px] w-[520px] bg-teal-mid/70" aria-hidden="true" />
         <div className="blob bottom-[-20%] right-[-10%] h-[520px] w-[520px] bg-coral/30" aria-hidden="true" />
@@ -31,9 +31,11 @@ export default function Closing() {
                 ZMOZHU створений саме для моменту, коли хочеться все кинути — щоб
                 допомогти Тобі повернутися і продовжити.
               </p>
-              <p className="mt-6 inline-flex items-center gap-2 rounded-pill border border-white/15 bg-white/5 px-4 py-2 text-[15px] text-white/85">
-                <span className="h-1.5 w-1.5 rounded-full bg-apricot" aria-hidden="true" />
-                Виконала умови — отримуєш свої 2000 грн назад.
+              <p className="mt-6 inline-flex items-center gap-2 rounded-[22px] border border-white/15 bg-white/5 px-4 py-2 text-left text-[15px] text-white/85 sm:rounded-pill">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-apricot" aria-hidden="true" />
+                <span>
+                  Виконала умови — отримуєш свої <strong className="font-bold text-apricot">2000 грн назад</strong>.
+                </span>
               </p>
             </Reveal>
 

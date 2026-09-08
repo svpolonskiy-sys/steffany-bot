@@ -94,7 +94,7 @@ export default function DepositCard({ className = "" }: { className?: string }) 
       </div>
 
       <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
-        Якщо хоча б одна умова не виконана, внесок не повертається. Підтримка триває до кінця 30 днів.
+        Якщо хоча б одна умова не виконана, <strong className="font-semibold text-ink">внесок не повертається</strong>. Підтримка триває до кінця 30 днів.
       </p>
       <a
         href="#how"

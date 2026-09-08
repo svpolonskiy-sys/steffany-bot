@@ -26,7 +26,7 @@ export default function Recognition() {
             text="А потім був звичайний день. Втома. Вечеря не за планом. Пропущене тренування. І поступово все поверталося назад."
           />
           <ScrollWords
-            className="text-[clamp(20px,2.3vw,27px)] leading-[1.55] text-ink-soft"
+            className="text-[clamp(22px,2.5vw,30px)] font-semibold leading-[1.45] text-teal-deep"
             text="Не тому, що Тобі бракує знань. І не тому, що Тобі бракує сили волі."
           />
 

@@ -51,7 +51,7 @@ export default function Day() {
   const width = useTransform(scrollYProgress, [0, 1], ["0%", reduce ? "100%" : "100%"]);
 
   return (
-    <section id="day" className="px-3 py-3 md:px-5" aria-labelledby="day-title">
+    <section id="day" className="bg-gradient-to-b from-sand from-50% to-paper to-50% px-3 py-3 md:px-5" aria-labelledby="day-title">
       <div className="on-dark grain relative overflow-hidden rounded-[32px] bg-teal-deep text-white md:rounded-[40px]">
         <div className="blob right-[-10%] top-[-20%] h-[520px] w-[520px] bg-teal-mid/60" aria-hidden="true" />
         <div className="blob bottom-[-30%] left-[-10%] h-[520px] w-[520px] bg-coral/25" aria-hidden="true" />

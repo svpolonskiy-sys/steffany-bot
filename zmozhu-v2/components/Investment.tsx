@@ -18,9 +18,9 @@ export default function Investment() {
             </Reveal>
 
             <Reveal delay={0.05} className="mt-8 max-w-[560px]">
-              <p className="text-[18px] leading-[1.7] text-ink">
-                Ти вносиш 2000 грн на старті. Виконуєш умови 30 днів — отримуєш усю суму
-                назад.
+              <p className="text-[19px] font-medium leading-[1.65] text-ink md:text-[21px]">
+                Ти вносиш <strong className="font-bold text-teal-deep">2000 грн</strong> на старті. Виконуєш умови 30 днів —{" "}
+                <strong className="hl font-bold text-teal-deep">отримуєш усю суму назад</strong>.
               </p>
             </Reveal>
 
@@ -139,10 +139,10 @@ export default function Investment() {
               </p>
               <p className="mt-2 text-[16px] leading-relaxed text-ink">
                 Якщо якась із трьох умов не виконана, участь у програмі
-                продовжується, але внесок не повертається.
+                продовжується, але <strong className="font-semibold text-teal-deep">внесок не повертається</strong>.
               </p>
               <p className="mt-5 border-t border-line pt-4 text-[14px] leading-relaxed text-ink-soft">
-                Гроші повертаються на ту саму картку, з якої була оплата. Повні
+                <strong className="font-semibold text-ink">Гроші повертаються на ту саму картку, з якої була оплата.</strong> Повні
                 правила — у{" "}
                 <a href="/oferta" className="font-semibold text-teal underline underline-offset-4 hover:text-coral-text">
                   Публічній оферті

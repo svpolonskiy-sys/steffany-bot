@@ -59,9 +59,10 @@ export default function Pillars() {
               </div>
             </div>
             <div className="flex flex-col p-7 sm:p-9">
-              <p className="text-[14px] leading-relaxed text-ink-soft">
-                Науковиця, понад 10 років досвіду. Співзасновниця школи
-                Nodiet School, авторка подкасту «Що в меню».
+              <p className="text-[15px] leading-relaxed text-ink">
+                <strong className="font-semibold text-teal-deep">Науковиця, понад 10 років досвіду.</strong>{" "}
+                Співзасновниця школи <strong className="font-semibold text-teal-deep">Nodiet School</strong>,
+                авторка подкасту «Що в меню».
               </p>
               <p className="mt-5 text-[16px] leading-[1.7] text-ink">
                 Коротко й зрозуміло пояснює, що відбувається з тілом, апетитом
@@ -90,7 +91,7 @@ export default function Pillars() {
 
               <p className="mt-4 text-[16px] leading-[1.7] text-ink">
                 Якщо Тобі стане складно — Ти завжди можеш написати в підтримку
-                й отримати відповідь від живої людини.
+                й <strong className="font-semibold text-teal-deep">отримати відповідь від живої людини</strong>.
               </p>
 
               <p className="display mt-auto pt-8 text-[clamp(22px,2.2vw,28px)] leading-[1.15] text-teal-deep">

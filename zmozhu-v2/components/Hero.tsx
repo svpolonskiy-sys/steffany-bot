@@ -107,9 +107,10 @@ export default function Hero() {
               transition={{ duration: 0.8, delay: 1.0, ease }}
               className="mt-3 max-w-[520px] text-[17px] leading-[1.6] text-ink sm:text-[18px]"
             >
-              ZMOZHU допомагає пройти ці 30 днів до кінця без жорстких дієт і
-              заборон. Щоденна підтримка і контроль, щоб один складний день не
-              перекреслював увесь шлях.
+              ZMOZHU допомагає пройти ці 30 днів до кінця{" "}
+              <strong className="font-semibold text-teal-deep">без жорстких дієт і заборон</strong>.
+              Щоденна підтримка і контроль, щоб{" "}
+              <strong className="font-semibold text-teal-deep">один складний день не перекреслював увесь шлях</strong>.
             </motion.p>
 
             <motion.div

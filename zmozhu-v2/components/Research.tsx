@@ -21,8 +21,8 @@ export default function Research() {
               У <span className="accent">4,5 раза</span> вищий результат під час програми.
             </p>
             <p className="mt-5 max-w-[460px] text-[17px] leading-relaxed text-ink">
-              Саме тому в ZMOZHU є мотиваційний внесок, щоденні зважування та
-              регулярні чекіни.
+              Саме тому в ZMOZHU є{" "}
+              <strong className="font-semibold text-teal-deep">мотиваційний внесок, щоденні зважування та регулярні чекіни</strong>.
             </p>
           </Reveal>
         </div>
