@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="uk" class="__variable_fe7774 __variable_392439">
+<head>
+<meta charset="utf-8">
+<title>ZMOZHU — Reels</title>
+<!-- Шрифти та токени беруться зі зібраного сайту (zmozhu/02-claude-redesign/out) -->
+<link rel="stylesheet" href="/_next/static/css/24592a63be159dd4.css">
+<style>
+  :root{
+    --paper:#FAF7F1; --sand:#F1EBE1; --mist:#E4EEEA; --rose:#F7E6DE;
+    --ink:#15252A; --ink-soft:#53656B; --teal:#0F4C4C; --teal-deep:#0A3636; --teal-mid:#1E6B66;
+    --coral:#E9765A; --coral-text:#B0462B; --apricot:#F7C2A0; --line:#E4DDD1;
+    --serif: var(--font-cormorant), Georgia, serif;
+    --sans: var(--font-manrope), system-ui, sans-serif;
+  }
+  html,body{margin:0;padding:0;background:#000}
+  #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--teal-deep);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .scene{position:absolute;inset:0;opacity:0}
+  .abs{position:absolute}
+  .blob{position:absolute;border-radius:999px;filter:blur(90px)}
+  .serif{font-family:var(--serif);font-weight:600;letter-spacing:-0.015em}
+  .it{font-style:italic;font-weight:500}
+  .eyebrow{display:flex;align-items:center;gap:16px;font-size:26px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  .eyebrow i{display:block;width:34px;height:3px;border-radius:3px;background:currentColor}
+  .w{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:.08em;margin-bottom:-.08em}
+  .w>span{display:inline-block;will-change:transform}
+  .tab{font-variant-numeric:tabular-nums}
+
+  /* ---------- Сцена 1: хук ---------- */
+  #s1 .h{left:90px;top:520px;width:900px;font-size:128px;line-height:1.05;color:#fff}
+  #s1 .h .l2{color:var(--apricot)}
+  #s1 .brand{left:90px;top:420px;display:flex;align-items:center;gap:14px;font-size:38px;font-weight:800;letter-spacing:-.06em;color:#fff}
+  #s1 .dot{width:16px;height:16px;border-radius:50%;background:var(--coral)}
+
+  /* ---------- Сцена 2: розкриття ---------- */
+  #s2 .eyebrow{left:90px;top:292px;color:var(--coral-text)}
+  #s2 .eyebrow b{width:14px;height:14px;border-radius:50%;background:var(--coral)}
+  #s2 .h{left:90px;top:342px;font-size:116px;line-height:1.05;color:var(--teal-deep)}
+  #s2 .photo{left:200px;top:560px;width:680px;height:850px;border-radius:340px 340px 36px 36px;overflow:hidden;background:var(--sand)}
+  #s2 .photo img{width:100%;height:100%;object-fit:cover;object-position:50% 34%;transform-origin:55% 30%}
+  #s2 .plaque{left:110px;top:1318px;width:640px;padding:26px 32px;border-radius:30px;background:rgba(255,255,255,.94);box-shadow:0 30px 70px rgba(10,54,54,.22)}
+  #s2 .plaque p{margin:0}
+  #s2 .plaque .t{display:flex;align-items:center;gap:14px;font-size:33px;font-weight:800;color:var(--teal-deep);letter-spacing:-.01em}
+  #s2 .plaque .t b{width:14px;height:14px;border-radius:50%;background:var(--teal)}
+  #s2 .plaque .s{margin-top:8px;font-size:26px;line-height:1.35;color:var(--ink-soft)}
+
+  /* ---------- Сцена 3: Міра в Telegram ---------- */
+  #s3 .eyebrow{left:90px;top:270px;color:var(--coral-text)}
+  #s3 .h{left:90px;top:318px;width:900px;font-size:90px;line-height:1.04;color:var(--teal-deep)}
+  #s3 .h .l2{color:var(--coral-text)}
+  #s3 .phone{left:250px;top:652px;width:580px;height:848px;border-radius:66px;background:#0b0f14;padding:14px;box-sizing:border-box;box-shadow:0 50px 110px rgba(10,54,54,.35)}
+  #s3 .screen{position:relative;width:100%;height:100%;border-radius:53px;background:#0E1621;overflow:hidden;display:flex;flex-direction:column;color:#fff}
+  #s3 .notch{position:absolute;left:50%;top:14px;width:150px;height:34px;margin-left:-75px;border-radius:20px;background:#0b0f14}
+  #s3 .sb{display:flex;justify-content:space-between;padding:20px 38px 6px;font-size:20px;font-weight:700}
+  #s3 .hdr{display:flex;align-items:center;gap:12px;padding:10px 20px}
+  #s3 .back{padding:10px 16px;border-radius:30px;background:rgba(255,255,255,.1);font-size:18px;font-weight:700}
+  #s3 .title{flex:1;text-align:center;border-radius:40px;background:rgba(255,255,255,.1);padding:8px 0}
+  #s3 .title p{margin:0}
+  #s3 .title .n{font-size:22px;font-weight:700}
+  #s3 .title .st{font-size:16px;color:rgba(255,255,255,.55);height:20px}
+  #s3 .ava{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--apricot),var(--coral))}
+  #s3 .msgs{flex:1;padding:8px 20px 0;display:flex;flex-direction:column;gap:12px}
+  #s3 .pill{align-self:center;padding:5px 16px;border-radius:30px;background:rgba(255,255,255,.1);font-size:16px;color:rgba(255,255,255,.75)}
+  #s3 .msg{max-width:90%;padding:14px 20px 10px;border-radius:28px 28px 28px 8px;background:#212D3B;font-size:24px;line-height:1.36;opacity:0}
+  #s3 .msg small{display:block;text-align:right;font-size:14px;color:rgba(255,255,255,.55);margin-top:2px}
+  #s3 .inp{display:flex;align-items:center;gap:10px;padding:12px 20px}
+  #s3 .menu{padding:10px 18px;border-radius:30px;background:#1C77A6;font-size:18px;font-weight:700}
+  #s3 .field{flex:1;padding:12px 20px;border-radius:30px;background:rgba(255,255,255,.1);font-size:18px;color:rgba(255,255,255,.7)}
+  #s3 .kb{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 20px 26px}
+  #s3 .kb span{padding:16px 6px;border-radius:18px;background:rgba(255,255,255,.08);text-align:center;font-size:18px;color:rgba(255,255,255,.9)}
+
+  /* ---------- Сцена 4: внесок ---------- */
+  #s4 .eyebrow{left:90px;top:290px;color:var(--apricot)}
+  #s4 .lab{left:90px;font-size:28px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+  #s4 .num{left:84px;display:flex;align-items:baseline;gap:18px;font-size:196px;font-weight:800;letter-spacing:-.06em;line-height:1}
+  #s4 .num small{font-size:56px;font-weight:600;letter-spacing:0}
+  #s4 .track{left:139px;top:700px;width:8px;height:300px;border-radius:8px;background:rgba(255,255,255,.14)}
+  #s4 .fill{left:139px;top:700px;width:8px;height:0;border-radius:8px;background:linear-gradient(180deg,var(--apricot),var(--coral))}
+  #s4 .runner{left:125px;top:686px;width:36px;height:36px;border-radius:50%;background:var(--coral);border:5px solid #fff;box-sizing:border-box}
+  #s4 .days{left:200px;top:688px;font-size:28px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--apricot)}
+  #s4 .ck{left:200px;display:flex;align-items:center;gap:18px;font-size:38px;font-weight:600;color:#fff}
+  #s4 .ck b{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:rgba(247,194,160,.18);color:var(--apricot)}
+
+  /* ---------- Сцена 5: фінал ---------- */
+  #s5 .l1{left:90px;top:330px;width:900px;font-size:92px;line-height:1.05;color:var(--teal-deep)}
+  #s5 .l2{left:90px;top:660px;width:900px;font-size:92px;line-height:1.05;color:var(--coral-text)}
+  #s5 .btn{left:90px;top:1060px;width:900px;height:140px;border-radius:999px;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;gap:26px;font-size:50px;font-weight:700;letter-spacing:.01em;overflow:hidden;box-shadow:0 34px 80px rgba(10,54,54,.3)}
+  #s5 .btn .ar{display:flex;align-items:center;justify-content:center;width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.16)}
+  #s5 .shine{position:absolute;top:-20%;bottom:-20%;width:26%;left:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-18deg)}
+  #s5 .tg{left:90px;width:900px;top:1232px;display:flex;justify-content:center;align-items:center;gap:14px;font-size:30px;color:var(--ink-soft)}
+  #s5 .mark{left:90px;width:900px;top:1330px;display:flex;justify-content:center;align-items:center;gap:12px;font-size:56px;font-weight:800;letter-spacing:-.06em;color:var(--teal-deep)}
+  #s5 .mark b{width:18px;height:18px;border-radius:50%;background:var(--coral);margin-top:12px}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- 1. ХУК -->
+  <section class="scene" id="s1">
+    <div class="blob" style="right:-220px;top:-160px;width:700px;height:700px;background:rgba(30,107,102,.7)"></div>
+    <div class="blob" style="left:-260px;bottom:-200px;width:700px;height:700px;background:rgba(233,118,90,.22)"></div>
+    <div class="abs brand" data-a="brand"><span class="dot" data-a="pulse"></span>ZMOZHU</div>
+    <h1 class="abs serif h" data-words>
+      <span class="l1">Ти знаєш, як схуднути.</span><br>
+      <span class="l2 it">Складніше — не зупинитися.</span>
+    </h1>
+  </section>
+
+  <!-- 2. РОЗКРИТТЯ -->
+  <section class="scene" id="s2">
+    <div class="blob" style="left:-240px;top:-120px;width:720px;height:720px;background:var(--rose)"></div>
+    <div class="blob" style="right:-260px;top:520px;width:760px;height:760px;background:var(--mist)"></div>
+    <div class="blob" style="left:180px;bottom:-260px;width:620px;height:620px;background:rgba(247,194,160,.45)"></div>
+    <div class="abs eyebrow" data-a="s2e"><b></b>30 днів · щоденна підтримка · −4% ваги</div>
+    <h2 class="abs serif h" data-a="s2h">Ми поруч щодня.</h2>
+    <div class="abs photo" data-a="s2p"><img src="/images/tanya-hero.jpg" alt=""></div>
+    <div class="abs plaque" data-a="s2q">
+      <p class="t"><b></b>Тетяна — реальна учасниця</p>
+      <p class="s">Проходить ті самі 30 днів разом із Тобою, день у день.</p>
+    </div>
+  </section>
+
+  <!-- 3. МІРА -->
+  <section class="scene" id="s3">
+    <div class="blob" style="left:-220px;top:900px;width:700px;height:700px;background:#CFE1DB"></div>
+    <div class="blob" style="right:-200px;top:-120px;width:600px;height:600px;background:rgba(247,230,222,.9)"></div>
+    <div class="abs eyebrow" data-a="s3e"><i></i>Твій день у ZMOZHU</div>
+    <h2 class="abs serif h" data-words>
+      <span class="l1">Близько 15 хвилин на день.</span><br>
+      <span class="l2 it">Усе в Telegram.</span>
+    </h2>
+    <div class="abs phone" data-a="s3p">
+      <div class="screen">
+        <div class="notch"></div>
+        <div class="sb"><span>7:30</span><span>24</span></div>
+        <div class="hdr">
+          <span class="back">‹ 3</span>
+          <div class="title"><p class="n">ZMOZHU</p><p class="st" data-a="status">бот</p></div>
+          <span class="ava"></span>
+        </div>
+        <div class="msgs">
+          <span class="pill">1,5+ літра</span>
+          <div class="msg" data-a="m0">Дякую 🤍 Сьогодні лише одне правило — сідай, коли їси.<small>7:28</small></div>
+          <div class="msg" data-a="m1">Привіт, Олено! ☀️ День 4 — і ти знову тут, це вже сама по собі маленька перемога. Сьогодні без ваги, тож просто радію, що ти зі мною.<small>7:28</small></div>
+          <div class="msg" data-a="m2">Побачимось о 15:00 — на тебе чекає аудіо від нутриціолога 🎧<small>7:28</small></div>
+        </div>
+        <div class="inp"><span class="menu">☰ Меню</span><span class="field">Повідомлення</span></div>
+        <div class="kb">
+          <span>⚖️ Зважитись</span><span>💗 Підтримка</span>
+          <span>🌅 Ранковий чекін</span><span>🌙 Вечірній чекін</span>
+          <span>📈 Мій прогрес</span><span>📋 Правила</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. ВНЕСОК -->
+  <section class="scene" id="s4">
+    <div class="blob" style="right:-240px;top:-200px;width:760px;height:760px;background:rgba(30,107,102,.65)"></div>
+    <div class="blob" style="left:-260px;bottom:-240px;width:760px;height:760px;background:rgba(233,118,90,.25)"></div>
+    <div class="abs eyebrow" data-a="s4e"><i></i>Як це працює</div>
+    <div class="abs lab" style="top:370px" data-a="s4l1">Внесок на старті</div>
+    <div class="abs num tab" style="top:418px;color:#fff" data-a="s4n1">2000<small style="color:rgba(255,255,255,.7)">грн</small></div>
+    <div class="abs track" data-a="s4tr"></div>
+    <div class="abs fill" data-a="s4fill"></div>
+    <div class="abs runner" data-a="s4run"></div>
+    <div class="abs days" data-a="s4days">30 днів</div>
+    <div class="abs ck" style="top:760px" data-a="c0"><b><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></b>−4% ваги</div>
+    <div class="abs ck" style="top:840px" data-a="c1"><b><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></b>ранкові й вечірні чекіни</div>
+    <div class="abs ck" style="top:920px" data-a="c2"><b><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></b>зважування</div>
+    <div class="abs lab" style="top:1070px" data-a="s4l2">Виконала всі три умови</div>
+    <div class="abs num tab" style="top:1118px;color:var(--apricot)" data-a="s4n2"><span data-a="count">2000</span><small style="color:rgba(247,194,160,.8)">грн назад</small></div>
+  </section>
+
+  <!-- 5. ФІНАЛ -->
+  <section class="scene" id="s5">
+    <div class="blob" style="left:-260px;top:-160px;width:760px;height:760px;background:var(--rose)"></div>
+    <div class="blob" style="right:-240px;bottom:-120px;width:760px;height:760px;background:var(--mist)"></div>
+    <h2 class="abs serif l1" data-words><span>Цього разу Тобі не потрібно починати заново.</span></h2>
+    <h2 class="abs serif it l2" data-words><span>Потрібно просто продовжити завтра.</span></h2>
+    <div class="abs btn" data-a="btn">
+      <span>Я ЗМОЖУ</span>
+      <span class="ar"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9 7h8v8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="shine" data-a="shine"></span>
+    </div>
+    <div class="abs tg" data-a="tg"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M21 3L3 10.5l6 2.5m12-10l-3 15-9-5m12-10L9 13m0 0v6l3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Усе в Telegram</div>
+    <div class="abs mark" data-a="mark">ZMOZHU<b></b></div>
+  </section>
+</div>
+
+<script>
+// Кожен кадр — чиста функція часу t (секунди). Ніяких CSS-анімацій.
+const $ = (s, r = document) => r.querySelector(s);
+const A = (k) => document.querySelector(`[data-a="${k}"]`);
+const clamp = (x) => Math.max(0, Math.min(1, x));
+const P = (a, b, t) => clamp((t - a) / (b - a));
+const eo = (x) => 1 - Math.pow(1 - x, 3);
+const eio = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const back = (x) => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const lerp = (a, b, x) => a + (b - a) * x;
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, x) => { const A1 = hex(a), B1 = hex(b); return `rgb(${A1.map((v, i) => Math.round(lerp(v, B1[i], x))).join(",")})`; };
+
+// Розбити заголовки на слова з маскою
+document.querySelectorAll("[data-words]").forEach((h) => {
+  h.querySelectorAll(":scope > span").forEach((line) => {
+    const words = line.textContent.trim().split(/\s+/);
+    line.innerHTML = words.map((w) => `<span class="w"><span>${w}</span></span>`).join(" ");
+  });
+});
+const words = (sel) => Array.from(document.querySelectorAll(`${sel} .w > span`));
+
+const SCENES = [
+  { id: "s1", s: 0.0, e: 3.8, bg: "#0A3636" },
+  { id: "s2", s: 3.8, e: 8.2, bg: "#FAF7F1" },
+  { id: "s3", s: 8.2, e: 12.8, bg: "#E4EEEA" },
+  { id: "s4", s: 12.8, e: 16.6, bg: "#0A3636" },
+  { id: "s5", s: 16.6, e: 99, bg: "#FAF7F1" },
+];
+const FIN = 0.45, FOUT = 0.35;
+
+function rise(el, t, start, dur = 0.8, dy = 40) {
+  const x = eo(P(start, start + dur, t));
+  el.style.opacity = x;
+  el.style.transform = `translateY(${(1 - x) * dy}px)`;
+}
+function wordsIn(list, t, start, step = 0.09, dur = 0.8) {
+  list.forEach((w, i) => {
+    const x = eo(P(start + i * step, start + i * step + dur, t));
+    w.style.transform = `translateY(${(1 - x) * 110}%)`;
+    w.style.opacity = Math.min(1, x * 1.4);
+  });
+}
+
+function render(t) {
+  // Фон сцени: плавний перехід кольору на межах
+  let bg = SCENES[0].bg;
+  for (let i = 0; i < SCENES.length; i++) {
+    const sc = SCENES[i];
+    if (t >= sc.s) bg = sc.bg;
+    if (i > 0) {
+      const b = sc.s, prev = SCENES[i - 1].bg;
+      if (t >= b - FOUT && t < b + 0.2) bg = mix(prev, sc.bg, eio(P(b - FOUT, b + 0.2, t)));
+    }
+  }
+  $("#stage").style.background = bg;
+
+  // Прозорість сцен: спершу старе зникає, потім нове з'являється
+  SCENES.forEach((sc) => {
+    const el = document.getElementById(sc.id);
+    let o = 0;
+    if (t >= sc.s && t <= sc.e) o = Math.min(eo(P(sc.s, sc.s + FIN, t)), 1 - eio(P(sc.e - FOUT, sc.e, t)));
+    if (sc.id === "s1") o = t <= sc.e ? 1 - eio(P(sc.e - FOUT, sc.e, t)) : 0;
+    el.style.opacity = o;
+    el.style.visibility = o > 0.001 ? "visible" : "hidden";
+  });
+
+  // 1. Хук
+  rise(A("brand"), t, 0.05, 0.7, 20);
+  const pulse = 1 + 0.35 * Math.max(0, Math.sin(t * 3.2));
+  A("pulse").style.transform = `scale(${pulse})`;
+  const w1 = words("#s1 .l1"), w2 = words("#s1 .l2");
+  wordsIn(w1, t, 0.25, 0.11);
+  wordsIn(w2, t, 1.35, 0.12);
+
+  // 2. Розкриття
+  rise(A("s2e"), t, 3.95, 0.7, 24);
+  rise(A("s2h"), t, 4.1, 0.9, 40);
+  const pr = eo(P(4.3, 5.5, t));
+  const ph = A("s2p");
+  ph.style.clipPath = `inset(${lerp(14, 0, pr)}% ${lerp(10, 0, pr)}% ${lerp(14, 0, pr)}% ${lerp(10, 0, pr)}% round 340px 340px 36px 36px)`;
+  ph.style.opacity = Math.min(1, pr * 1.6);
+  ph.querySelector("img").style.transform = `scale(${lerp(1.12, 1.0, eo(P(4.3, 8.2, t)))})`;
+  const q = A("s2q"), qx = eo(P(5.35, 6.2, t));
+  q.style.opacity = qx;
+  q.style.transform = `translateY(${(1 - qx) * 30}px) rotate(${lerp(0, -1.5, qx)}deg)`;
+
+  // 3. Міра
+  rise(A("s3e"), t, 8.35, 0.7, 24);
+  wordsIn(words("#s3 .l1"), t, 8.45, 0.08);
+  wordsIn(words("#s3 .l2"), t, 9.0, 0.1);
+  const pp = eo(P(8.5, 9.4, t));
+  A("s3p").style.opacity = pp;
+  A("s3p").style.transform = `translateY(${(1 - pp) * 80}px)`;
+  const MT = [9.35, 10.2, 11.15];
+  let typing = false;
+  MT.forEach((m, i) => {
+    if (t > m - 0.65 && t < m) typing = true;
+    const x = eo(P(m, m + 0.4, t));
+    const el = A("m" + i);
+    el.style.opacity = x;
+    el.style.transform = `translateY(${(1 - x) * 16}px) scale(${lerp(0.96, 1, x)})`;
+  });
+  A("status").textContent = typing ? "друкує…" : "бот";
+  A("status").style.opacity = typing ? 0.6 + 0.4 * Math.abs(Math.sin(t * 6)) : 1;
+
+  // 4. Внесок
+  rise(A("s4e"), t, 12.95, 0.7, 24);
+  rise(A("s4l1"), t, 13.0, 0.7, 24);
+  rise(A("s4n1"), t, 13.1, 0.8, 40);
+  const pathX = eio(P(13.6, 14.9, t));
+  rise(A("s4tr"), t, 13.45, 0.4, 0);
+  A("s4fill").style.height = `${300 * pathX}px`;
+  A("s4fill").style.opacity = t > 13.45 ? 1 : 0;
+  const run = A("s4run");
+  run.style.transform = `translateY(${300 * pathX}px)`;
+  run.style.opacity = eo(P(13.45, 13.75, t));
+  rise(A("s4days"), t, 13.5, 0.6, 16);
+  ["c0", "c1", "c2"].forEach((k, i) => rise(A(k), t, 13.75 + i * 0.3, 0.6, 18));
+  rise(A("s4l2"), t, 14.2, 0.7, 24);
+  rise(A("s4n2"), t, 14.3, 0.8, 40);
+  A("count").textContent = String(Math.round(2000 * eio(P(14.3, 15.3, t))));
+  const glow = eo(P(15.3, 15.6, t)) * (1 - eo(P(15.6, 16.3, t)));
+  A("s4n2").style.textShadow = `0 0 ${40 * glow}px rgba(247,194,160,${0.55 * glow})`;
+
+  // 5. Фінал
+  wordsIn(words("#s5 .l1"), t, 16.8, 0.07);
+  wordsIn(words("#s5 .l2"), t, 17.85, 0.09);
+  const bx = P(18.7, 19.3, t);
+  const btn = A("btn");
+  btn.style.opacity = eo(Math.min(1, bx * 2));
+  btn.style.transform = `scale(${bx > 0 ? lerp(0.9, 1, back(bx)) : 0.9})`;
+  const sx = P(19.5, 20.3, t);
+  A("shine").style.transform = `translateX(${lerp(-120, 460, eio(sx))}%) skewX(-18deg)`;
+  A("shine").style.opacity = sx > 0 && sx < 1 ? 1 : 0;
+  rise(A("tg"), t, 19.0, 0.7, 16);
+  rise(A("mark"), t, 19.2, 0.8, 16);
+}
+
+window.render = render;
+window.ready = async () => {
+  await document.fonts.ready;
+  await Promise.all(Array.from(document.images).map((i) => (i.decode ? i.decode().catch(() => {}) : null)));
+  render(0);
+  return true;
+};
+render(0);
+</script>
+</body>
+</html>
