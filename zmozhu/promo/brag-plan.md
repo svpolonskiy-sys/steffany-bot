@@ -53,3 +53,14 @@
 - `brag.mp4` — ролик 1080×1920, H.264 + AAC, кадр 0 = обкладинка.
 - `brag.jpg` — обкладинка (найсильніший кадр).
 - `share-copy.txt` — підпис для посту.
+
+## Як перезібрати
+
+```bash
+pip install numpy imageio-ffmpeg
+cd zmozhu/02-claude-redesign && npm run build && cd ../..
+python3 zmozhu/promo/src/audio.py zmozhu/promo/work/audio.wav
+FFMPEG=$(python3 -c "import imageio_ffmpeg;print(imageio_ffmpeg.get_ffmpeg_exe())") node zmozhu/promo/src/render.mjs
+```
+
+Результат рендеру 2026-09-28: 21.0 с, 1080×1920, 30 fps, H.264 High + AAC 44.1 кГц стерео, пік −1 dBFS, 3.3 МБ.
