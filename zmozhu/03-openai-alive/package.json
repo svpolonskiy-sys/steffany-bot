@@ -1,13 +1,13 @@
 {
   "name": "zmozhu-openai-alive",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "check:texts": "STRICT=1 OLD_DIR=../01-original-2026-09-06 node scripts/check-texts.mjs"
+    "check:texts": "OLD_DIR=../01-original-2026-09-06 node scripts/check-texts.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.5.4",

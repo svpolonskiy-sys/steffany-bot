@@ -134,7 +134,7 @@ export default function Hero() {
               <span className="relative flex h-2 w-2"><span className="absolute inset-0 rounded-full bg-moss animate-breathe" /><span className="relative h-2 w-2 rounded-full bg-moss" /></span>
               Тетяна — реальна учасниця
             </p>
-            <p className="mt-1 text-[13px] leading-snug text-ink-soft">Проходить ці 30 днів прямо зараз, разом із Тобою.</p>
+            <p className="mt-1 text-[13px] leading-snug text-ink-soft">Проходить ті самі 30 днів разом із Тобою, день у день.</p>
           </motion.div>
         </motion.div>
       </div>

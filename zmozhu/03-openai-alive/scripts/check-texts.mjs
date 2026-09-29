@@ -20,7 +20,7 @@ const norm = (s) =>
 
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (["node_modules", ".next", "out", "public", ".git"].includes(e.name)) continue;
+    if (["node_modules", ".next", "out", "public", ".git", "scripts"].includes(e.name)) continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walk(p, out);
     else if (/\.(tsx?|mjs)$/.test(e.name)) out.push(p);

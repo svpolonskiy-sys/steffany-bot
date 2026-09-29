@@ -1,5 +1,5 @@
 import DayCycle from "@/components/DayCycle";
-import { CountUp, Item, Mark, Reveal, Stagger } from "@/components/motion";
+import { CountUp, Item, Reveal, Stagger } from "@/components/motion";
 
 const base = "flex h-full flex-col rounded-[32px] p-7 transition-all duration-500 hover:-translate-y-1 hover:shadow-lift sm:p-8";
 const card = `${base} border border-line bg-white`;
@@ -101,9 +101,13 @@ export default function Approach() {
                 <p className="mt-4 text-[15px] text-ink-soft">від стартової ваги за 30 днів</p>
               </div>
               <div>
-                <p className="text-[18px] leading-[1.7] text-ink">
-                  Бо наша мета — не максимальна цифра на вагах за короткий час. А
-                  результат, який можна пройти без крайнощів.
+                <p className="text-[clamp(28px,3vw,40px)] font-semibold leading-[1.12] tracking-[-0.03em] text-forest">
+                  Достатньо, щоб побачити результат.{" "}
+                  <span className="voice font-medium text-moss">Реалістично, щоб пройти шлях до кінця.</span>
+                </p>
+                <p className="mt-6 text-[18px] leading-[1.7] text-ink">
+                  Бо наша мета — не найменша цифра на вагах будь-якою ціною. А
+                  нові звички, які працюють на Тебе.
                 </p>
                 <ul className="mt-6 space-y-3">
                   {["Без гонки за «мінус 10».", "Без жорстких обмежень.", "Без вимоги бути ідеальною щодня."].map((item) => (
@@ -115,9 +119,6 @@ export default function Approach() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-8 text-[clamp(22px,2.2vw,28px)] font-semibold leading-[1.2] tracking-[-0.02em] text-forest">
-                  <Mark className="mark-dark">Достатньо, щоб побачити результат. Реалістично, щоб пройти шлях до кінця.</Mark>
-                </p>
               </div>
             </div>
           </div>

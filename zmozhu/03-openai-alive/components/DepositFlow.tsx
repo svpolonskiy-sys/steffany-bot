@@ -61,9 +61,6 @@ export default function DepositFlow() {
               Усі умови повернення <span aria-hidden="true">↗</span>
             </a>
           </div>
-          <p className="mt-3 max-w-[640px] text-[13.5px] leading-relaxed text-ink-soft">
-            Якщо хоча б одна умова не виконана, внесок не повертається. Підтримка триває до кінця 30 днів.
-          </p>
         </Reveal>
       </div>
     </section>
