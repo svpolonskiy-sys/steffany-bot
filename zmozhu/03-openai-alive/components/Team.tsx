@@ -86,7 +86,7 @@ export default function Team() {
                 <p className="mt-6 text-[16px] leading-[1.7] text-ink">
                   Ми стежимо за тим, як проходить програму кожна учасниця. Якщо
                   бачимо, що щось потребує додаткової уваги,{" "}
-                  <Mark className="font-semibold text-forest">зв&apos;язуємося з Тобою</Mark>{" "}
+                  <Mark className="mark-dark font-semibold text-forest">зв&apos;язуємося з Тобою</Mark>{" "}
                   і, за потреби, пропонуємо консультацію профільного експерта.
                 </p>
                 <p className="mt-4 text-[16px] leading-[1.7] text-ink">

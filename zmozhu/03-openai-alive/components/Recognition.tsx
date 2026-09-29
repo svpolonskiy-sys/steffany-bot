@@ -1,4 +1,5 @@
-import { Mark, Reveal, ScrollLit } from "@/components/motion";
+import MotivationCard from "@/components/MotivationCard";
+import { Reveal, ScrollLit } from "@/components/motion";
 
 export default function Recognition() {
   return (
@@ -22,12 +23,7 @@ export default function Recognition() {
             </p>
           </Reveal>
           <Reveal delay={0.1}>
-            <div className="relative overflow-hidden rounded-[32px] bg-forest p-8 text-white sm:p-10">
-              <div aria-hidden="true" className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-lime/20 blur-3xl animate-drift" />
-              <p className="relative text-[clamp(26px,2.8vw,36px)] font-semibold leading-[1.15] tracking-[-0.03em]">
-                <Mark>Найважче — залишатися в процесі, коли мотивація закінчується.</Mark>
-              </p>
-            </div>
+            <MotivationCard />
           </Reveal>
         </div>
       </div>

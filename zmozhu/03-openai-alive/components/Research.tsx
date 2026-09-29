@@ -22,7 +22,7 @@ export default function Research() {
           <Reveal delay={0.1} className="mt-10">
             <p className="text-[clamp(26px,3vw,38px)] font-semibold leading-[1.15] tracking-[-0.03em] text-forest">
               <span className="block sm:inline">
-                У <Mark>4,5 раза</Mark> вищий
+                У <Mark className="mark-dark">4,5 раза</Mark> вищий
                 результат
               </span>{" "}
               <span className="block sm:inline">під час програми.</span>

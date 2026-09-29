@@ -22,7 +22,7 @@ function MiraBubble() {
       initial={reduce ? false : { opacity: 0, y: 16, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: 1.5, duration: 0.7, ease: EASE }}
-      className="absolute -left-3 top-[9%] z-10 w-[min(290px,78%)] animate-drift sm:-left-10 lg:-left-16"
+      className="absolute bottom-5 left-4 z-10 w-[min(280px,74%)] animate-drift lg:bottom-auto lg:-left-24 lg:top-[56%]"
       aria-hidden="true"
     >
       <div className="flex items-center gap-2 pb-1.5 pl-1 text-[11px] font-semibold text-white/70">
@@ -108,6 +108,7 @@ export default function Hero() {
 
         {/* Фото Тетяни */}
         <motion.div style={{ y: photoY }} className="relative mx-auto w-full max-w-[500px]">
+          <div className="relative">
           <motion.div
             initial={reduce ? false : { clipPath: "inset(18% 12% 18% 12% round 48px)", opacity: 0 }}
             animate={{ clipPath: "inset(0% 0% 0% 0% round 48px)", opacity: 1 }}
@@ -121,12 +122,13 @@ export default function Hero() {
           </motion.div>
 
           <MiraBubble />
+          </div>
 
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1, duration: 0.8, ease: EASE }}
-            className="absolute -bottom-6 right-4 max-w-[260px] rounded-[22px] bg-cream px-5 py-4 text-ink shadow-deep sm:-right-6"
+            className="relative mt-4 rounded-[22px] bg-cream px-5 py-4 text-ink shadow-deep lg:absolute lg:-bottom-6 lg:-right-6 lg:mt-0 lg:max-w-[260px]"
           >
             <p className="flex items-center gap-2 text-[15px] font-semibold tracking-[-0.01em] text-forest">
               <span className="relative flex h-2 w-2"><span className="absolute inset-0 rounded-full bg-moss animate-breathe" /><span className="relative h-2 w-2 rounded-full bg-moss" /></span>

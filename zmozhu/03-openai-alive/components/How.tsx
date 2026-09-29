@@ -25,6 +25,37 @@ function Tick({ delay }: { delay: number }) {
   );
 }
 
+// Графік ваги: рівний спад — зелений; різкий обрив — система ставить прапорець
+function SafetyGraph() {
+  const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const seen = useInView(ref, { once: true, margin: "-15% 0px" });
+  const calm = "M20 60 C 70 66, 110 74, 160 86 S 250 104, 290 112";
+  const sharp = "M290 112 L 318 118 L 334 196";
+  return (
+    <div ref={ref} aria-hidden="true" className="relative flex min-h-[300px] items-center justify-center bg-sage p-6 sm:p-10">
+      <svg viewBox="0 0 380 240" className="w-full max-w-[460px]">
+        {[60, 110, 160, 210].map((y) => <line key={y} x1="20" x2="360" y1={y} y2={y} stroke="#10352D" strokeOpacity=".08" />)}
+        <motion.path d={calm} fill="none" stroke="#2F6B57" strokeWidth="5" strokeLinecap="round"
+          initial={reduce ? false : { pathLength: 0 }} animate={seen ? { pathLength: 1 } : undefined} transition={{ duration: 1.6, ease: [0.2, 0.7, 0.2, 1] }} />
+        <motion.path d={sharp} fill="none" stroke="#E0674A" strokeWidth="5" strokeLinecap="round" strokeDasharray="1 10"
+          initial={reduce ? false : { pathLength: 0, opacity: 0 }} animate={seen ? { pathLength: 1, opacity: 1 } : undefined} transition={{ delay: 1.6, duration: 0.6 }} />
+        <motion.g initial={reduce ? false : { scale: 0, opacity: 0 }} animate={seen ? { scale: 1, opacity: 1 } : undefined}
+          transition={{ delay: 2.2, type: "spring", stiffness: 260, damping: 14 }} style={{ transformOrigin: "334px 196px" }}>
+          <circle cx="334" cy="196" r="22" fill="#FDE3D8" />
+          <circle cx="334" cy="196" r="9" fill="#E0674A" />
+          <motion.circle cx="334" cy="196" r="22" fill="none" stroke="#E0674A" strokeWidth="2"
+            animate={seen && !reduce ? { r: [22, 36], opacity: [0.7, 0] } : undefined} transition={{ duration: 1.6, repeat: Infinity, delay: 2.6 }} />
+        </motion.g>
+        {[20, 90, 160, 230, 290].map((x, i) => (
+          <motion.circle key={x} cx={x} cy={[60, 69, 86, 102, 112][i]} r="6" fill="#D9F27E" stroke="#10352D" strokeWidth="2"
+            initial={reduce ? false : { scale: 0 }} animate={seen ? { scale: 1 } : undefined} transition={{ delay: 0.3 + i * 0.28 }} style={{ transformOrigin: `${x}px ${[60, 69, 86, 102, 112][i]}px` }} />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 export default function How() {
   const spot = useSpotlight<HTMLElement>();
   return (
@@ -100,29 +131,42 @@ export default function How() {
           </p>
         </Reveal>
 
-        <Reveal className="mx-auto mt-14 max-w-3xl">
-          <div className="rounded-[32px] bg-cream p-7 text-ink sm:p-10">
-            <h4 className="text-[clamp(24px,2.6vw,32px)] font-semibold leading-[1.15] tracking-[-0.03em] text-forest">
-              <span className="text-moss">Безпека</span> важливіша за
-              цифру на вагах.
-            </h4>
-            <p className="mt-5 text-[16px] leading-relaxed">Ми дивимося не лише на результат, а й на те, як Ти до нього йдеш.</p>
-            <p className="mt-3 text-[16px] leading-relaxed">
-              Якщо система бачить різкі або підозрілі зміни ваги, ми можемо
-              попросити додаткове підтвердження або зупинити участь — щоб не
-              заохочувати небезпечні способи схуднення.
-            </p>
-            <p className="mt-6 text-[16px] font-semibold leading-relaxed text-forest">Усі правила повернення внеску прозорі й однакові для всіх.</p>
-            <p className="mt-2 text-[16px] leading-relaxed">
-              Якщо якась із трьох умов не виконана, участь у програмі
-              продовжується, але внесок не повертається.
-            </p>
-            <p className="mt-6 border-t border-line pt-5 text-[14px] leading-relaxed text-ink-soft">
-              Гроші повертаються на ту саму картку, з якої була оплата. Повні
-              правила — у{" "}
-              <a href="/oferta" className="font-semibold text-forest underline decoration-lime decoration-2 underline-offset-4 hover:text-moss">Публічній оферті</a>
-              .
-            </p>
+        <Reveal className="mt-16">
+          <div className="grid overflow-hidden rounded-[36px] bg-cream text-ink lg:grid-cols-[0.95fr_1.05fr]">
+            <SafetyGraph />
+            <div className="p-7 sm:p-10 lg:p-12">
+              <h4 className="text-[clamp(28px,3vw,40px)] font-semibold leading-[1.1] tracking-[-0.035em] text-forest">
+                <span className="text-moss">Безпека</span> важливіша за
+                цифру на вагах.
+              </h4>
+              <p className="mt-5 text-[17px] leading-relaxed">Ми дивимося не лише на результат, а й на те, як Ти до нього йдеш.</p>
+              <div className="mt-6 flex gap-4 rounded-[22px] bg-white p-5">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FDE3D8] text-[18px]" aria-hidden="true">🚩</span>
+                <p className="text-[16px] leading-relaxed">
+                  Якщо система бачить різкі або підозрілі зміни ваги, ми можемо
+                  попросити додаткове підтвердження або зупинити участь — щоб не
+                  заохочувати небезпечні способи схуднення.
+                </p>
+              </div>
+              <div className="mt-3 flex gap-4 rounded-[22px] bg-white p-5">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-lime text-forest" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </span>
+                <div>
+                  <p className="text-[16px] font-semibold leading-relaxed text-forest">Усі правила повернення внеску прозорі й однакові для всіх.</p>
+                  <p className="mt-1 text-[16px] leading-relaxed">
+                    Якщо якась із трьох умов не виконана, участь у програмі
+                    продовжується, але внесок не повертається.
+                  </p>
+                </div>
+              </div>
+              <p className="mt-6 text-[14px] leading-relaxed text-ink-soft">
+                Гроші повертаються на ту саму картку, з якої була оплата. Повні
+                правила — у{" "}
+                <a href="/oferta" className="font-semibold text-forest underline decoration-moss decoration-2 underline-offset-4 hover:text-moss">Публічній оферті</a>
+                .
+              </p>
+            </div>
           </div>
         </Reveal>
       </div>

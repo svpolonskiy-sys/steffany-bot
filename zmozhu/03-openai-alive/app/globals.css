@@ -46,13 +46,14 @@ a:focus-visible, button:focus-visible { outline: 3px solid #7fb3a2; outline-offs
 .mark {
   background-image: linear-gradient(var(--lime), var(--lime));
   background-repeat: no-repeat;
-  background-position: 0 88%;
-  background-size: var(--mark, 0%) 0.34em;
+  background-position: 0 100%;
+  background-size: var(--mark, 0%) 0.11em;
   transition: background-size 1.1s cubic-bezier(.2,.7,.2,1) .15s;
-  padding: 0 .06em;
+  padding-bottom: .1em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
 }
 .mark.on { --mark: 100%; }
-.on-dark .mark { background-image: linear-gradient(rgba(217,242,126,.28), rgba(217,242,126,.28)); }
+.mark-dark { background-image: linear-gradient(#2F6B57, #2F6B57); }
 
 /* Прожектор за курсором на темних блоках */
 .spot { position: relative; isolation: isolate; }

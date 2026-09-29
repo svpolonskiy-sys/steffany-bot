@@ -49,7 +49,7 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Розділи сторінки">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Розділи сторінки">
           {navLinks.map((l) => (
             <Link key={l.href} href={l.href} className={`rounded-pill px-4 py-2 text-[14px] font-medium transition-colors ${onHero ? "text-white/85 hover:bg-white/10" : "text-ink hover:bg-sage"}`}>
               {l.label}
@@ -64,7 +64,7 @@ export default function Header() {
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </span>
           </a>
-          <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Закрити меню" : "Відкрити меню"} aria-expanded={open} aria-controls="mobile-navigation" className={`flex h-11 w-11 items-center justify-center rounded-full md:hidden ${onHero ? "text-white" : "text-forest"}`}>
+          <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Закрити меню" : "Відкрити меню"} aria-expanded={open} aria-controls="mobile-navigation" className={`flex h-11 w-11 items-center justify-center rounded-full lg:hidden ${onHero ? "text-white" : "text-forest"}`}>
             <span className="relative block h-4 w-6">
               <span className={`absolute left-0 h-[2px] w-6 rounded bg-current transition-all duration-300 ${open ? "top-[7px] rotate-45" : "top-0"}`} />
               <span className={`absolute left-0 top-[7px] h-[2px] w-6 rounded bg-current transition-opacity duration-300 ${open ? "opacity-0" : ""}`} />
@@ -90,7 +90,7 @@ export default function Header() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.28 }}
-            className="wrap flex flex-col pb-5 md:hidden"
+            className="wrap flex flex-col pb-5 lg:hidden"
           >
             {navLinks.map((l, i) => (
               <motion.div key={l.href} initial={reduce ? false : { opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.04 + i * 0.05 }}>

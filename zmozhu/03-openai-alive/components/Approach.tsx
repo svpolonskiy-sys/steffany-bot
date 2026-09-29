@@ -116,7 +116,7 @@ export default function Approach() {
                   ))}
                 </ul>
                 <p className="mt-8 text-[clamp(22px,2.2vw,28px)] font-semibold leading-[1.2] tracking-[-0.02em] text-forest">
-                  <Mark>Достатньо, щоб побачити результат. Реалістично, щоб пройти шлях до кінця.</Mark>
+                  <Mark className="mark-dark">Достатньо, щоб побачити результат. Реалістично, щоб пройти шлях до кінця.</Mark>
                 </p>
               </div>
             </div>
