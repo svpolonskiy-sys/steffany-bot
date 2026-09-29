@@ -27,9 +27,9 @@ const keyboard = [
 ];
 
 // Скільки часу «друкує» Міра і скільки триває пауза після повідомлення
-const TYPING_MS = 700;
-const PAUSE_MS = 450;
-const START_DELAY_MS = 400;
+const TYPING_MS = 600;
+const PAUSE_MS = 350;
+const START_DELAY_MS = 200;
 
 export default function MiraChat() {
   const reduce = useReducedMotion();
@@ -45,7 +45,8 @@ export default function MiraChat() {
     const timers: ReturnType<typeof setTimeout>[] = [];
     let t = START_DELAY_MS;
 
-    messages.forEach(() => {
+    // перше повідомлення вже на екрані; «друкуються» лише наступні
+    messages.slice(1).forEach(() => {
       timers.push(setTimeout(() => setTyping(true), t));
       t += TYPING_MS;
       timers.push(setTimeout(() => setTyping(false), t));
@@ -57,7 +58,7 @@ export default function MiraChat() {
 
   // Момент появи кожного повідомлення збігається з кінцем «друкує…»
   const messageDelay = (i: number) =>
-    (START_DELAY_MS + (i + 1) * TYPING_MS + i * PAUSE_MS) / 1000;
+    i === 0 ? 0 : (START_DELAY_MS + i * TYPING_MS + (i - 1) * PAUSE_MS) / 1000;
 
   return (
     <div
@@ -119,7 +120,7 @@ export default function MiraChat() {
         {messages.map((text, i) => (
           <motion.div
             key={text}
-            initial={reduce ? false : { opacity: 0, y: 8, scale: 0.98 }}
+            initial={reduce || i === 0 ? false : { opacity: 0, y: 8, scale: 0.98 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{
@@ -129,21 +130,21 @@ export default function MiraChat() {
             }}
             className="max-w-[92%] rounded-[14px] rounded-bl-[4px] bg-[#212D3B] px-3 py-2"
           >
-            <p className="text-[11px] leading-snug text-white">{text}</p>
-            <p className="mt-0.5 text-right text-[8px] text-white/75">7:28</p>
+            <p className="text-[13.5px] leading-snug text-white">{text}</p>
+            <p className="mt-0.5 text-right text-[10px] text-white/70">7:28</p>
           </motion.div>
         ))}
       </div>
 
       {/* Поле вводу */}
       <div className="flex items-center gap-1.5 px-3 py-2">
-        <span className="flex items-center gap-1 rounded-full bg-[#1C77A6] px-2.5 py-1.5 text-[10px] font-semibold text-white">
+        <span className="flex items-center gap-1 rounded-full bg-[#1C77A6] px-2.5 py-1.5 text-[12px] font-semibold text-white">
           <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path d="M1 2h10M1 6h10M1 10h10" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           Меню
         </span>
-        <span className="flex flex-1 items-center rounded-full bg-white/10 px-3 py-1.5 text-[10px] text-white/75">
+        <span className="flex flex-1 items-center rounded-full bg-white/10 px-3 py-1.5 text-[12px] text-white/75">
           Повідомлення
         </span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -156,7 +157,7 @@ export default function MiraChat() {
         {keyboard.map((btn) => (
           <span
             key={btn}
-            className="rounded-[10px] bg-white/[0.08] px-2 py-2 text-center text-[10px] text-white/90"
+            className="rounded-[10px] bg-white/[0.08] px-2 py-2.5 text-center text-[12px] text-white/90"
           >
             {btn}
           </span>

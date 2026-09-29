@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function OfertaPage() {
   return (
-    <LegalShell title="Публічний договір (Оферта)">
+    <LegalShell title="Публічний договір (Оферта)" updated="29 вересня 2026 року">
       <p>
         Цей документ є офіційною публічною пропозицією (офертою){" "}
         {LEGAL.entity} (далі — «Виконавець») укласти договір про надання

@@ -65,7 +65,11 @@ export default function Hero() {
       <div ref={box} className="wrap relative grid items-center gap-14 pb-20 md:grid-cols-[1.08fr_0.92fr] md:gap-10 md:pb-28 lg:gap-16">
         <motion.div style={{ y: copyY }} className="relative z-10">
           <motion.p initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }} className="tag text-lime">
-            30 днів · щоденна підтримка · −4% ваги
+            <span>
+              <span className="whitespace-nowrap">30 днів ·</span>{" "}
+              <span className="whitespace-nowrap">щоденна підтримка ·</span>{" "}
+              <span className="whitespace-nowrap">−4% ваги</span>
+            </span>
           </motion.p>
 
           <h1 className="h-display mt-7 text-[clamp(42px,5.5vw,80px)]">
@@ -91,6 +95,25 @@ export default function Hero() {
 
           <motion.div initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.15, duration: 0.8, ease: EASE }} className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <CtaButton variant="lime" className="w-full sm:w-auto">Я ЗМОЖУ</CtaButton>
+          </motion.div>
+
+          {/* Телефон: живе обличчя вже на першому екрані */}
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.3, duration: 0.7, ease: EASE }}
+            className="mt-6 flex items-center gap-4 rounded-[24px] bg-white/[0.07] p-3 pr-4 ring-1 ring-white/10 md:hidden"
+          >
+            <span className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-full ring-2 ring-lime">
+              <Image src="/images/tanya-hero.jpg" alt="" fill sizes="72px" className="origin-[64%_22%] scale-[2.3] object-cover object-[64%_22%]" />
+            </span>
+            <span>
+              <span className="flex items-center gap-2 text-[15px] font-semibold text-white">
+                <span className="relative flex h-2 w-2"><span className="absolute inset-0 rounded-full bg-lime animate-breathe" /><span className="relative h-2 w-2 rounded-full bg-lime" /></span>
+                Тетяна — реальна учасниця
+              </span>
+              <span className="mt-1 block text-[13px] leading-snug text-white/70">Проходить ті самі 30 днів разом із Тобою, день у день.</span>
+            </span>
           </motion.div>
 
           <motion.div initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 1 }} className="mt-12 max-w-[520px] border-t border-white/15 pt-7">
@@ -128,7 +151,7 @@ export default function Hero() {
             initial={reduce ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1, duration: 0.8, ease: EASE }}
-            className="relative mt-4 rounded-[22px] bg-cream px-5 py-4 text-ink shadow-deep lg:absolute lg:-bottom-6 lg:-right-6 lg:mt-0 lg:max-w-[260px]"
+            className="relative mt-4 hidden rounded-[22px] bg-cream px-5 py-4 text-ink shadow-deep md:block lg:absolute lg:-bottom-6 lg:-right-6 lg:mt-0 lg:max-w-[260px]"
           >
             <p className="flex items-center gap-2 text-[15px] font-semibold tracking-[-0.01em] text-forest">
               <span className="relative flex h-2 w-2"><span className="absolute inset-0 rounded-full bg-moss animate-breathe" /><span className="relative h-2 w-2 rounded-full bg-moss" /></span>

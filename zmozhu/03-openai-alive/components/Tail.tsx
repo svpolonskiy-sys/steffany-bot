@@ -85,8 +85,9 @@ export function Closing() {
               ZMOZHU створений саме для моменту, коли хочеться все кинути — щоб
               допомогти Тобі повернутися і продовжити.
             </p>
-            <p className="mt-6 inline-flex rounded-pill border border-white/15 bg-white/5 px-5 py-2 text-[15px] text-white/85">
-              Виконала умови — отримуєш свої 2000 грн назад.
+            <p className="mt-6 inline-block text-balance rounded-2xl border sm:rounded-pill border-white/15 bg-white/5 px-5 py-2 text-[15px] text-white/85">
+              Виконала умови — отримуєш свої{" "}
+              <span className="whitespace-nowrap">2000 грн назад.</span>
             </p>
           </Reveal>
           <Reveal delay={0.2} className="mt-14">

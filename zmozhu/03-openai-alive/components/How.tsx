@@ -3,7 +3,7 @@
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 import CtaButton from "@/components/CtaButton";
-import { CountUp, Item, Mark, Reveal, Stagger, useSpotlight } from "@/components/motion";
+import { Item, Mark, Reveal, Stagger, useSpotlight } from "@/components/motion";
 
 const conditions = [
   { n: "01", t: "Знизити вагу на 4%", d: "Від стартової ваги. Фінальний результат визначаємо за вагою на 30-й день." },
@@ -44,8 +44,9 @@ function SafetyGraph() {
           transition={{ delay: 2.2, type: "spring", stiffness: 260, damping: 14 }} style={{ transformOrigin: "334px 196px" }}>
           <circle cx="334" cy="196" r="22" fill="#FDE3D8" />
           <circle cx="334" cy="196" r="9" fill="#E0674A" />
-          <motion.circle cx="334" cy="196" r="22" fill="none" stroke="#E0674A" strokeWidth="2"
-            animate={seen && !reduce ? { r: [22, 36], opacity: [0.7, 0] } : undefined} transition={{ duration: 1.6, repeat: Infinity, delay: 2.6 }} />
+          <motion.circle cx="334" cy="196" r="22" fill="none" stroke="#E0674A" strokeWidth="2" style={{ transformOrigin: "334px 196px" }}
+            initial={{ scale: 1, opacity: 0 }}
+            animate={seen && !reduce ? { scale: [1, 1.6], opacity: [0.7, 0] } : { scale: 1, opacity: 0 }} transition={{ duration: 1.6, repeat: seen && !reduce ? Infinity : 0, delay: 2.6 }} />
         </motion.g>
         {[20, 90, 160, 230, 290].map((x, i) => (
           <motion.circle key={x} cx={x} cy={[60, 69, 86, 102, 112][i]} r="6" fill="#D9F27E" stroke="#10352D" strokeWidth="2"
@@ -94,11 +95,21 @@ export default function How() {
           <Reveal delay={0.1} scale>
             <div className="relative overflow-hidden rounded-[40px] bg-lime p-9 text-forest shadow-deep sm:p-11">
               <div aria-hidden="true" className="absolute -right-10 -top-10 h-44 w-44 rounded-full border-[18px] border-forest/10 animate-spin-slow" />
-              <p className="relative text-[clamp(30px,3vw,38px)] font-semibold tracking-[-0.03em]">Внесок 2000 грн</p>
-              <p className="relative mt-4 text-[clamp(72px,9vw,120px)] font-bold leading-none tracking-[-0.07em]" aria-hidden="true">
-                <CountUp to={2000} mode="int" duration={1.3} />
-              </p>
-              <p className="relative mt-5 text-[18px] font-medium leading-snug">Виконала умови → 2000 грн повертаються</p>
+              <p className="relative text-[clamp(44px,5vw,68px)] font-bold leading-[1.02] tracking-[-0.05em]">Внесок 2000 грн</p>
+              {/* Шлях внеску: старт → 30 днів → повернення, без повтору суми */}
+              <div aria-hidden="true" className="relative mt-7 flex items-center gap-3">
+                <span className="h-4 w-4 shrink-0 rounded-full bg-forest" />
+                <motion.span className="h-[3px] flex-1 origin-left rounded-full bg-forest/70"
+                  initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }} />
+                <span className="shrink-0 rounded-pill bg-forest px-3 py-1 text-[12px] font-bold uppercase tracking-[0.12em] text-lime">30</span>
+                <motion.span className="h-[3px] flex-1 origin-left rounded-full bg-forest/70"
+                  initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ delay: 1.1, duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }} />
+                <motion.span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-forest text-lime"
+                  initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ delay: 2.2, type: "spring", stiffness: 260, damping: 14 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </motion.span>
+              </div>
+              <p className="relative mt-6 text-[19px] font-semibold leading-snug">Виконала умови → 2000 грн повертаються</p>
               <div className="relative mt-8">
                 <CtaButton className="w-full">Я ЗМОЖУ</CtaButton>
               </div>

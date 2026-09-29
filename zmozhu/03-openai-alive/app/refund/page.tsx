@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function RefundPage() {
   return (
-    <LegalShell title="Правила повернення коштів">
+    <LegalShell title="Правила повернення коштів" updated="29 вересня 2026 року">
       <p>
         Ці Правила описують умови, за яких мотиваційний внесок, сплачений
         Учасницею програми «ZMOZHU», повертається повністю.

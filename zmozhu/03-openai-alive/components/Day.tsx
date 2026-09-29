@@ -158,7 +158,7 @@ export default function Day() {
   // Сонце рухається по дузі; на вечір стає місяцем
   const angle = useTransform(scrollYProgress, [0, 1], [186, 354]);
   const sunX = useTransform(angle, (a) => 50 + 44 * Math.cos((a * Math.PI) / 180));
-  const sunY = useTransform(angle, (a) => 108 + 96 * Math.sin((a * Math.PI) / 180));
+  const sunY = useTransform(angle, (a) => 90 + 78 * Math.sin((a * Math.PI) / 180));
   const sunLeft = useTransform(sunX, (v) => `${v}%`);
   const sunTop = useTransform(sunY, (v) => `${v}%`);
   const moon = useTransform(scrollYProgress, [0.7, 0.82], [0, 1]);
@@ -187,7 +187,7 @@ export default function Day() {
           <motion.div style={{ background: bg }} className="sticky top-0 flex h-screen items-center overflow-hidden">
             {/* дуга неба */}
             <svg aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <path d="M 6 108 A 44 96 0 0 1 94 108" fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="0.15" strokeDasharray="0.8 0.8" style={{ color: phase === 2 ? "#fff" : "#10352D" }} />
+              <path d="M 6 90 A 44 78 0 0 1 94 90" fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="0.15" strokeDasharray="0.8 0.8" style={{ color: phase === 2 ? "#fff" : "#10352D" }} />
             </svg>
             <motion.div aria-hidden="true" style={{ left: sunLeft, top: sunTop, backgroundColor: sunColor }} className="absolute h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_120px_40px_rgba(249,226,122,.35)]">
               <motion.span style={{ opacity: moon }} className="absolute -right-3 -top-3 h-20 w-20 rounded-full bg-forest" />

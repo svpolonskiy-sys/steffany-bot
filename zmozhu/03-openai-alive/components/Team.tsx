@@ -21,19 +21,19 @@ export default function Team() {
 
         <Stagger className="mt-14 grid gap-5 lg:grid-cols-12" gap={0.12}>
           {/* Міра */}
-          <Item as="article" className="lg:col-span-7 lg:row-span-2">
+          <Item as="article" className="lg:col-span-12">
             <div ref={spot} className="spot on-dark relative h-full overflow-hidden rounded-[36px] bg-forest p-7 text-white sm:p-10">
               <div aria-hidden="true" className="absolute -right-24 top-10 h-72 w-72 rounded-full bg-forest-3 blur-3xl animate-drift-slow" />
-              <div className="relative grid gap-10 md:grid-cols-[1fr_300px] md:items-end lg:grid-cols-1 xl:grid-cols-[1fr_300px]">
+              <div className="relative grid gap-10 md:grid-cols-[1fr_300px] md:items-center lg:mx-auto lg:max-w-[1040px] lg:grid-cols-[1fr_320px] lg:gap-20">
                 <div>
                   <p className="tag text-lime">Твоя щоденна опора</p>
                   <h3 className="mt-4 text-[clamp(52px,6vw,84px)] font-semibold leading-none tracking-[-0.05em]">Міра</h3>
-                  <p className="mt-6 max-w-[460px] text-[17px] leading-[1.7] text-white/80">
+                  <p className="mt-6 max-w-[460px] text-[17px] leading-[1.7] text-white/80 lg:max-w-[540px] lg:text-[18px]">
                     Міра пам&apos;ятає Твої чекіни, вагу й те, як проходить Твій
                     день. Допомагає розібрати складний момент, повернутися після
                     зриву й не випадати з процесу.
                   </p>
-                  <p className="voice mt-7 max-w-[440px] text-[clamp(22px,2.2vw,28px)] leading-[1.25]">
+                  <p className="voice mt-7 max-w-[440px] text-[clamp(22px,2.2vw,28px)] lg:max-w-[540px] leading-[1.25]">
                     Вона не оцінює. <span className="text-lime">Вона допомагає залишатися в русі.</span>
                   </p>
                 </div>
@@ -45,10 +45,10 @@ export default function Team() {
           </Item>
 
           {/* Анастасія */}
-          <Item as="article" className="lg:col-span-5">
+          <Item as="article" className="lg:col-span-6">
             <Tilt className="h-full" max={3}>
-              <div className="group grid h-full overflow-hidden rounded-[36px] border border-line bg-white sm:grid-cols-[0.9fr_1.1fr] lg:grid-cols-1 xl:grid-cols-[0.9fr_1.1fr]">
-                <div ref={px.ref} className="relative min-h-[340px] overflow-hidden sm:min-h-0 lg:min-h-[300px] xl:min-h-0">
+              <div className="group grid h-full overflow-hidden rounded-[36px] border border-line bg-white sm:grid-cols-[0.9fr_1.1fr]">
+                <div ref={px.ref} className="relative min-h-[340px] overflow-hidden sm:min-h-0">
                   <motion.div style={{ y: px.y }} className="absolute -inset-y-10 inset-x-0">
                     <Image src="/images/nastya.jpg" alt="Анастасія — експертка з харчування у програмі" fill sizes="(max-width: 640px) 100vw, 320px" className="object-cover object-[center_20%] transition-transform duration-[1.4s] group-hover:scale-105" />
                   </motion.div>
@@ -77,7 +77,7 @@ export default function Team() {
           </Item>
 
           {/* Жива людина */}
-          <Item as="article" className="lg:col-span-5">
+          <Item as="article" className="lg:col-span-6">
             <div className="relative h-full overflow-hidden rounded-[36px] bg-lime-soft p-7 sm:p-9">
               <div aria-hidden="true" className="absolute -bottom-20 -right-16 h-64 w-64 rounded-full bg-lime blur-3xl opacity-70 animate-drift" />
               <div className="relative">

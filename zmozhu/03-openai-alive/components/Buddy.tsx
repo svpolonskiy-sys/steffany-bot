@@ -22,7 +22,7 @@ export default function Buddy() {
           <div className="relative aspect-[4/5] overflow-hidden rounded-[40px] border-[10px] border-white shadow-lift">
             <Image src="/images/tanya2.jpg" alt="Тетяна — учасниця, яка проходить ці 30 днів разом із тобою" fill sizes="(max-width: 768px) 90vw, 400px" className="object-cover" />
           </div>
-          <div className="absolute -bottom-5 -right-3 rotate-3 rounded-pill bg-forest px-5 py-3 text-[15px] font-semibold text-lime shadow-lift">
+          <div className="absolute -bottom-5 right-3 rotate-3 sm:-right-3 rounded-pill bg-forest px-5 py-3 text-[15px] font-semibold text-lime shadow-lift">
             Твоя Баді.
           </div>
         </motion.div>

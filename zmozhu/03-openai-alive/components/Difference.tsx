@@ -9,23 +9,26 @@ const rows = [
   { first: "Подруга підтримує.", second: "ZMOZHU додає до підтримки систему і ритм." },
 ];
 
-// Рядок: спершу «як зазвичай», потім лаймова риска і відповідь ZMOZHU
+// Рядок: «що дає звичний шлях» → стрілка малюється → «що додає ZMOZHU».
+// Нічого не закреслюємо: дієта, експерт і подруга — не вороги, ZMOZHU їх доповнює.
 function Row({ first, second, i }: { first: string; second: string; i: number }) {
   const reduce = useReducedMotion();
   const d = i * 0.12;
   return (
-    <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-15% 0px" }} className="grid gap-2 border-b border-line py-8 md:grid-cols-[0.8fr_1.2fr] md:gap-10">
-      <p className="relative w-fit self-start text-[18px] leading-[1.5] text-ink-soft">
-        {first}
-        <motion.span
-          aria-hidden="true"
-          className="absolute left-0 top-1/2 h-[3px] w-full origin-left rounded-full bg-lime"
-          variants={{ hidden: { scaleX: reduce ? 1 : 0 }, show: { scaleX: 1, transition: { delay: d + 0.4, duration: 0.6 } } }}
-        />
-      </p>
+    <motion.div initial="hidden" whileInView="show" viewport={{ once: true, margin: "-15% 0px" }} className="grid items-center gap-3 border-b border-forest/10 py-7 md:grid-cols-[0.8fr_auto_1.2fr] md:gap-8">
       <motion.p
-        className="text-[clamp(24px,2.6vw,34px)] font-semibold leading-[1.15] tracking-[-0.03em] text-forest"
-        variants={{ hidden: reduce ? { opacity: 1 } : { opacity: 0, x: 30 }, show: { opacity: 1, x: 0, transition: { delay: d + 0.7, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] } } }}
+        className="w-fit rounded-pill bg-white/70 px-4 py-2 text-[16px] text-ink-soft md:text-[17px]"
+        variants={{ hidden: reduce ? { opacity: 1 } : { opacity: 0, x: -16 }, show: { opacity: 1, x: 0, transition: { delay: d, duration: 0.6 } } }}
+      >
+        {first}
+      </motion.p>
+      <svg aria-hidden="true" viewBox="0 0 64 24" className="h-6 w-12 rotate-90 text-moss md:w-16 md:rotate-0">
+        <motion.path d="M2 12 H58 M48 3 L60 12 L48 21" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          variants={{ hidden: { pathLength: reduce ? 1 : 0 }, show: { pathLength: 1, transition: { delay: d + 0.35, duration: 0.6 } } }} />
+      </svg>
+      <motion.p
+        className="text-[clamp(22px,2.6vw,34px)] font-semibold leading-[1.15] tracking-[-0.03em] text-forest"
+        variants={{ hidden: reduce ? { opacity: 1 } : { opacity: 0, x: 24 }, show: { opacity: 1, x: 0, transition: { delay: d + 0.7, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] } } }}
       >
         {second}
       </motion.p>
