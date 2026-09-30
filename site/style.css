@@ -282,16 +282,6 @@ h3{font-weight:700;letter-spacing:-.02em;line-height:1.1}
 .tl-i p{color:#4a4945}
 #start .foot{border-top:1px solid var(--line)}
 
-/* STATUS */
-.status{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
-.status>div{padding:var(--pad);display:flex;gap:28px;align-items:flex-start}
-.status-main{border-right:1px solid var(--line)}
-.status .label{color:var(--mute);margin-bottom:10px}
-.status h3{font-size:34px;margin-bottom:8px}
-.status p{color:#4a4945}
-.status li{padding:10px 0;border-bottom:1px dashed var(--line);font-weight:600;display:flex;gap:12px;flex-wrap:wrap;align-items:baseline}
-.status li .mono{color:var(--acc)}
-.status li em{font-style:normal;color:var(--mute);font-weight:400;font-size:14px}
 .link{color:var(--acc);display:inline-block;margin-top:14px;position:relative}
 .link::after{content:"";position:absolute;left:0;bottom:-3px;height:1px;width:100%;background:currentColor;transform-origin:left;transition:transform .3s}
 .link:hover::after{transform:scaleX(.3)}
@@ -364,16 +354,16 @@ h3{font-weight:700;letter-spacing:-.02em;line-height:1.1}
   .hero-more{flex-direction:row;align-items:center;padding:18px var(--pad)}
   .coords{display:none}
   .hero-svg{padding:24px 6px}
-  .split,.demo-grid,.dossier,.ind,.pilot,.status,.team,.cta,.human,.steps3,.timeline,.cards3{grid-template-columns:1fr}
+  .split,.demo-grid,.dossier,.ind,.pilot,.team,.cta,.human,.steps3,.timeline,.cards3{grid-template-columns:1fr}
   .split{min-height:0}
   .split-art{height:340px;order:0!important;border:0!important;border-bottom:1px solid var(--line)!important}
   .split.rev .split-art{order:0}
-  .panel,.tabs,.step,.card,.person,.status-main,.human>div:first-child,.pilot-n,.tl-i,.form{border-right:0;border-left:0}
-  .panel,.step,.card,.person,.status-main,.human>div:first-child,.tl-i,.tabs{border-bottom:1px solid var(--line)}
+  .panel,.tabs,.step,.card,.person,.human>div:first-child,.pilot-n,.tl-i,.form{border-right:0;border-left:0}
+  .panel,.step,.card,.person,.human>div:first-child,.tl-i,.tabs{border-bottom:1px solid var(--line)}
   .pilot-n{border-bottom:1px solid var(--line)}
   .form{border-top:1px solid var(--line)}
   .card{min-height:0}
-  .status>div,.person{flex-direction:column;gap:16px}
+  .person{flex-direction:column;gap:16px}
   .ind-cols{grid-template-columns:1fr}
   .ind-cols>div+div{padding-left:0;border-left:0}
   .tab-desc{display:none}
