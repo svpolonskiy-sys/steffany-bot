@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sinaptic — ШІ для вашого бізнесу</title>
+<meta name="description" content="Sinaptic об'єднує дані компанії в одну картину, запускає ШІ-агентів у захищеному середовищі й контролює кожну їхню дію. Для будь-якого бізнесу.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f4f2ec'/%3E%3Crect x='7' y='7' width='18' height='18' fill='none' stroke='%231d1d1b' stroke-width='2'/%3E%3Crect x='14' y='14' width='8' height='8' fill='%23ff3b00'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+
+<div class="frame">
+
+<!-- ============ HEADER ============ -->
+<header class="nav" id="top">
+  <a href="#top" class="logo" aria-label="Sinaptic">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="26" height="26"/><path d="M4 4l8 8M30 4l-8 8M4 30l8-8M30 30l-8-8"/><rect x="12" y="12" width="10" height="10" fill="#ff3b00" stroke="none" class="logo-core"/></svg>
+    <span>SINAPTIC</span>
+  </a>
+  <nav class="nav-links" id="navLinks">
+    <a href="#problem">Проблема</a>
+    <a href="#solution">Рішення</a>
+    <a href="#roles">Для кого</a>
+    <a href="#security">Безпека</a>
+    <a href="#start">Старт</a>
+    <a href="#contact" class="nav-cta">Зв'язатися з нами <span>→</span></a>
+  </nav>
+  <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><i></i><i></i></button>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="hero">
+  <div class="hero-stage">
+    <span class="plus tl">+</span><span class="plus tr">+</span><span class="plus bl">+</span><span class="plus br">+</span>
+    <div class="ruler ruler-top"></div><div class="ruler ruler-left"></div>
+    <div class="crosshair-x" id="chx"></div><div class="crosshair-y" id="chy"></div>
+    <div class="coords" id="coords">X: 0 ПІКСЕЛІВ<br>Y: 0 PX</div>
+    <svg class="hero-svg" id="heroSvg" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Схема: дані з CRM, ERP, бухгалтерії, дзвінків, документів і таблиць потрапляють у захищене середовище Sinaptic, а на виході — три дії: бачить, радить, робить"></svg>
+  </div>
+  <div class="hero-bottom">
+    <h1 class="hero-title"><span class="line"><span>ДЕСЯТОК СИСТЕМ —</span></span><span class="line"><span>ОДНА КАРТИНА</span></span><span class="line"><span>І НАСТУПНИЙ КРОК</span></span></h1>
+    <div class="hero-text">
+      <p>Sinaptic об'єднує дані вашого бізнесу, запускає ШІ-агентів у захищеному середовищі та контролює кожну їхню дію. <b>Від даних — до виконаного завдання.</b></p>
+      <p class="muted">Працює для будь-якої галузі: від власника до лінійного менеджера.</p>
+    </div>
+    <a class="hero-more" href="#problem"><span class="mono">ДІЗНАТИСЯ БІЛЬШЕ</span><span class="arrow">↓</span></a>
+  </div>
+</section>
+
+<!-- ============ MARQUEE ============ -->
+<div class="marquee" aria-label="Джерела даних">
+  <div class="marquee-track">
+    <span>CRM</span><i>■</i><span>ERP</span><i>■</i><span>БУХГАЛТЕРІЯ</span><i>■</i><span>ДЗВІНКИ</span><i>■</i><span>ДОКУМЕНТИ</span><i>■</i><span>ТАБЛИЦІ</span><i>■</i><span>ВІДКРИТІ ДЖЕРЕЛА</span><i>■</i><span>ЛИСТИ</span><i>■</i>
+    <span>CRM</span><i>■</i><span>ERP</span><i>■</i><span>БУХГАЛТЕРІЯ</span><i>■</i><span>ДЗВІНКИ</span><i>■</i><span>ДОКУМЕНТИ</span><i>■</i><span>ТАБЛИЦІ</span><i>■</i><span>ВІДКРИТІ ДЖЕРЕЛА</span><i>■</i><span>ЛИСТИ</span><i>■</i>
+  </div>
+</div>
+
+<!-- ============ NUMBERS ============ -->
+<section class="stats">
+  <div class="stat reveal"><div class="mono label">ДО ПЕРШОГО РЕЗУЛЬТАТУ*</div><div class="big"><span data-count="5">5</span> <small>днів</small></div></div>
+  <div class="stat reveal"><div class="mono label">ДЛЯ ПІЛОТУ ВАМ ПОТРІБНО</div><div class="big"><span data-count="1">1</span> <small>процес</small></div></div>
+  <div class="stat reveal"><div class="mono label">ІЗОЛЬОВАНЕ СЕРЕДОВИЩЕ</div><div class="big"><span data-count="1">1</span> <small>на клієнта</small></div></div>
+  <div class="stat reveal"><div class="mono label">ОСТАННЄ СЛОВО ЗА</div><div class="big">ЛЮДИНОЮ</div></div>
+  <p class="foot mono">* РОБОЧИХ ДНІВ ПІСЛЯ ПОГОДЖЕННЯ ЗАДАЧІ Й ДОСТУПІВ. ЦЕ ПЕРШИЙ РЕЗУЛЬТАТ ПІЛОТА, А НЕ ПОВНЕ ВПРОВАДЖЕННЯ.</p>
+</section>
+
+<!-- ============ PROBLEM ============ -->
+<section class="sec" id="problem">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 01 — ПРОБЛЕМА</div>
+    <h2 class="reveal">ДАНИХ БАГАТО.<br>АЛЕ ВОНИ РОЗКИДАНІ</h2>
+    <p class="lead reveal">Продажі, клієнти, документи, дзвінки, звіти — усе це вже є в компанії. Тільки живе в різних програмах і в головах різних людей. Цілої картини не бачить ніхто. <b>Проблема не в нестачі даних, а в тому, що вони не працюють разом.</b></p>
+  </div>
+  <div class="cards4">
+    <article class="card reveal"><div class="num mono">01</div><h3>Проста відповідь — довгий пошук</h3><p>Щоб дізнатися, як ідуть справи в регіоні, треба відкрити кілька програм і написати колегам.</p><div class="cost mono">ВТРАЧЕНИЙ ЧАС</div></article>
+    <article class="card reveal"><div class="num mono">02</div><h3>На зустріч — без підготовки</h3><p>Історію клієнта й минулі домовленості менеджер збирає вручну. Або йде без них.</p><div class="cost mono">СЛАБША РОЗМОВА З КЛІЄНТОМ</div></article>
+    <article class="card reveal"><div class="num mono">03</div><h3>Звіт каже «що було», а не «що робити»</h3><p>Цифри є, але висновок і наступний крок кожен шукає сам.</p><div class="cost mono">РІШЕННЯ НАВМАННЯ</div></article>
+    <article class="card reveal"><div class="num mono">04</div><h3>Людина йде — знання йдуть з нею</h3><p>Змінився менеджер — і контакти та домовленості з клієнтами доводиться відновлювати.</p><div class="cost mono">ВТРАЧЕНИЙ КОНТЕКСТ</div></article>
+  </div>
+</section>
+
+<!-- ============ SOLUTION ============ -->
+<section class="sec split" id="solution">
+  <div class="split-art art-a">
+    <svg viewBox="0 0 600 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#1d1d1b" stroke-width="1.2"/></pattern></defs>
+      <circle class="sun" cx="170" cy="170" r="130" fill="#ff3b00"/>
+      <rect x="330" y="0" width="120" height="330" fill="#ff3b00"/>
+      <circle cx="120" cy="470" r="90" fill="#e9e5da"/>
+      <g class="bld">
+        <rect x="80" y="330" width="520" height="40" fill="#f4f2ec" stroke="#1d1d1b" stroke-width="2"/>
+        <rect x="80" y="370" width="520" height="10" fill="url(#hatch)"/>
+        <rect x="150" y="380" width="90" height="230" fill="#1d1d1b"/>
+        <rect x="330" y="380" width="110" height="230" fill="#1d1d1b"/>
+        <rect x="480" y="380" width="70" height="230" fill="#1d1d1b"/>
+        <rect x="360" y="470" width="50" height="140" fill="#ff3b00"/>
+        <g stroke="#1d1d1b" stroke-width="1.5">
+          <line x1="0" y1="610" x2="600" y2="610"/>
+          <line x1="0" y1="640" x2="600" y2="640"/><line x1="0" y1="670" x2="600" y2="670"/>
+          <line x1="100" y1="610" x2="20" y2="700"/><line x1="250" y1="610" x2="230" y2="700"/><line x1="400" y1="610" x2="440" y2="700"/><line x1="550" y1="610" x2="620" y2="700"/>
+        </g>
+        <rect x="266" y="572" width="6" height="26" fill="#1d1d1b"/><circle cx="269" cy="566" r="5" fill="#1d1d1b"/>
+      </g>
+    </svg>
+  </div>
+  <div class="split-body">
+    <div class="mono tag reveal"><i></i> 02 — РІШЕННЯ</div>
+    <h2 class="reveal">УСІ ДАНІ КОМПАНІЇ — В ОДНІЙ КАРТИНІ</h2>
+    <p class="lead reveal">Ваші програми залишаються. Sinaptic підключається до них, збирає інформацію в захищене місце і показує керівнику зрозумілу картину — з джерелами, з яких її зібрано.</p>
+    <div class="acc-list" id="solAcc">
+      <div class="acc open">
+        <button class="acc-h"><span>Панель з усіма даними</span><b>+</b></button>
+        <div class="acc-b"><p>Одна картина замість десятка вкладок. Продажі, склад, оплати й клієнти — на одному екрані.</p></div>
+      </div>
+      <div class="acc">
+        <button class="acc-h"><span>Відповіді на запитання</span><b>+</b></button>
+        <div class="acc-b"><p>Голосом або текстом — з посиланням на джерело. Наприклад: «Як ідуть продажі в регіоні цього місяця?»</p></div>
+      </div>
+      <div class="acc">
+        <button class="acc-h"><span>Корпоративна пам'ять</span><b>+</b></button>
+        <div class="acc-b"><p>Дані впорядковані й накопичуються. Знання лишаються в компанії, а не в окремих людей.</p></div>
+      </div>
+      <div class="acc">
+        <button class="acc-h"><span>Окреме захищене середовище</span><b>+</b></button>
+        <div class="acc-b"><p>Ізоляція від зовнішнього середовища, шифрування, доступ за ролями. Ваші програми залишаються на місці — готові підключення займають кілька годин технічної роботи, нестандартні системи налаштовуємо окремо, під задачу.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEMO: Q&A + DASHBOARD ============ -->
+<section class="sec" id="demo">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 03 — ЯК ЦЕ ВИГЛЯДАЄ</div>
+    <h2 class="reveal">ПОЧНІТЬ ДЕНЬ<br>З ГОТОВИХ РІШЕНЬ</h2>
+    <p class="lead reveal">Спробуйте: поставте запитання системі або погодьте дії з панелі керівника. Це ілюстрація сценарію, не реальні дані.</p>
+  </div>
+  <div class="demo-grid">
+    <div class="panel reveal">
+      <div class="panel-h mono"><span>ПАНЕЛЬ КЕРІВНИКА</span><span id="clock">сьогодні, 08:30</span></div>
+      <ul class="tasks" id="tasks">
+        <li class="task" data-i="0"><div class="dot"></div><div><h4>План продажів під ризиком</h4><p>Дефіцит товару.</p><em>Дія: перерозподілити запаси.</em></div></li>
+        <li class="task" data-i="1"><div class="dot"></div><div><h4>Відвантаження затримуються</h4><p>Замовлення заблоковані через маркування.</p><em>Дія: виправити маркування партій.</em></div></li>
+        <li class="task" data-i="2"><div class="dot"></div><div><h4>Обігові кошти під ризиком</h4><p>Прострочені оплати.</p><em>Дія: погодити план роботи з боржниками.</em></div></li>
+      </ul>
+      <div class="panel-f">
+        <div><div class="mono label">РІШЕННЯ НА СЬОГОДНІ</div><div class="small">Пріоритети визначено. Дії підготовлено.</div></div>
+        <button class="btn" id="approveAll"><span class="btn-t">Погодити й передати в роботу</span><span class="btn-a">→</span></button>
+      </div>
+    </div>
+
+    <div class="panel reveal">
+      <div class="panel-h mono"><span>ЗАПИТАЙТЕ СИСТЕМУ</span><span>ГОЛОСОМ АБО ТЕКСТОМ</span></div>
+      <div class="chips" id="chips">
+        <button class="chip active" data-q="0">Як ідуть продажі в регіоні?</button>
+        <button class="chip" data-q="1">Що обіцяли клієнту минулого разу?</button>
+        <button class="chip" data-q="2">Де зависли замовлення?</button>
+      </div>
+      <div class="chat">
+        <div class="q" id="qText"></div>
+        <div class="a" id="aText"></div>
+        <div class="src mono" id="aSrc"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ROLES ============ -->
+<section class="sec split rev" id="roles">
+  <div class="split-body">
+    <div class="mono tag reveal"><i></i> 04 — ДЛЯ КОГО</div>
+    <h2 class="reveal">ЗРОЗУМІЛО КОЖНОМУ — ВІД ВЛАСНИКА ДО МЕНЕДЖЕРА</h2>
+    <div class="acc-list" id="roleAcc">
+      <div class="acc open"><button class="acc-h"><span>Власник</span><b>+</b></button><div class="acc-b"><p>Щоранку — одна картина бізнесу: де ризики, де гроші, що вирішити сьогодні. Кожен висновок — з посиланням на джерело. Права й кроки погодження визначаєте ви.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Директор і керівник напряму</span><b>+</b></button><div class="acc-b"><p>Пріоритети дня вже розставлені, дії підготовлені. Погодили одним натисканням — система передала в роботу.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Лінійний менеджер</span><b>+</b></button><div class="acc-b"><p>Коротке досьє перед кожною зустріччю й відповіді на запитання без пошуку по програмах та розпитування колег. Менше рутини — більше розмов з клієнтами.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Фінанси й бухгалтерія</span><b>+</b></button><div class="acc-b"><p>Прострочені оплати, розбіжності між даними, готові документи. Якщо цифри суперечать одна одній — система покаже де й покличе людину вирішити.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Продажі та клієнти</span><b>+</b></button><div class="acc-b"><p>Історія співпраці, домовленості, відкриті питання й побажання клієнта. Про нового партнера система сама збере інформацію з відкритих джерел.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Операції та логістика</span><b>+</b></button><div class="acc-b"><p>Затримки, дефіцит, заблоковані замовлення — видно одразу, разом із пропозицією, що робити.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>ІТ та безпека</span><b>+</b></button><div class="acc-b"><p>Ізольоване середовище, доступ за ролями, журнал дій. Надамо тестове середовище, щоб ваша команда безпеки могла провести аудит.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Новий співробітник</span><b>+</b></button><div class="acc-b"><p>З першого дня отримує весь контекст: клієнтів, домовленості, історію рішень — а не починає з нуля.</p></div></div>
+    </div>
+  </div>
+  <div class="split-art art-b">
+    <svg viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <circle class="sun" cx="300" cy="230" r="170" fill="#ff3b00"/>
+      <g stroke="#1d1d1b" stroke-width="1.4" fill="none">
+        <rect x="120" y="120" width="360" height="560" fill="rgba(244,242,236,.55)"/>
+        <g id="towerLines"></g>
+      </g>
+      <g fill="#1d1d1b" id="towerFill"></g>
+      <rect x="40" y="620" width="520" height="80" fill="#f4f2ec" stroke="#1d1d1b" stroke-width="2"/>
+      <rect x="0" y="700" width="600" height="100" fill="#f4f2ec" stroke="#1d1d1b" stroke-width="2"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ============ MEETING DOSSIER ============ -->
+<section class="sec" id="dossier">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 05 — ПІДГОТОВКА ДО ЗУСТРІЧІ</div>
+    <h2 class="reveal">КОМАНДА ГОТОВА ЩЕ ДО ЗУСТРІЧІ</h2>
+    <p class="lead reveal">Перед кожною зустріччю з клієнтом менеджер отримує коротке досьє. Не треба нічого шукати й нікого розпитувати.</p>
+  </div>
+  <div class="dossier">
+    <div class="tabs reveal" id="dTabs">
+      <button class="tab active" data-d="0"><span class="mono">1</span> Новий партнер</button>
+      <button class="tab" data-d="1"><span class="mono">2</span> Партнер, з яким уже працюємо</button>
+      <button class="tab" data-d="2"><span class="mono">3</span> Новий менеджер</button>
+      <p class="tab-desc" id="dDesc"></p>
+    </div>
+    <div class="doc reveal">
+      <div class="doc-h mono"><span>ДОСЬЄ ПАРТНЕРА</span><span class="live"><i></i> ЗУСТРІЧ О 14:00</span></div>
+      <h3>Мережа магазинів «Приклад»</h3>
+      <div class="doc-rows">
+        <div class="doc-row"><div class="mono">ПРО КОМПАНІЮ <em>відкриті джерела</em></div><p>Хто вони, чим живуть, що нового.</p></div>
+        <div class="doc-row"><div class="mono">ІСТОРІЯ СПІВПРАЦІ <em>CRM · документи</em></div><p>Що купували, як розвивалися відносини.</p></div>
+        <div class="doc-row"><div class="mono">ДОМОВЛЕНОСТІ ТА ВІДКРИТІ ПИТАННЯ <em>листи · дзвінки</em></div><p>Що обіцяли, що ще не закрили.</p></div>
+        <div class="doc-row hi"><div class="mono">ЩО ВАЖЛИВО ЦЬОМУ КЛІЄНТУ</div><p>Його пріоритети й побажання з попередніх розмов — щоб говорити про головне.</p></div>
+      </div>
+      <div class="mono note">ІЛЮСТРАЦІЯ СЦЕНАРІЮ, НЕ РЕАЛЬНІ ДАНІ</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SEE ADVISE DO ============ -->
+<section class="sec" id="flow">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 06 — АНАЛІТИКА, ЩО ДІЄ</div>
+    <h2 class="reveal">НЕ ЛИШЕ «ЩО СТАЛОСЯ»,<br>А НАСТУПНИЙ КРОК</h2>
+    <p class="lead reveal">Sinaptic не зупиняється на звіті: пояснює, що відбувається, радить, що робити, і допомагає це зробити.</p>
+  </div>
+  <div class="steps3" id="steps3">
+    <article class="step reveal"><div class="mono label">КРОК 1</div><h3>БАЧИТЬ</h3><p>Збирає дані з усіх підключених систем в одну панель і відповідає на запитання.</p><div class="ex">Наприклад: «Як ідуть продажі в регіоні цього місяця?»</div><div class="bar"><i></i></div></article>
+    <article class="step reveal"><div class="mono label">КРОК 2</div><h3>РАДИТЬ</h3><p>Аналізує й пропонує рішення — з поясненням, на чому воно ґрунтується.</p><div class="ex">Наприклад: пропозиції, як покращити рентабельність регіону.</div><div class="bar"><i></i></div></article>
+    <article class="step reveal"><div class="mono label">КРОК 3</div><h3>РОБИТЬ</h3><p>Створює завдання, готує документи, надсилає повідомлення, оновлює CRM.</p><div class="ex"><b>Важливо:</b> лише те, що дозволив власник, і з погодженням там, де воно потрібне.</div><div class="bar"><i></i></div></article>
+  </div>
+  <div class="human reveal">
+    <div><div class="mono label">ДАНІ СУПЕРЕЧАТЬ ОДНЕ ОДНОМУ?</div><p>Система показує розбіжність і кличе людину вирішити.</p></div>
+    <div><div class="mono label">ОСТАННЄ СЛОВО — ЗА ЛЮДИНОЮ</div><p>Власник сам визначає права й кроки погодження.</p></div>
+  </div>
+</section>
+
+<!-- ============ SECURITY ============ -->
+<section class="sec dark" id="security">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 07 — БЕЗПЕКА</div>
+    <h2 class="reveal">ДАНІ ЗАХИЩЕНІ.<br>КОЖНА ВІДПОВІДЬ ПЕРЕВІРЕНА.<br>КОЖНА ДІЯ ЗАФІКСОВАНА.</h2>
+    <p class="lead reveal">Захист даних — основа архітектури. Платформа спроєктована з урахуванням вимог GDPR щодо захисту персональних даних. Ізоляція середовища, шифрування, контроль доступу та журнал дій захищають персональні й корпоративні дані на всіх етапах роботи.</p>
+  </div>
+  <div class="cards3">
+    <article class="card reveal"><div class="ic"><svg viewBox="0 0 40 40"><rect x="8" y="17" width="24" height="17" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 17v-5a7 7 0 0114 0v5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="18" y="23" width="4" height="5" fill="#ff3b00"/></svg></div><h3>ЗАХИЩЕНІ</h3><ul><li>Окреме ізольоване середовище для кожного клієнта</li><li>Дані зашифровані, ключ — у клієнта</li><li>Доступ за ролями — від власника до працівника</li></ul></article>
+    <article class="card reveal"><div class="ic"><svg viewBox="0 0 40 40"><path d="M6 21l9 9 19-20" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="28" y="28" width="6" height="6" fill="#ff3b00"/></svg></div><h3>ПЕРЕВІРЕНІ</h3><ul><li>Кожен висновок — з посиланням на джерело</li><li>Кожну заплановану дію система перевіряє до виконання</li></ul></article>
+    <article class="card reveal"><div class="ic"><svg viewBox="0 0 40 40"><rect x="8" y="6" width="24" height="28" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13 14h14M13 20h14M13 26h8" stroke="currentColor" stroke-width="1.6"/><rect x="25" y="24" width="4" height="4" fill="#ff3b00"/></svg></div><h3>ЗАФІКСОВАНІ</h3><ul><li>Журнал дій</li><li>Сповіщення про спроби стороннього доступу</li></ul></article>
+  </div>
+  <div class="audit reveal">
+    <div class="mono label">ВІДКРИТІ ДО ПЕРЕВІРКИ</div>
+    <p>Надамо тестове середовище для аудиту вашою командою безпеки.</p>
+  </div>
+</section>
+
+<!-- ============ COMPLIANCE ============ -->
+<section class="sec" id="compliance">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 08 — ВІДПОВІДНІСТЬ</div>
+    <h2 class="reveal">РЕГУЛЯТОРНІ ВИМОГИ<br>ТА СТАНДАРТИ</h2>
+    <p class="lead reveal">Система спроєктована відповідно до застосовних регуляторних вимог. Застосовність визначаємо для конкретного рішення, ринку, даних і ролей сторін.</p>
+  </div>
+  <div class="cards4">
+    <article class="card reveal"><div class="num mono">GDPR</div><h3>Персональні дані</h3><p>Мета обробки, мінімізація даних, права людини та контроль доступу.</p></article>
+    <article class="card reveal"><div class="num mono">EU AI ACT</div><h3>Відповідальне використання ШІ</h3><p>Ризики й ролі, прозорість, документація та нагляд людини.</p></article>
+    <article class="card reveal"><div class="num mono">HIPAA</div><h3>Медичні дані у США</h3><p>Захист медичної інформації — для застосовних сценаріїв.</p></article>
+    <article class="card reveal"><div class="num mono">MDR</div><h3>Медичне ПЗ у ЄС</h3><p>Окремий шлях оцінки відповідності, якщо рішення є медичним виробом.</p></article>
+  </div>
+  <div class="iso">
+    <div class="iso-i reveal"><b>ISO/IEC 42001</b><span>Управління ШІ</span><em>Сертифікація — у процесі</em></div>
+    <div class="iso-i reveal"><b>ISO/IEC 27001</b><span>Інформаційна безпека</span><em>Сертифікація — у процесі</em></div>
+    <div class="iso-i reveal"><b>ISO 9001</b><span>Якість виконання</span><em>Сертифікація — у процесі</em></div>
+    <div class="iso-i reveal"><b>ISO 31000</b><span>Управління ризиками</span><em>Впровадження практик — у процесі</em></div>
+  </div>
+</section>
+
+<!-- ============ INDUSTRIES ============ -->
+<section class="sec" id="industries">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 09 — ДЛЯ БУДЬ-ЯКОГО БІЗНЕСУ</div>
+    <h2 class="reveal">ОДНА ПЛАТФОРМА —<br>БАГАТО ГАЛУЗЕЙ</h2>
+    <p class="lead reveal">Sinaptic підключається до програм, які у вас уже є, тому працює однаково добре в торгівлі, сервісі, виробництві чи послугах. Оберіть свій тип бізнесу — побачите, що змінюється.</p>
+  </div>
+  <div class="ind">
+    <div class="tabs vertical reveal" id="iTabs">
+      <button class="tab active" data-t="0"><span class="mono">01</span> Мережі та заклади</button>
+      <button class="tab" data-t="1"><span class="mono">02</span> Сервіс і філії</button>
+      <button class="tab" data-t="2"><span class="mono">03</span> Дистрибуція і виробництво</button>
+      <button class="tab" data-t="3"><span class="mono">04</span> Послуги та консалтинг</button>
+    </div>
+    <div class="ind-body reveal" id="iBody"></div>
+  </div>
+</section>
+
+<!-- ============ START ============ -->
+<section class="sec" id="start">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 10 — ЯК ПОЧАТИ</div>
+    <h2 class="reveal">ПОЧНІМО З ПІЛОТУ</h2>
+    <p class="lead reveal">Без великих проєктів на старті. Одна команда, один процес, перший результат — за 5 робочих днів*. Потім масштабуємо разом.</p>
+  </div>
+  <div class="pilot">
+    <div class="pilot-n reveal"><div><span class="huge">1</span><span class="mono">ПІДРОЗДІЛ</span></div><div><span class="huge">1</span><span class="mono">ПРОЦЕС, ЯКИЙ ОБЕРЕМО РАЗОМ</span></div><div><span class="huge">5</span><span class="mono">ДНІВ ДО ПЕРШОГО РЕЗУЛЬТАТУ*</span></div></div>
+    <div class="pilot-who">
+      <div class="reveal"><div class="mono label">ВІД ВАС</div><p>Відповідальна команда, опис задачі, договір і доступи до потрібних систем.</p></div>
+      <div class="reveal"><div class="mono label">ВІД SINAPTIC</div><p>Підключення, налаштування, демонстрація та спільна оцінка результату.</p></div>
+    </div>
+  </div>
+  <div class="timeline" id="timeline">
+    <div class="tl-line"><i id="tlFill"></i></div>
+    <div class="tl-i reveal"><span class="mono">01</span><h4>Почати з однієї команди</h4><p>Обираємо перший підрозділ і процес — разом.</p></div>
+    <div class="tl-i reveal"><span class="mono">02</span><h4>Довести результат</h4><p>Підключення, налаштування, демонстрація. Спільно оцінюємо результат.</p></div>
+    <div class="tl-i reveal"><span class="mono">03</span><h4>Масштабувати разом</h4><p>Додаємо підрозділи, процеси й джерела даних — там, де є ефект.</p></div>
+  </div>
+  <p class="foot mono">* РОБОЧИХ ДНІВ ПІСЛЯ ПОГОДЖЕННЯ ЗАДАЧІ ТА ДОСТУПІВ. ЦЕ ПЕРШИЙ РЕЗУЛЬТАТ ПІЛОТА, А НЕ ПОВНЕ ВПРОВАДЖЕННЯ.</p>
+</section>
+
+<!-- ============ STATUS ============ -->
+<section class="sec" id="status">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 11 — СТАДІЯ ПРОЄКТУ</div>
+    <h2 class="reveal">ПОВНІСТЮ ГОТОВИЙ ПРОДУКТ</h2>
+    <p class="lead reveal">Sinaptic AI готова до інтеграції та вже працює в бізнесі.</p>
+  </div>
+  <div class="status">
+    <div class="status-main reveal"><div class="huge" data-count="1">1</div><div><div class="mono label">КЛІЄНТ НА ПЛАТНІЙ ПІДПИСЦІ</div><h3>Solar Garden</h3><p>Проєктування та будівництво сонячних електростанцій і систем зберігання енергії. Платформу повністю інтегровано.</p><a class="link mono" href="https://solargarden.com.ua" target="_blank" rel="noopener">solargarden.com.ua ↗</a></div></div>
+    <div class="status-side reveal"><div class="huge" data-count="3">3</div><div><div class="mono label">ПРОЄКТИ НА ЕТАПІ ІНТЕГРАЦІЇ</div><ul><li><span class="mono">01</span> Beauty Academy <em>Б'юті-бізнес</em></li><li><span class="mono">02</span> HoReCa <em>Готельно-ресторанний бізнес</em></li><li><span class="mono">03</span> Бухгалтерський консалтинг <em>Облік і консультування бізнесу</em></li></ul></div></div>
+  </div>
+</section>
+
+<!-- ============ TEAM ============ -->
+<section class="sec" id="team">
+  <div class="sec-head">
+    <div class="mono tag reveal"><i></i> 12 — КОМАНДА</div>
+    <h2 class="reveal">ЛЮДИ ЗА ПЛАТФОРМОЮ</h2>
+  </div>
+  <div class="team">
+    <article class="person reveal">
+      <div class="avatar"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="44" fill="#ff3b00"/><rect x="20" y="20" width="80" height="80" fill="none" stroke="#1d1d1b" stroke-width="1.4"/><text x="60" y="72" text-anchor="middle" font-family="Inter Tight" font-weight="800" font-size="34" fill="#f4f2ec">ЮГ</text></svg></div>
+      <div><div class="mono label">ЗАСНОВНИК, ТЕХНІЧНИЙ ДИРЕКТОР</div><h3>Юлій Громико</h3><p>18+ років в ІТ та корпоративній архітектурі. Сертифікований керівник з інформаційної безпеки (PECB CISO) і фахівець із захисту персональних даних (PECB DPO). Спеціалізується на безпечному впровадженні ШІ та відповідності європейським вимогам. Проєктував архітектуру платформ для Thomas Cook і Fozzy Group.</p>
+      <div class="badges"><span class="mono">ISO/IEC 42001</span><span class="mono">CISO</span><span class="mono">DPO</span><span class="mono">ISO 31000</span></div></div>
+    </article>
+    <article class="person reveal">
+      <div class="avatar"><svg viewBox="0 0 120 120"><rect x="20" y="20" width="80" height="80" fill="#ff3b00"/><circle cx="60" cy="60" r="44" fill="none" stroke="#1d1d1b" stroke-width="1.4"/><text x="60" y="72" text-anchor="middle" font-family="Inter Tight" font-weight="800" font-size="34" fill="#f4f2ec">СП</text></svg></div>
+      <div><div class="mono label">СПІВЗАСНОВНИК, ДИРЕКТОР З РОЗВИТКУ</div><h3>Сергій Полонський</h3><p>Серійний підприємець. 18 років досвіду в операційному бізнесі, з них 12 — у створенні та розвитку мереж салонів краси й косметологічних центрів.</p>
+      <div class="badges"><span class="mono">РЕЗИДЕНТ ДІЯ.CITY</span></div></div>
+    </article>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="sec split" id="faq">
+  <div class="split-art art-c">
+    <svg viewBox="0 0 600 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <circle class="sun" cx="430" cy="200" r="120" fill="#ff3b00"/>
+      <g fill="none" stroke="#1d1d1b" stroke-width="1.3" id="gridArt"></g>
+      <rect x="90" y="360" width="200" height="200" fill="#1d1d1b"/><rect x="130" y="400" width="50" height="50" fill="#ff3b00"/>
+    </svg>
+  </div>
+  <div class="split-body">
+    <div class="mono tag reveal"><i></i> 13 — ПИТАННЯ Й ВІДПОВІДІ</div>
+    <h2 class="reveal">ЧАСТІ ПИТАННЯ</h2>
+    <div class="acc-list" id="faqAcc">
+      <div class="acc open"><button class="acc-h"><span>Чи треба міняти наші програми?</span><b>+</b></button><div class="acc-b"><p>Ні. Ваші програми залишаються. Sinaptic підключається до них. Готові підключення — кілька годин технічної роботи, нестандартні системи — окремо, під задачу.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Чи бачить ШІ всі наші дані?</span><b>+</b></button><div class="acc-b"><p>Уся обробка відбувається в окремому ізольованому середовищі вашої компанії. Доступ визначається ролями, дані зашифровані, а ключ — у вас.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Чи може система щось зробити без мого дозволу?</span><b>+</b></button><div class="acc-b"><p>Ні. Система виконує лише те, що дозволив власник, і з погодженням там, де воно потрібне. Кожну заплановану дію вона перевіряє до виконання, а кожну дію фіксує в журналі.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>А якщо система помилиться?</span><b>+</b></button><div class="acc-b"><p>Кожен висновок подається з посиланням на джерело, тож його легко перевірити. Якщо дані суперечать одне одному, система не вгадує — вона показує розбіжність і кличе людину.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Як користуватися системою команді?</span><b>+</b></button><div class="acc-b"><p>Через інтерфейс Sinaptic з елементами гейміфікації або через підключені ChatGPT чи Claude. Запитання можна ставити голосом або текстом.</p></div></div>
+      <div class="acc"><button class="acc-h"><span>Скільки часу до першого результату?</span><b>+</b></button><div class="acc-b"><p>Пілот — 1 підрозділ і 1 процес, який оберемо разом. Перший результат — за 5 робочих днів після погодження задачі та доступів. Це результат пілота, а не повне впровадження.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section class="sec cta" id="contact">
+  <div class="cta-l">
+    <div class="mono tag reveal"><i></i> 14 — ПОЧНІМО</div>
+    <h2 class="reveal">ПЕРЕТВОРІМО ДАНІ<br>НА СИЛУ ЩОДЕННИХ РІШЕНЬ</h2>
+    <p class="lead reveal">Наша мета — стратегічне партнерство: разом перетворити дані на обґрунтовані рішення, а рішення — на щоденний результат. Розкажіть про свій бізнес — запропонуємо процес для пілоту.</p>
+    <a class="link mono reveal" href="https://sinaptic.ai" target="_blank" rel="noopener">sinaptic.ai ↗</a>
+  </div>
+  <form class="form reveal" id="form" novalidate>
+    <label><span class="mono">ІМ'Я</span><input name="name" required autocomplete="name" placeholder="Як до вас звертатися"></label>
+    <label><span class="mono">КОМПАНІЯ І ГАЛУЗЬ</span><input name="company" autocomplete="organization" placeholder="Наприклад, мережа кав'ярень"></label>
+    <label><span class="mono">ТЕЛЕФОН АБО E-MAIL</span><input name="contact" required autocomplete="email" placeholder="Як з вами зв'язатися"></label>
+    <label><span class="mono">ЯКИЙ ПРОЦЕС ХОЧЕТЕ ПОКРАЩИТИ?</span><textarea name="task" rows="3" placeholder="Наприклад: щоденний контроль філій"></textarea></label>
+    <button class="btn" type="submit"><span class="btn-t">Обговорити пілот</span><span class="btn-a">→</span></button>
+    <p class="form-msg mono" id="formMsg" role="status"></p>
+  </form>
+</section>
+
+<footer class="foot-bar">
+  <div class="logo"><svg width="26" height="26" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="26" height="26"/><path d="M4 4l8 8M30 4l-8 8M4 30l8-8M30 30l-8-8"/><rect x="12" y="12" width="10" height="10" fill="#ff3b00" stroke="none"/></svg><span>SINAPTIC</span></div>
+  <div class="mono">ШІ-ІНФРАСТРУКТУРА ДЛЯ БІЗНЕСУ · ДАНІ → РІШЕННЯ → РЕЗУЛЬТАТ</div>
+  <a class="mono" href="#top">НАГОРУ ↑</a>
+</footer>
+
+</div>
+<script src="script.js"></script>
+</body>
+</html>
