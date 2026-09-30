@@ -44,7 +44,7 @@ export function ContactForm() {
       if (res.ok && body.code === "ok") {
         setStatus("success"); formRef.current?.reset(); setLen(0); track("contact_submit_success");
         requestAnimationFrame(() => statusRef.current?.focus());
-      } else if (res.status === 503) {
+      } else if (res.status === 503 || res.status === 404) {
         setStatus("unavailable");
       } else if (res.status === 422 && body.fields) {
         setErrors(body.fields); setStatus("idle"); focusFirst(body.fields); track("contact_submit_error", { category: "validation" });
