@@ -72,7 +72,9 @@ img, svg { display: block; max-width: 100%; }
 .header { position: sticky; top: 0; z-index: 50; height: var(--header-h); border-bottom: 1px solid transparent; background: transparent; transition: background-color 200ms ease-out, border-color 200ms ease-out; }
 .header[data-scrolled="true"], .header[data-open="true"] { background: var(--canvas); border-color: var(--line); }
 .header-in { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; }
+.brand { display: inline-flex; align-items: center; text-decoration: none; }
+.wordmark { font-weight: 800; letter-spacing: -0.045em; line-height: 1; color: var(--ink); display: inline-flex; align-items: baseline; }
+.wordmark-dot { width: 0.2em; height: 0.2em; margin-left: 0.06em; border-radius: 50%; background: var(--brass); display: inline-block; }
 .nav-desktop { display: none; gap: 32px; }
 .nav-desktop a { text-decoration: none; font-size: 0.9375rem; font-weight: 600; padding: 8px 0; border-bottom: 2px solid transparent; }
 .nav-desktop a:hover { border-color: var(--teal); }

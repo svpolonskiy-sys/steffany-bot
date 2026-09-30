@@ -1,13 +1,13 @@
 import { nav, footer } from "@/content/site.uk";
 import { siteConfig } from "@/lib/site-config";
-import { Logo } from "../ui/icons";
+import { Wordmark } from "../ui/icons";
 
 export function SiteFooter() {
   return (
     <footer className="footer">
       <div className="container footer-in">
         <div style={{ display: "grid", gap: 8 }}>
-          <span className="brand"><Logo /> Synaptic</span>
+          <span className="brand"><Wordmark size="1.75rem" /></span>
           <p className="small">{footer.tagline}</p>
         </div>
         <nav aria-label="Навігація у футері">

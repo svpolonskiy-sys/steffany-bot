@@ -100,7 +100,6 @@ export function ContactForm() {
       <div className="hp" aria-hidden="true">
         <label>Не заповнюйте це поле<input name="website" tabIndex={-1} autoComplete="off" /></label>
       </div>
-      <p className="small">{contact.privacy}</p>
       <button type="submit" className="btn btn-primary" disabled={status === "submitting"} aria-disabled={status === "submitting"}>
         {status === "submitting" ? "Надсилаємо…" : contact.submit}
       </button>

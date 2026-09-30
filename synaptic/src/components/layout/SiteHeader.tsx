@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { nav, cta } from "@/content/site.uk";
-import { Logo, Menu, Close } from "../ui/icons";
+import { Wordmark, Menu, Close } from "../ui/icons";
 import { PrimaryCta } from "../ui/TrackedLink";
 
 export function SiteHeader() {
@@ -43,7 +43,7 @@ export function SiteHeader() {
     <header className="header" data-scrolled={scrolled} data-open={open}>
       <div className="container header-in">
         <a href="#top" className="brand" aria-label="Synaptic — на початок сторінки" onClick={close}>
-          <Logo /> <span>Synaptic</span>
+          <Wordmark />
         </a>
         <nav className="nav-desktop" aria-label="Основна навігація">
           {nav.map((n) => <a key={n.href} href={n.href}>{n.label}</a>)}
