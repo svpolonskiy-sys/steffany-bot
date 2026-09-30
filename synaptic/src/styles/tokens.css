@@ -1,0 +1,34 @@
+:root {
+  --canvas: #f5f2ea;
+  --surface: #fffdf8;
+  --ink: #142328;
+  --muted: #526268;
+  --petrol: #0b242a;
+  --petrol-2: #12343b;
+  --teal: #0d7176;
+  --teal-dark: #095a5e;
+  --mint: #79d1c5;
+  --brass: #a88a48;
+  --line: #dcddd5;
+  --edge: #6b7c80; /* межі інтерактивних елементів, контраст ≥ 3:1 */
+  --warn-bg: #fbeccb;
+  --warn-ink: #5c3d00;
+  --ok-bg: #d9efe9;
+  --ok-ink: #0a4a48;
+  --err: #a12a1f;
+
+  --font-sans: var(--font-manrope), "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-noto-serif), Georgia, "Times New Roman", serif;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --gutter: 20px;
+  --header-h: 64px;
+  --section-y: 72px;
+}
+
+@media (min-width: 768px) {
+  :root { --gutter: 24px; }
+}
+@media (min-width: 1024px) {
+  :root { --gutter: 56px; --header-h: 72px; --section-y: 128px; }
+}
