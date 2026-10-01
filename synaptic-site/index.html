@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="uk" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synaptic — цифрова трансформація готелів на основі ШІ</title>
+<meta name="description" content="Synaptic об'єднує PMS, CRM, POS та інші системи готелю в єдине інтелектуальне ядро: більше доходу, менше рутини, кращий досвід гостя. Без заміни існуючих систем.">
+<meta property="og:title" content="Synaptic — інтелектуальне ядро сучасної гостинності">
+<meta property="og:description" content="AI-first цифрова трансформація готелів і hospitality-бізнесу. Один інтелектуальний шар над усіма системами готелю.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#F6F4F0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%232B35CC'/%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%232B35CC' stroke-width='1.5' stroke-dasharray='2 3'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/styles.css">
+<script>document.documentElement.classList.remove('no-js')</script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-7z"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M17 14c2.5 0 4 2 4 5"/></symbol>
+<symbol id="i-badge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+<symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+<symbol id="i-thumb" viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-8c2 0 3 1.2 3 3v3h5.5a1.5 1.5 0 0 1 1.5 1.8l-1.5 7A2 2 0 0 1 17.6 20H7"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
+<symbol id="i-key2" viewBox="0 0 24 24"><circle cx="9" cy="9" r="2.5"/><path d="M11 11l8 8M16 16l2-2M13.5 13.5l2-2"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+<symbol id="i-mega" viewBox="0 0 24 24"><path d="M3 11v3l12 5V6zM15 8c3 0 5 1.8 5 4s-2 4-5 4M7 14v4"/></symbol>
+<symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/></symbol>
+<symbol id="i-spa" viewBox="0 0 24 24"><path d="M12 20c-5 0-8-3-8-8 5 0 8 3 8 8zM12 20c5 0 8-3 8-8-5 0-8 3-8 8zM12 12c-2-3-2-6 0-9 2 3 2 6 0 9z"/></symbol>
+<symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18V6M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="1.6"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4zM10 21h4"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+</defs></svg>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top" aria-label="Synaptic">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="none" stroke="#2B35CC" stroke-width="1.2" stroke-dasharray="2 3"/><circle cx="16" cy="16" r="6" fill="#2B35CC"/><circle cx="16" cy="3.5" r="2" fill="#2B35CC"/><circle cx="27" cy="22" r="2" fill="#2B35CC"/><circle cx="5" cy="22" r="2" fill="#2B35CC"/></svg>
+      Synaptic
+    </a>
+    <nav class="links" aria-label="Розділи сайту">
+      <a href="#problem">Проблема</a>
+      <a href="#solution">Рішення</a>
+      <a href="#tasks">Задачі</a>
+      <a href="#results">Результати</a>
+      <a href="#security">Безпека</a>
+      <a href="#team">Команда</a>
+    </nav>
+    <a class="btn btn-primary" href="#contact">Обговорити <svg class="ic"><use href="#i-arrow"/></svg></a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">AI-first hospitality</span>
+      <h1>Інтелектуальне ядро <span class="hl">сучасної гостинності</span></h1>
+      <p class="lead"><b>Synaptic — цифрова трансформація готелів на основі штучного інтелекту.</b> Ми об'єднуємо PMS, CRM, POS та інші системи готелю в одну інтелектуальну систему, яка допомагає заробляти більше та працювати з меншою рутиною.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#contact">Обговорити ваш готель <svg class="ic"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-ghost" href="#how">Як це працює</a>
+      </div>
+      <div class="trust">
+        <span><svg class="ic"><use href="#i-check"/></svg>Без заміни PMS та інших систем</span>
+        <span><svg class="ic"><use href="#i-check"/></svg>Дані під вашим ключем</span>
+        <span><svg class="ic"><use href="#i-check"/></svg>Вимірюваний результат</span>
+      </div>
+    </div>
+    <div class="hero-vis" id="hero-vis" role="img" aria-label="Схема: системи готелю PMS, CRM, POS, OTA, телефонія, месенджери та інші підключені до єдиного ядра Synaptic"></div>
+  </div>
+</section>
+
+<!-- POSITIONING -->
+<section class="strip" aria-label="Хто ми">
+  <div class="wrap strip-in">
+    <div><b>Для кого</b><span>Власники та керівники готелів, готельні групи, курортні комплекси, керуючі компанії.</span></div>
+    <div><b>Що ми робимо</b><span>Створюємо інтелектуальне цифрове ядро готелю: від першого контакту з гостем до повторного візиту.</span></div>
+    <div><b>Чим ми не є</b><span><span class="no">Не IT-аутсорс. Не ще одна програма. Не набір чат-ботів.</span> Стратегічний партнер з трансформації.</span></div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="wrap problem-grid">
+    <div class="rv">
+      <div class="head" style="margin-bottom:28px">
+        <span class="eyebrow">Проблема</span>
+        <h2>Готелям не бракує технологій. <span class="hl">Їм бракує цілісності.</span></h2>
+        <p class="lead">PMS, CRM, POS, бронювання, OTA, телефонія, месенджери, фінанси, SPA, ресторан, housekeeping, відгуки. Кожна система працює окремо, а повної картини не бачить ніхто.</p>
+      </div>
+      <ul class="symptoms">
+        <li><span class="n">01</span><div>Дані розрізнені, історія гостя губиться<small>Інформація про гостя є, але в десяти різних місцях.</small></div></li>
+        <li><span class="n">02</span><div>Власник бачить бізнес через десятки звітів<small>Щоб зрозуміти стан справ, треба чекати й зводити вручну.</small></div></li>
+        <li><span class="n">03</span><div>Сервіс реактивний: проблему помічають після скарги<small>Негативний відгук з'являється раніше, ніж реакція команди.</small></div></li>
+        <li><span class="n">04</span><div>Можливості додаткових продажів втрачаються<small>Підвищення категорії, SPA, ресторан, пізній виїзд.</small></div></li>
+        <li><span class="n">05</span><div>Персонал витрачає час на рутину, а не на гостя<small>Гостинність витісняється операційною метушнею.</small></div></li>
+      </ul>
+    </div>
+    <div class="chaos rv" style="--d:.1s" id="chaos" role="img" aria-label="Схема: окремі системи готелю з обірваними зв'язками"></div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution" class="alt">
+  <div class="wrap sol-grid">
+    <div class="sol-copy rv">
+      <span class="eyebrow">Рішення</span>
+      <h2>Ми створюємо інтелектуальне <span class="hl">цифрове ядро готелю</span></h2>
+      <p class="big">Ми не додаємо ще одну систему.<br><span class="hl">Ми змушуємо наявні працювати разом.</span></p>
+      <p class="lead">Інтелектуальний шар над вашими PMS, CRM, POS та іншими системами. Без обов'язкової заміни, без зупинки роботи готелю.</p>
+      <div class="aud">
+        <span class="chip">Гість</span><span class="chip">Операції</span><span class="chip">Команда</span><span class="chip">Фінанси</span><span class="chip">Продажі</span><span class="chip">Сервіс</span><span class="chip">Маркетинг</span><span class="chip">Аналітика</span>
+      </div>
+    </div>
+    <div class="sol-vis rv" style="--d:.1s" id="hub" role="img" aria-label="Схема: Synaptic у центрі, навколо гість, операції, команда, фінанси, продажі, сервіс, маркетинг, аналітика"></div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Принцип роботи</span>
+      <h2>Бачить. Розуміє. <span class="hl">Діє.</span></h2>
+      <p class="lead">Одна логіка для всього готелю: система отримує дані, розуміє контекст і виконує дозволені дії. Людина керує винятками.</p>
+    </div>
+    <div class="sua">
+      <div class="card rv">
+        <span class="num">01</span><h3>Бачить</h3>
+        <p>Дані та події з усіх систем готелю.</p>
+        <div class="tags"><span>PMS</span><span>CRM</span><span>POS</span><span>OTA</span><span>Месенджери</span><span>Телефонія</span><span>Відгуки</span><span>Фінанси</span><span>SPA</span><span>Housekeeping</span><span>IoT</span></div>
+      </div>
+      <div class="arrow"><svg class="ic"><use href="#i-arrow"/></svg></div>
+      <div class="card rv" style="--d:.1s">
+        <span class="num">02</span><h3>Розуміє</h3>
+        <p>Контекст, причини, ризики та можливості.</p>
+        <ul><li>Що відбувається і чому</li><li>Де втрачаються гроші</li><li>Який гість незадоволений</li><li>Де є можливість додаткового продажу</li></ul>
+      </div>
+      <div class="arrow"><svg class="ic"><use href="#i-arrow"/></svg></div>
+      <div class="card hi rv" style="--d:.2s">
+        <span class="num">03</span><h3>Діє</h3>
+        <p>Рекомендації, задачі, автоматизація, персональні дії.</p>
+        <ul><li>Створює задачу й повідомляє відповідального</li><li>Готує рекомендацію</li><li>Відповідає гостю, пропонує послугу</li><li>Менеджеру передає лише виняток</li></ul>
+      </div>
+    </div>
+    <div class="owner-law rv">
+      <svg class="ic"><use href="#i-key"/></svg>
+      <div><b>Останнє слово завжди за людиною.</b><span>Власник сам визначає, що система виконує автоматично, а що лише після погодження. Якщо дані суперечать одні одним, система покаже розбіжність і покличе людину.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- AI-FIRST -->
+<section class="alt">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">AI-first готель</span>
+      <h2>Від цифрового готелю — <span class="hl">до інтелектуального</span></h2>
+    </div>
+    <div class="cmp">
+      <div class="card col tr rv">
+        <h3>Традиційна модель</h3>
+        <ul>
+          <li><i>01</i>Дані — у різних системах</li>
+          <li><i>02</i>Людина шукає інформацію</li>
+          <li><i>03</i>Людина аналізує</li>
+          <li><i>04</i>Людина ставить задачу</li>
+          <li><i>05</i>Людина контролює</li>
+        </ul>
+      </div>
+      <div class="mid"><svg class="ic"><use href="#i-arrow"/></svg></div>
+      <div class="card col ai rv" style="--d:.1s">
+        <h3>AI-first модель</h3>
+        <ul>
+          <li><i>01</i>Дані об'єднані</li>
+          <li><i>02</i>AI бачить контекст</li>
+          <li><i>03</i>AI виявляє проблему</li>
+          <li><i>04</i>AI рекомендує або виконує дозволену дію</li>
+          <li><i>05</i>Людина керує винятками</li>
+        </ul>
+      </div>
+    </div>
+    <p class="quote rv" style="margin-top:34px">Менше рутини. Більше гостинності.</p>
+  </div>
+</section>
+
+<!-- TASKS -->
+<section id="tasks">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Які задачі вирішуємо</span>
+      <h2>Конкретні ситуації готелю. <span class="hl">Було й стало.</span></h2>
+      <p class="lead">Кожен сценарій прив'язаний до показника, який можна виміряти до старту й після впровадження.</p>
+    </div>
+    <div class="tasks">
+      <article class="card task rv">
+        <div class="top"><svg class="ic"><use href="#i-trend"/></svg><h3>Додаткові продажі</h3></div>
+        <p class="was"><b>Було</b>Підвищення категорії, SPA чи пізній виїзд пропонують «коли пощастить».</p>
+        <p class="now"><b>Стало</b>Система пропонує потрібну послугу потрібному гостю в потрібний момент.</p>
+        <p class="kpi">Вимірюємо: <span>дохід на гостя, ADR</span></p>
+      </article>
+      <article class="card task rv" style="--d:.06s">
+        <div class="top"><svg class="ic"><use href="#i-warn"/></svg><h3>Скарги й відгуки</h3></div>
+        <p class="was"><b>Було</b>Скарга → негативний відгук → запізніла реакція.</p>
+        <p class="now"><b>Стало</b>Сигнал → задача → контроль SLA → вирішено до відгуку.</p>
+        <p class="kpi">Вимірюємо: <span>час реакції, скарги, оцінка гостя</span></p>
+      </article>
+      <article class="card task rv" style="--d:.12s">
+        <div class="top"><svg class="ic"><use href="#i-bulb"/></svg><h3>Ранок керівника</h3></div>
+        <p class="was"><b>Було</b>Щоб зрозуміти стан справ, чекають кілька звітів і дзвонять колегам.</p>
+        <p class="now"><b>Стало</b>Одна відповідь на питання «Як у нас сьогодні справи?», задачі вже створені.</p>
+        <p class="kpi">Вимірюємо: <span>час на звіти, швидкість рішень</span></p>
+      </article>
+      <article class="card task rv">
+        <div class="top"><svg class="ic"><use href="#i-users"/></svg><h3>Пам'ять про гостя</h3></div>
+        <p class="was"><b>Було</b>Вподобання гостя в різних системах і в головах персоналу.</p>
+        <p class="now"><b>Стало</b>Єдиний профіль: історія, побажання, канал зв'язку, попередні пропозиції.</p>
+        <p class="kpi">Вимірюємо: <span>retention, повторний візит</span></p>
+      </article>
+      <article class="card task rv" style="--d:.06s">
+        <div class="top"><svg class="ic"><use href="#i-bed"/></svg><h3>Операції та housekeeping</h3></div>
+        <p class="was"><b>Було</b>Ручні координації, помилки, задачі губляться між змінами.</p>
+        <p class="now"><b>Стало</b>Задачі створюються й призначаються автоматично, виконання контролюється.</p>
+        <p class="kpi">Вимірюємо: <span>витрати на номер, час на рутину, помилки</span></p>
+      </article>
+      <article class="card task rv" style="--d:.12s">
+        <div class="top"><svg class="ic"><use href="#i-chat"/></svg><h3>Прямі бронювання</h3></div>
+        <p class="was"><b>Було</b>Звернення гостей у месенджерах і по телефону лишаються без швидкої відповіді.</p>
+        <p class="now"><b>Стало</b>Комунікація 24/7 і персональні пропозиції, які ведуть до прямого бронювання.</p>
+        <p class="kpi">Вимірюємо: <span>прямі бронювання, RevPAR</span></p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- GUEST -->
+<section id="guest" class="alt">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Гість</span>
+      <h2>Від номера бронювання — <span class="hl">до розуміння гостя</span></h2>
+    </div>
+    <div class="guest-grid">
+      <div class="card profile rv">
+        <div class="profile-h"><div><span class="avatar"><svg class="ic"><use href="#i-users"/></svg></span>Профіль гостя</div><span class="badge">Умовний приклад</span></div>
+        <div class="pf">
+          <div><small>Історія проживань</small><b>4 візити</b></div>
+          <div><small>Тип номера</small><b>Suite</b></div>
+          <div><small>Вподобання</small><b>Тиха кімната</b></div>
+          <div><small>Канал комунікації</small><b>WhatsApp</b></div>
+          <div><small>SPA</small><b>Масаж, вечір</b></div>
+          <div><small>Ресторан</small><b>Вечеря з вином</b></div>
+          <div><small>Побажання</small><b>Додаткова подушка</b></div>
+          <div><small>Скарги</small><b>1 · вирішено</b></div>
+          <div><small>Середній чек</small><b>Зростає</b></div>
+          <div><small>Попередні пропозиції</small><b>Upgrade — прийнято</b></div>
+          <div><small>Комунікації</small><b>Без зайвих листів</b></div>
+          <div><small>Ймовірність повернення</small><b>Висока</b></div>
+        </div>
+      </div>
+      <div class="guest-side rv" style="--d:.1s">
+        <p class="big hl">Кожна наступна взаємодія має бути кращою за попередню.</p>
+        <p class="lead">Один профіль замість десятка окремих систем.</p>
+      </div>
+    </div>
+
+    <div class="journey rv">
+      <p>Гіперперсоналізація: приклад шляху одного гостя</p>
+      <div class="steps">
+        <div class="step"><small>За 48 годин до заїзду</small><h3>Пропозиція підвищення категорії номера</h3><span>Підвищення категорії</span></div>
+        <div class="step"><small>Після заселення</small><h3>SPA або ресторан</h3><span>Додаткові послуги</span></div>
+        <div class="step"><small>Перед виїздом</small><h3>Пропозиція пізнього виїзду</h3><span>Пізній виїзд</span></div>
+        <div class="step"><small>Через 60 днів</small><h3>Персональне запрошення повернутися</h3><span>Повторний візит</span></div>
+      </div>
+      <p class="quote" style="margin-top:36px">Правильна пропозиція. Правильному гостю. У правильний момент.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROACTIVE -->
+<section>
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Проактивний сервіс</span>
+      <h2>Проблема має бути вирішена, <span class="hl">перш ніж стане негативним відгуком</span></h2>
+    </div>
+    <div class="flow">
+      <div class="fs rv"><small>01 · Сигнал</small><b>Гість повідомляє про проблему</b></div>
+      <div class="fs rv" style="--d:.06s"><small>02 · Оцінка</small><b>AI визначає критичність</b></div>
+      <div class="fs rv" style="--d:.12s"><small>03 · Задача</small><b>Створено й призначено відповідального</b></div>
+      <div class="fs rv" style="--d:.18s"><small>04 · Контроль</small><b>SLA та перевірка результату</b></div>
+      <div class="fs last rv" style="--d:.24s"><small>05 · Ескалація</small><b>Менеджер — лише якщо не вирішено</b></div>
+    </div>
+    <div class="wb rv">
+      <div class="was"><small>Було</small>Скарга → негативний відгук → запізніла реакція</div>
+      <div class="will"><small>Стає</small>Сигнал → задача → контроль → вирішено до відгуку</div>
+    </div>
+    <p class="quote rv" style="margin-top:34px">Від реакції на скарги — до управління ризиком у реальному часі.</p>
+  </div>
+</section>
+
+<!-- COPILOT -->
+<section class="alt">
+  <div class="wrap co-grid">
+    <div class="co-side rv">
+      <span class="eyebrow">Інтелектуальне управління</span>
+      <h2>Не ще один дашборд. <span class="hl">Відповіді на питання власника.</span></h2>
+      <p class="lead">Запитайте словами. Отримайте відповідь, пояснення причин і готові дії на погодження.</p>
+      <div class="qs" id="qs" role="group" aria-label="Приклади питань власника">
+        <button class="q" aria-pressed="true" data-i="0">«Як у нас сьогодні справи?»</button>
+        <button class="q" aria-pressed="false" data-i="1">«Де ми втрачаємо дохід?»</button>
+        <button class="q" aria-pressed="false" data-i="2">«Хто з гостей потребує уваги?»</button>
+      </div>
+    </div>
+    <div class="card copilot rv" style="--d:.1s">
+      <div class="copilot-h"><svg class="ic"><use href="#i-bulb"/></svg>AI-копілот керівника<span>Умовний приклад інтерфейсу</span></div>
+      <div id="co-rows" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Економіка</span>
+      <h2>Технологія має давати <span class="hl">вимірюваний бізнес-результат</span></h2>
+      <p class="lead">Ми не обіцяємо абстрактних відсотків. Ми фіксуємо показники до старту та після впровадження й показуємо різницю.</p>
+    </div>
+    <div class="res">
+      <div class="card rv"><span class="num">01</span><h3>Більше доходу</h3><p class="how">Персональні додаткові продажі, upgrade, SPA, ресторан, трансфери, ранній заїзд, пізній виїзд, прямі бронювання.</p><small>Вимірюємо</small><ul><li>RevPAR</li><li>ADR</li><li>Прямі бронювання</li><li>Дохід на гостя</li></ul></div>
+      <div class="card rv" style="--d:.06s"><span class="num">02</span><h3>Нижчі витрати</h3><p class="how">Автоматизація рутини, ефективніше staffing та housekeeping, менше помилок, автоматичний контроль.</p><small>Вимірюємо</small><ul><li>Витрати на номер</li><li>Час на рутину</li><li>Кількість помилок</li></ul></div>
+      <div class="card rv" style="--d:.12s"><span class="num">03</span><h3>Кращий досвід гостя</h3><p class="how">Персоналізація, швидка реакція, комунікація 24/7, проактивний сервіс, знання історії гостя.</p><small>Вимірюємо</small><ul><li>Час реакції</li><li>Кількість скарг</li><li>Оцінка гостя</li></ul></div>
+      <div class="card hi rv" style="--d:.18s"><span class="num">04</span><h3>Вища лояльність</h3><p class="how">Пам'ять про гостя, персональні сценарії, прогноз ризику втрати клієнта, повторні пропозиції.</p><small>Вимірюємо</small><ul><li>Retention</li><li>Повторний візит</li></ul></div>
+    </div>
+    <p class="quote rv" style="margin-top:34px">Кожен показник вимірюється до старту й після впровадження.</p>
+  </div>
+</section>
+
+<!-- ECOSYSTEM -->
+<section class="alt">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Екосистема</span>
+      <h2>Весь готель — <span class="hl">в одній екосистемі</span></h2>
+      <p class="lead">Один інтелектуальний шар над усіма напрямками готелю. Починаємо з того, що дає найбільший ефект саме вам.</p>
+    </div>
+    <div class="eco rv">
+      <div class="mod"><svg class="ic"><use href="#i-gear"/></svg>Операції</div>
+      <div class="mod"><svg class="ic"><use href="#i-star"/></svg>Guest experience</div>
+      <div class="mod"><svg class="ic"><use href="#i-chat"/></svg>CRM і комунікації</div>
+      <div class="mod"><svg class="ic"><use href="#i-key2"/></svg>Продажі та бронювання</div>
+      <div class="mod core">Synaptic<small>Інтелектуальне ядро</small></div>
+      <div class="mod"><svg class="ic"><use href="#i-chart"/></svg>Revenue management</div>
+      <div class="mod"><svg class="ic"><use href="#i-mega"/></svg>Маркетинг</div>
+      <div class="mod"><svg class="ic"><use href="#i-users"/></svg>Персонал</div>
+      <div class="mod"><svg class="ic"><use href="#i-badge"/></svg>Контроль якості</div>
+      <div class="mod"><svg class="ic"><use href="#i-trend"/></svg>Аналітика</div>
+      <div class="mod"><svg class="ic"><use href="#i-thumb"/></svg>Лояльність</div>
+      <div class="mod"><svg class="ic"><use href="#i-bolt"/></svg>Гіперперсоналізація</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section id="security">
+  <div class="wrap sec-grid">
+    <div class="sec-l rv">
+      <span class="eyebrow">Безпека даних гостей</span>
+      <h2>Дані ваших гостей під замком. <span class="hl">Ключ у вас.</span></h2>
+      <p class="lead">Готель працює з персональними даними тисяч людей. Захист закладено в архітектуру Synaptic, а не додано як опцію. Платформа спроєктована з урахуванням вимог GDPR.</p>
+      <div class="std">
+        <div><b>GDPR</b>Персональні дані: мета обробки, мінімізація, права людини, контроль доступу.</div>
+        <div><b>EU AI Act</b>Відповідальне використання ШІ: прозорість, нагляд людини.</div>
+        <div><b>ISO/IEC 42001</b>Управління ШІ<br><em>Сертифікація в процесі</em></div>
+        <div><b>ISO/IEC 27001</b>Інформаційна безпека<br><em>Сертифікація в процесі</em></div>
+      </div>
+      <p class="note">Застосовність вимог визначаємо для конкретного рішення, ринку, даних і ролей сторін.</p>
+    </div>
+    <div class="sec-list rv" style="--d:.1s">
+      <div class="sec-i"><svg class="ic"><use href="#i-db"/></svg><div><b>Окреме закрите сховище</b><span>Дані кожного готелю зберігаються окремо від інших і закриті від зовнішнього світу.</span></div></div>
+      <div class="sec-i"><svg class="ic"><use href="#i-lock"/></svg><div><b>Шифрування, ключ належить вам</b><span>У сховищі лежать лише зашифровані дані. Ключ зберігається у власника поза сховищем.</span></div></div>
+      <div class="sec-i"><svg class="ic"><use href="#i-users"/></svg><div><b>Доступ за ролями</b><span>Від власника до адміністратора: кожен бачить лише своє.</span></div></div>
+      <div class="sec-i"><svg class="ic"><use href="#i-list"/></svg><div><b>Журнал усіх дій</b><span>Кожна дія записана: хто, що і коли. Її завжди можна відновити.</span></div></div>
+      <div class="sec-i"><svg class="ic"><use href="#i-pin"/></svg><div><b>Де зберігаються дані</b><span>На сервері вашої компанії або на нашому сервері в Польщі, тобто в межах Європейського Союзу.</span></div></div>
+      <div class="sec-i"><svg class="ic"><use href="#i-eye"/></svg><div><b>Відкриті до перевірки</b><span>Надамо тестове середовище, щоб ваша служба безпеки перевірила все самостійно.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- APPROACH + PILOT -->
+<section id="approach" class="alt">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Підхід</span>
+      <h2>Ми не починаємо з технології. <span class="hl">Ми починаємо з бізнесу.</span></h2>
+    </div>
+    <div class="appr">
+      <div class="card ap rv"><span class="num">01</span><h3>Діагностика</h3><p>Аналіз систем, даних, процесів, шляху гостя та операційних втрат.</p></div>
+      <div class="card ap rv" style="--d:.06s"><span class="num">02</span><h3>Архітектура</h3><p>Створення карти цифрової трансформації готелю.</p></div>
+      <div class="card ap rv" style="--d:.12s"><span class="num">03</span><h3>Інтеграція</h3><p>Об'єднання систем і запуск AI-рішень.</p></div>
+      <div class="card ap last rv" style="--d:.18s"><span class="num">04</span><h3>Оптимізація</h3><p>Постійне вимірювання результатів і масштабування.</p></div>
+    </div>
+    <p class="quote rv" style="margin-top:34px">Кожен проєкт починається з питання: де готель може заробляти більше, працювати ефективніше та краще обслуговувати гостя?</p>
+
+    <div class="pilot">
+      <div class="card rv">
+        <span class="eyebrow">Перший крок</span>
+        <h3 style="font-size:1.7rem">Гарантований пілот на одному процесі</h3>
+        <p class="lead" style="font-size:1rem">Беремо один процес або напрямок готелю, разом визначаємо вимірювані цілі, виконуємо задачу й презентуємо результат. Перший результат за 5 робочих днів після погодження задачі та доступів.</p>
+        <ol>
+          <li><div>Визначаємо процес і цілі<span>Наприклад: скарги, додаткові продажі чи ранковий звіт власника.</span></div></li>
+          <li><div>Підключення<span>Ви надаєте доступи, ми підключаємо їх до закритого сховища даних готелю.</span></div></li>
+          <li><div>Налаштування й виконання<span>Налаштовуємо систему під вашу задачу відповідно до технічного завдання.</span></div></li>
+          <li><div>Презентація результату<span>Показуємо результат на ваших даних і підтверджуємо відповідність ТЗ.</span></div></li>
+        </ol>
+      </div>
+      <div class="card hi rv" style="--d:.1s">
+        <span class="eyebrow">Вартість</span>
+        <div class="price">450 €</div>
+        <p class="note" style="font-size:.95rem">Базова інтеграція: підключення систем до закритого сховища, налаштування збору даних, реалізація технічного завдання та оцінка ефективності.</p>
+        <div class="g"><svg class="ic"><use href="#i-badge"/></svg><div>100% повернення коштів<span>Якщо результат не відповідає узгодженому ТЗ, ми повертаємо всю сплачену суму.</span></div></div>
+        <p class="note">Від готелю: відповідальна людина, опис задачі, договір і доступи до потрібних систем.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="wrap">
+    <div class="head rv">
+      <span class="eyebrow">Команда</span>
+      <h2>Ми бачимо готель з двох сторін: <span class="hl">технології та реальних операцій</span></h2>
+    </div>
+    <div class="team">
+      <article class="card person rv">
+        <div class="who"><img src="img/founder-yuliy-hromyko.png" alt="Юлій Громико" width="84" height="84"><div><h3>Юлій Громико</h3><span class="role">Архітектор платформи Synaptic</span></div></div>
+        <p><b>18+ років</b> у технологіях, enterprise-архітектурі, AI, cloud та кібербезпеці.</p>
+        <p>Працював Principal Architect у Thomas Cook Group, одному з найбільших міжнародних туристичних бізнесів свого часу. Проєктував архітектуру платформ для Thomas Cook і Fozzy Group.</p>
+        <div class="tags"><span>Enterprise-архітектура</span><span>AI-архітектура</span><span>Кібербезпека</span><span>Управління даними</span></div>
+      </article>
+      <article class="card person rv" style="--d:.1s">
+        <div class="who"><img src="img/cofounder-serhiy-polonskyi.png" alt="Сергій Полонський" width="84" height="84"><div><h3>Сергій Полонський</h3><span class="role">Операції та масштабування</span></div></div>
+        <p>Підприємець та експерт з операційного управління з <b>майже 20-річним досвідом</b> побудови та масштабування операційних бізнесів.</p>
+        <div class="tags"><span>Побудова команд</span><span>Масштабування</span><span>Франчайзинг</span><span>Клієнтський сервіс</span><span>Контроль якості</span><span>Управління персоналом</span><span>Операційна ефективність</span><span>Фінансова модель</span></div>
+      </article>
+    </div>
+    <p class="quote rv" style="margin-top:34px">Технології enterprise-рівня + реальний досвід побудови й управління операційним бізнесом.</p>
+
+    <div class="badges">
+      <div class="bd rv"><img src="img/badge-pecb-iso-42001.png" alt="PECB ISO/IEC 42001 Implementer"><div><b>ISO/IEC 42001</b><span>Управління ШІ · PECB Certified Implementer</span></div></div>
+      <div class="bd rv" style="--d:.05s"><img src="img/badge-pecb-ciso.png" alt="PECB Chief Information Security Officer"><div><b>CISO</b><span>Інформаційна безпека · PECB Certified</span></div></div>
+      <div class="bd rv" style="--d:.1s"><img src="img/badge-pecb-dpo.png" alt="PECB Data Protection Officer"><div><b>DPO</b><span>Захист даних · PECB Certified</span></div></div>
+      <div class="bd rv" style="--d:.15s"><img src="img/badge-pecb-iso-31000.png" alt="PECB ISO 31000 Risk Manager"><div><b>ISO 31000</b><span>Управління ризиками · PECB Certified Risk Manager</span></div></div>
+    </div>
+    <p class="note" style="margin-top:14px">Міжнародні сертифікації засновника видає орган сертифікації PECB.</p>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section class="final" id="contact">
+  <div class="wrap">
+    <div class="cta-card rv">
+      <div>
+        <h2>Майбутнє гостинності — не більше технологій. <span>А більше інтелекту.</span></h2>
+        <p>Обговоримо, де ваш готель може заробляти більше та працювати ефективніше. Напишіть у зручний месенджер.</p>
+      </div>
+      <div class="ct">
+        <div class="ct-who"><img src="img/cofounder-serhiy-polonskyi.png" alt="Сергій Полонський" width="56" height="56"><div><b>Сергій Полонський</b><small>Співзасновник Synaptic</small></div></div>
+        <div class="ct-row"><span><small>Telegram</small><span class="ct-val">+380 67 716 22 24</span></span><a href="https://t.me/+380677162224" rel="noopener">Написати</a></div>
+        <div class="ct-row"><span><small>WhatsApp</small><span class="ct-val">+380 67 716 22 24</span></span><a href="https://wa.me/380677162224" rel="noopener">Написати</a></div>
+        <div class="ct-row"><span><small>Телефон</small><span class="ct-val">+380 67 716 22 24</span></span><button type="button" data-copy="+380677162224">Копіювати</button></div>
+        <div class="ct-row"><span><small>Електронна пошта</small><span class="ct-val">sergiy@sinaptic.ai</span></span><a href="mailto:sergiy@sinaptic.ai">Написати</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span><b style="color:var(--ink)">Synaptic</b> · Інтелектуальне ядро сучасної гостинності</span>
+    <span>Резидент Дія.City · sinaptic.ai · sergiy@sinaptic.ai</span>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
