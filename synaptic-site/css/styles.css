@@ -654,3 +654,13 @@ ul.ans b{color:var(--dk-accent)}
 .sx-head h2{max-width:20ch}
 @media(min-width:1001px){.res-c>p{min-height:9.4em}}
 .flows g{opacity:0}
+.who-s{padding-bottom:clamp(24px,3vw,40px)}
+.who-s+section{padding-top:clamp(40px,5vw,72px)}
+.cmp .win .rows{flex:1;justify-content:space-between;gap:10px}
+.cmp .win .row{flex:1;max-height:64px}
+section{padding-block:clamp(56px,7vw,96px)}
+.comp-cap{margin-bottom:0}
+.comp-cap+.comp{margin-top:18px}
+.cb.pr .st{flex-direction:row;padding:0;border:0;background:none;border-radius:0}
+.final{padding-top:clamp(40px,5vw,72px)}
+.who-s{padding-block:clamp(48px,6vw,80px) clamp(16px,2vw,24px)}
