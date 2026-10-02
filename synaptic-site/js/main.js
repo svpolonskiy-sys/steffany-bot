@@ -26,3 +26,9 @@
     try{navigator.clipboard.writeText(v).then(done,fb)}catch(e){fb()}
   })});
 })();
+(function(){
+  var tabs=document.querySelectorAll('.seg-t [role=tab]');
+  tabs.forEach(function(t,i){t.addEventListener('click',function(){
+    tabs.forEach(function(x,j){x.setAttribute('aria-selected',j===i?'true':'false');var p=document.getElementById(x.getAttribute('aria-controls'));if(p){p.hidden=j!==i;p.classList.toggle('on',j===i)}});
+  })});
+})();
