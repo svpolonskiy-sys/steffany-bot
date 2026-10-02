@@ -769,3 +769,40 @@ abbr[title]{text-decoration:underline dotted;text-decoration-color:var(--muted);
 .hero h1{font-size:clamp(2.1rem,3.4vw,3.2rem);text-wrap:nowrap}
 @media(max-width:1100px){.hero h1{text-wrap:balance}}
 .h-lead{max-width:54ch}
+
+/* ===== editorial typography system (magazine-style section heads) ===== */
+h1,h2,h3,h4,.claim,.big{text-wrap:balance}
+p,li,.lead{text-wrap:pretty}
+h2{font-size:clamp(1.85rem,3vw,2.65rem);line-height:1.1;font-weight:700;letter-spacing:-.028em}
+.head:not(.center),.sx-head{
+  display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);column-gap:clamp(28px,5vw,80px);row-gap:clamp(16px,2vw,24px);
+  align-items:end;max-width:none;margin-bottom:clamp(32px,4.5vw,56px)}
+.head:not(.center)>.eyebrow,.sx-head>.eyebrow{grid-column:1/-1;display:flex;align-items:center;gap:18px;font-size:.74rem;letter-spacing:.24em}
+.head:not(.center)>.eyebrow::after,.sx-head>.eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec .sx-head>.eyebrow::after{background:var(--dk-line)}
+.head:not(.center)>h2,.head:not(.center)>h3,.sx-head>h2{grid-column:1;max-width:none}
+.head:not(.center)>.lead,.sx-head>.lead{grid-column:2;max-width:none;font-size:1.02rem;line-height:1.6;align-self:end;padding-bottom:.35em}
+.head:not(.center):not(:has(.lead))>h2,.head:not(.center):not(:has(.lead))>h3{grid-column:1/-1}
+.head:not(.center) h2 .serif,.sx-head h2 .serif{display:block;margin-top:.04em}
+.head.center{max-width:760px}
+.head.center>h2{text-wrap:balance}
+.head.center>.eyebrow{letter-spacing:.24em}
+.h3x{font-size:clamp(1.45rem,2.3vw,2rem);font-weight:700}
+.claim{font-size:clamp(1.25rem,2.2vw,1.75rem);max-width:30em;margin-inline:auto}
+.quote{max-width:34em}
+.lead{max-width:56ch}
+.who-grid h2{max-width:13ch}
+@media(max-width:900px){
+  .head:not(.center),.sx-head{grid-template-columns:1fr}
+  .head:not(.center)>h2,.head:not(.center)>h3,.sx-head>h2,.head:not(.center)>.lead,.sx-head>.lead{grid-column:1}
+  .head:not(.center)>.lead,.sx-head>.lead{padding-bottom:0}
+  h2{font-size:clamp(1.75rem,6.2vw,2.2rem)}
+}
+.mq .t{font-weight:inherit}
+.who-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:clamp(28px,5vw,80px);align-items:start}
+.who-row .not{margin-top:0}
+.who-row .aud{margin-top:0;align-self:start}
+@media(max-width:900px){.who-row{grid-template-columns:1fr}}
+.who-s{padding-block:clamp(48px,6vw,88px)}
+.tile h3,.pain h3,.mod h3,.g h3,.card2 b,.person h3{line-height:1.22}
+.who-s{padding-bottom:clamp(24px,3vw,40px)}
