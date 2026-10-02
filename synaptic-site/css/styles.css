@@ -831,3 +831,10 @@ h2{font-size:clamp(1.85rem,3vw,2.65rem);line-height:1.1;font-weight:700;letter-s
 .tile.t-a .kpi-l{color:var(--gold)}
 @media (prefers-reduced-motion:no-preference){.btn-primary{animation:none}}
 .nav{background:rgba(13,27,23,.96);border-bottom-color:var(--line)}
+
+/* hero: top-align copy with the visual to remove the empty corner */
+.hero{padding-block:clamp(28px,3.4vw,52px) clamp(48px,6vw,88px)}
+.hero-grid{align-items:start}
+.hero-copy{padding-top:clamp(8px,2vw,28px)}
+.h-eyebrow{margin-bottom:clamp(16px,1.8vw,22px)}
+.hero .vis{margin-top:0}
