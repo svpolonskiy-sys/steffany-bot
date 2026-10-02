@@ -838,3 +838,21 @@ h2{font-size:clamp(1.85rem,3vw,2.65rem);line-height:1.1;font-weight:700;letter-s
 .hero-copy{padding-top:clamp(8px,2vw,28px)}
 .h-eyebrow{margin-bottom:clamp(16px,1.8vw,22px)}
 .hero .vis{margin-top:0}
+
+/* hero balance: centre copy against a more compact visual */
+@media(min-width:1101px){
+  .hero{padding-block:clamp(40px,4.4vw,72px)}
+  .hero-grid{align-items:center}
+  .hero-copy{padding-top:0}
+  .hero .vis{--u:calc(min(100vw - 40px,430px) / 52)}
+  .hero .brief{margin-top:calc(var(--u) * -3)}
+  .hero h1{font-size:clamp(2.3rem,3.9vw,3.7rem)}
+  .h-eyebrow{margin-bottom:clamp(20px,2.2vw,30px)}
+  .h-lead{margin-top:clamp(22px,2.4vw,32px);font-size:clamp(1.02rem,1.2vw,1.12rem);line-height:1.7}
+  .h-res{margin-top:clamp(28px,3vw,40px);padding-top:22px}
+  .h-cta{margin-top:clamp(28px,3vw,40px)}
+}
+@media(min-width:1101px){
+  .hero .vis{--u:calc(min(100vw - 40px,470px) / 52)}
+  .hero .brief{margin-top:calc(var(--u) * -4.5)}
+}
