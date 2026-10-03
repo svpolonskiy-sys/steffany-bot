@@ -335,7 +335,7 @@ footer .row{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-betw
 .vstep{border:1.5px solid transparent;animation:vlit 9s ease-in-out infinite;animation-delay:calc(var(--i) * 2.2s)}
 
 /* метрики */
-.kpi{display:grid;grid-template-columns:1.15fr 1fr;gap:clamp(18px,3vw,40px);align-items:center}
+.kpi{display:grid;grid-template-columns:1.15fr 1fr;gap:clamp(18px,3vw,40px);align-items:start}
 .kpi .big{font-family:var(--head);font-weight:800;font-size:clamp(3rem,8vw,6rem);line-height:.95;letter-spacing:-.04em;color:var(--blue)}
 .kpi .big small{display:block;font-size:.3em;letter-spacing:0;font-weight:700;margin:8px 0 0;color:var(--ink)}
 .brow{display:grid;grid-template-columns:64px 1fr 150px;gap:12px;align-items:center;margin-top:14px}
@@ -384,6 +384,74 @@ footer .row{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-betw
 .vdash .vb div{display:flex;flex-direction:column-reverse;justify-content:flex-start;gap:calc(var(--u) * .3);font-size:calc(var(--u) * 1);color:var(--muted);font-weight:700;font-family:var(--head)}
 .vdash .vb i{display:block;height:calc(var(--u) * var(--h));border-radius:calc(var(--u) * .5);background:linear-gradient(180deg,#8fb1d6,#2b5c8e);transform-origin:bottom;animation:vbar 3.2s ease-in-out infinite;animation-delay:calc(var(--k) * .5s)}
 @keyframes vbar{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1)}}
+
+
+/* =====================================================================
+   v3: редакційна верстка (стиль преміального медичного журналу).
+   Палітра й шрифти Асклепій без змін.
+   ===================================================================== */
+body{line-height:1.65;font-feature-settings:"kern","liga"}
+p{text-wrap:pretty}
+section{padding-block:clamp(22px,2.8vw,40px)}
+.sec-title{font-size:clamp(1.85rem,3.3vw,2.85rem);line-height:1.1;letter-spacing:-.025em;text-wrap:balance}
+/* шапка розділу: рубрика ліворуч, заголовок і підзаголовок праворуч */
+.mag-head{display:grid;grid-template-columns:clamp(120px,15vw,200px) 1fr;gap:clamp(16px,3vw,48px);align-items:start;border-top:2px solid var(--blue);padding-top:20px;margin-bottom:clamp(22px,3vw,38px)}
+.kick{display:flex;flex-direction:column;gap:8px;font-family:var(--head)}
+.kick .n{font-weight:800;font-size:clamp(2.2rem,4vw,3.2rem);line-height:.9;color:var(--blue);letter-spacing:-.04em}
+.kick .k{font-weight:700;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.deck{font-size:clamp(1.02rem,1.4vw,1.2rem);line-height:1.55;color:var(--muted);max-width:60ch;margin-top:14px}
+.sec-dark .mag-head{border-color:rgba(255,255,255,.55)}
+.sec-dark .kick .n{color:#bcd3ee}
+.sec-dark .kick .k,.sec-dark .deck{color:#d3e0f1}
+.band .mag-head{border-color:var(--blue)}
+@media(max-width:700px){.mag-head{grid-template-columns:1fr;gap:10px}.kick{flex-direction:row;align-items:baseline;gap:12px}}
+/* hero: колонка тез у стилі боковика журналу */
+.hero-in{display:grid;grid-template-columns:1.35fr .65fr;gap:clamp(24px,4vw,72px);align-items:end}
+.h-main{display:flex;flex-direction:column;gap:22px;min-width:0}
+.banner h1{max-width:none;font-size:clamp(2.1rem,4.4vw,3.7rem)}
+.banner p.sub{max-width:58ch}
+.h-side{border-left:1px solid rgba(255,255,255,.4);padding-left:clamp(18px,2.4vw,34px);display:flex;flex-direction:column;min-width:0}
+.hs{padding-block:16px;border-top:1px solid rgba(255,255,255,.3);display:flex;flex-direction:column;gap:6px}
+.hs:first-child{border-top:0;padding-top:0}
+.hk{font-family:var(--head);font-weight:700;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;opacity:.8}
+.hs b{font-family:var(--head);font-weight:800;font-size:clamp(1.1rem,1.7vw,1.45rem);line-height:1.2}
+.hs .hd{font-size:.92rem;opacity:.92;line-height:1.5}
+.banner{min-height:0;gap:clamp(18px,2.4vw,30px)}
+@media(max-width:900px){.hero-in{grid-template-columns:1fr}.h-side{border-left:0;padding-left:0;border-top:1px solid rgba(255,255,255,.4);padding-top:18px}}
+/* картки: рівні відступи, тонкі лінії замість важких тіней */
+.o3,.cmp2 .c,.panel{box-shadow:0 1px 0 rgba(34,77,131,.06),0 12px 30px rgba(34,77,131,.08)}
+.o3 .tag,.cmp2 .tg2{letter-spacing:.14em}
+.mchips{margin-top:20px;padding-top:16px;border-top:1px solid #d9d9d9}
+footer{padding-block:24px 80px}
+
+
+/* відповідність */
+.cert-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cert-grid h3{font-family:var(--head);font-weight:800;font-size:1.3rem;line-height:1.2;margin:12px 0 0}
+.have .tag,.road .tag{width:max-content}
+.bdg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.b1{display:flex;gap:12px;align-items:center;background:var(--bg);border-radius:var(--r-m);padding:12px 14px;transition:transform .3s}
+.b1:hover{transform:translateY(-3px)}
+.b1 img{width:64px;height:auto;border-radius:10px;flex:none}
+.b1 b{font-family:var(--head);font-weight:800;display:block;line-height:1.2}
+.b1 span{font-size:.84rem;color:var(--muted);line-height:1.3;display:block}
+.rl{margin-top:8px}
+.rl li{display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;padding:14px 0;border-top:1px solid #d9e2ef}
+.rl li:first-child{border-top:0}
+.rl b{font-family:var(--head);font-weight:800;display:block}
+.rl span{font-size:.86rem;color:var(--muted)}
+.rl em{font-style:normal;font-family:var(--head);font-weight:700;font-size:.74rem;background:var(--pale);color:var(--blue);border-radius:999px;padding:5px 12px;white-space:nowrap}
+.pb{grid-column:1/-1;display:block;height:6px;border-radius:999px;background:var(--pale);position:relative;overflow:hidden}
+.pb::after{content:"";position:absolute;top:0;bottom:0;width:38%;border-radius:999px;background:linear-gradient(90deg,transparent,var(--blue),transparent);animation:pbmove 2.8s ease-in-out infinite;animation-delay:var(--d,0s)}
+@keyframes pbmove{0%{left:-40%}100%{left:100%}}
+.regs{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px}
+.rg2{background:#fff;border-radius:var(--r-m);padding:18px 20px;box-shadow:0 1px 0 rgba(34,77,131,.06),0 12px 30px rgba(34,77,131,.08);display:flex;flex-direction:column;gap:6px;min-width:0}
+.rg2 .ic{width:1.6em;height:1.6em;color:var(--blue)}
+.rg2 b{font-family:var(--head);font-weight:800;font-size:1.05rem;line-height:1.2}
+.rg2 span{font-size:.88rem;color:var(--muted);line-height:1.45}
+@media(max-width:1060px){.regs{grid-template-columns:1fr 1fr}}
+@media(max-width:860px){.cert-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.regs{grid-template-columns:1fr}.bdg{grid-template-columns:1fr}.rl li{grid-template-columns:1fr}}
 
 /* grid-діти не розпирають екран на вузьких телефонах */
 .hero-grid>*,.cta>*,.usa>*,.vault>*,.profile>*,.calc>*,.pilot>*,.factors>*,.diagram>*,.price>*,.vs>*{min-width:0}
@@ -502,6 +570,7 @@ section{padding-block:clamp(26px,3.4vw,48px)}
         <a href="#core">Рішення</a>
         <a href="#metrics">Метрики</a>
         <a href="#safe">Безпека</a>
+        <a href="#certs">Сертифікати</a>
         <a href="#contact">Умови</a>
       </nav>
       <span class="hdr-sep" aria-hidden="true"></span>
@@ -520,17 +589,19 @@ section{padding-block:clamp(26px,3.4vw,48px)}
         <span class="shape s1"></span><span class="shape s2"></span>
         <svg class="cross" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><use href="#i-cross"/></svg>
         <span class="eyebrow">Sinaptic × Медичний центр «Асклепій»</span>
-        <div>
-          <h1>Більше часу лікарю.<span>Більше уваги кожному пацієнту.</span></h1>
-        </div>
-        <p class="sub">Захищена ШІ-платформа, яка об'єднує всі системи Асклепій: персональний шлях пацієнта, менше рутини в лікаря, більше пацієнтів у тих самих слотах. <b>Ми не пропонуємо ще одну систему: ми об'єднуємо всі ваші джерела даних в єдине цифрове операційне ядро.</b></p>
-        <div class="row">
-          <a class="btn white" href="#core">Як це працює <svg class="ic"><use href="#i-arrow"/></svg></a>
-        </div>
-        <div class="glass-row">
-          <div class="glass"><b>Єдине операційне ядро Асклепій</b></div>
-          <div class="glass"><b>Більше пацієнтів</b><span>у супроводі лікаря на місяць. Гіперперсоналізація супроводу</span></div>
-          <div class="glass"><b>Захист даних пацієнтів</b><span>Персональні та медичні дані захищені відповідно до регуляторних вимог ЄС</span></div>
+        <div class="hero-in">
+          <div class="h-main">
+            <h1>Більше часу лікарю.<span>Більше уваги кожному пацієнту.</span></h1>
+            <p class="sub">Захищена ШІ-платформа, яка об'єднує всі системи Асклепій: персональний шлях пацієнта, менше рутини в лікаря, більше пацієнтів у тих самих слотах. <b>Ми не пропонуємо ще одну систему: ми об'єднуємо всі ваші джерела даних в єдине цифрове операційне ядро.</b></p>
+            <div class="row">
+              <a class="btn white" href="#core">Як це працює <svg class="ic"><use href="#i-arrow"/></svg></a>
+            </div>
+          </div>
+          <aside class="h-side" aria-label="Ключові тези">
+            <div class="hs"><span class="hk">01 · Платформа</span><b>Єдине операційне ядро Асклепій</b></div>
+            <div class="hs"><span class="hk">02 · Результат</span><b>Більше пацієнтів у супроводі лікаря на місяць</b><span class="hd">Гіперперсоналізація супроводу</span></div>
+            <div class="hs"><span class="hk">03 · Безпека</span><b>Захист даних пацієнтів</b><span class="hd">Персональні та медичні дані захищені відповідно до регуляторних вимог ЄС</span></div>
+          </aside>
         </div>
       </div>
 
@@ -542,8 +613,9 @@ section{padding-block:clamp(26px,3.4vw,48px)}
 <section id="core">
   <div class="wrap">
     <div class="band rv"><div class="band-in">
-      <div class="title-line" style="border-color:var(--blue)">
-        <h2 class="sec-title">Єдина захищена інтерактивна <em>база знань</em>, що об'єднує всі джерела</h2>
+      <div class="mag-head">
+        <div class="kick"><span class="n">01</span><span class="k">Рішення</span></div>
+        <div><h2 class="sec-title">Єдина захищена інтерактивна <em>база знань</em>, що об'єднує всі джерела</h2><p class="deck">Усі джерела даних Асклепій працюють як єдине ціле, а кожна роль бачить лише те, що їй потрібно.</p></div>
       </div>
       <div class="diagram" id="diagram">
         <svg class="dflow" id="dflow" aria-hidden="true"></svg>
@@ -587,8 +659,9 @@ section{padding-block:clamp(26px,3.4vw,48px)}
 <!-- ======================= ЕКРАН 3: МЕТРИКИ ======================= -->
 <section id="metrics">
   <div class="wrap">
-    <div class="title-line rv">
-      <h2 class="sec-title">Ми продаємо <em>метрики</em>, а не технологію</h2>
+    <div class="mag-head rv">
+      <div class="kick"><span class="n">02</span><span class="k">Метрики</span></div>
+      <div><h2 class="sec-title">Ми продаємо <em>метрики</em>, а не технологію</h2><p class="deck">Результат цифрової клініки в США та показники, які ми фіксуємо для Асклепій до старту.</p></div>
     </div>
     <div class="panel kpi rv" id="kpi">
       <div>
@@ -616,7 +689,10 @@ section{padding-block:clamp(26px,3.4vw,48px)}
 <section id="safe">
   <div class="wrap">
     <div class="sec-dark rv"><div class="band-in" style="position:relative">
-      <div class="title-line"><h2 class="sec-title">Всі дані мережі під <em>Вашим контролем</em></h2></div>
+      <div class="mag-head">
+        <div class="kick"><span class="n">03</span><span class="k">Безпека</span></div>
+        <div><h2 class="sec-title">Всі дані мережі під <em>Вашим контролем</em></h2><p class="deck">Шифрування при вході, окреме сховище, журнал кожної дії. Ключ належить вам.</p></div>
+      </div>
       <div class="safe-grid">
         <div>
           <div class="vx" role="img" aria-label="Схема: дані з МІС, лабораторії та діагностики шифруються на вході й потрапляють у закрите сховище; спроба стороннього доступу блокується">
@@ -663,6 +739,51 @@ section{padding-block:clamp(26px,3.4vw,48px)}
         </div>
       </div>
     </div></div>
+  </div>
+</section>
+
+<!-- ======================= ЕКРАН: ВІДПОВІДНІСТЬ ======================= -->
+<section id="certs">
+  <div class="wrap">
+    <div class="mag-head rv">
+      <div class="kick"><span class="n">04</span><span class="k">Відповідність</span></div>
+      <div><h2 class="sec-title">Безпека, підтверджена <em>стандартами й кваліфікацією</em></h2><p class="deck">Міжнародні сертифікації та вимоги регуляторів, які ми закладаємо в архітектуру платформи, а не додаємо після запуску.</p></div>
+    </div>
+
+    <div class="cert-grid">
+      <div class="panel have rv">
+        <span class="tag">Вже є</span>
+        <h3>Підтверджена кваліфікація технічного директора</h3>
+        <div class="bdg">
+          <div class="b1"><img src="img/badge-pecb-dpo.png" alt="PECB Certified Data Protection Officer" width="64" height="65"><div><b>DPO</b><span>Захист персональних даних</span></div></div>
+          <div class="b1"><img src="img/badge-pecb-ciso.png" alt="PECB Certified CISO" width="64" height="65"><div><b>CISO</b><span>Інформаційна безпека</span></div></div>
+          <div class="b1"><img src="img/badge-pecb-iso-42001.png" alt="PECB ISO/IEC 42001 Implementer" width="64" height="65"><div><b>ISO/IEC 42001</b><span>Управління ШІ, Implementer</span></div></div>
+          <div class="b1"><img src="img/badge-pecb-iso-31000.png" alt="PECB ISO 31000 Risk Manager" width="64" height="65"><div><b>ISO 31000</b><span>Управління ризиками, Risk Manager</span></div></div>
+        </div>
+        <p class="note" style="margin-top:12px">Сертифікації видає міжнародний орган PECB. Це кваліфікація людини, яка проєктує безпеку вашої платформи.</p>
+      </div>
+
+      <div class="panel road rv">
+        <span class="tag">У процесі отримання</span>
+        <h3>Сертифікація компанії та платформи</h3>
+        <ul class="rl">
+          <li><div><b>ISO/IEC 27001</b><span>Система управління інформаційною безпекою</span></div><em>Сертифікація в процесі</em><i class="pb" style="--d:0s"></i></li>
+          <li><div><b>ISO/IEC 42001</b><span>Система управління штучним інтелектом</span></div><em>Сертифікація в процесі</em><i class="pb" style="--d:.5s"></i></li>
+          <li><div><b>ISO 9001</b><span>Система управління якістю</span></div><em>Сертифікація в процесі</em><i class="pb" style="--d:1s"></i></li>
+          <li><div><b>ISO 31000</b><span>Управління ризиками</span></div><em>Впровадження в процесі</em><i class="pb" style="--d:1.5s"></i></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="regs">
+      <div class="rg2 rv"><svg class="ic"><use href="#i-shield"/></svg><b>GDPR</b><span>Мета обробки, мінімізація даних, згода, право пацієнта на доступ і видалення.</span></div>
+      <div class="rg2 rv"><svg class="ic"><use href="#i-eye"/></svg><b>EU AI Act</b><span>Прозорість, документація та нагляд людини за ШІ. Клінічні рішення лишаються за лікарем.</span></div>
+      <div class="rg2 rv"><svg class="ic"><use href="#i-file"/></svg><b>Законодавство України</b><span>Захист персональних даних і лікарська таємниця: контроль доступу та журнал кожної дії.</span></div>
+      <div class="rg2 rv"><svg class="ic"><use href="#i-key"/></svg><b>Відкритий аудит</b><span>Тестове середовище, у якому ваша служба безпеки й юристи перевірять усе самостійно.</span></div>
+    </div>
+
+    <div class="mchips rv"><b>Що це дає Асклепій:</b><span class="tag">менше регуляторних ризиків</span><span class="tag">готовність до перевірок: кожна дія в журналі</span><span class="tag">довіра пацієнтів до закладу</span></div>
+    <p class="note" style="margin-top:10px">Платформа спроєктована з урахуванням цих вимог. Застосовність до конкретного рішення, даних і ролей визначаємо разом із вашими юристами та DPO.</p>
   </div>
 </section>
 
