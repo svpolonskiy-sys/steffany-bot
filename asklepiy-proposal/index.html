@@ -87,8 +87,8 @@ main{overflow-x:clip}
 
 /* ---------- hero ---------- */
 .hero{padding-block:24px 0}
-.hero-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:28px;align-items:stretch}
-.banner{position:relative;border-radius:var(--r-l);overflow:hidden;min-height:560px;color:#fff;padding:clamp(24px,3.4vw,52px);display:flex;flex-direction:column;justify-content:space-between;gap:28px;
+.hero-grid{display:grid;grid-template-columns:1fr;gap:28px;align-items:stretch}
+.banner{position:relative;border-radius:var(--r-l);overflow:hidden;min-height:520px;color:#fff;padding:clamp(24px,3.4vw,52px);display:flex;flex-direction:column;justify-content:space-between;gap:28px;
   background:radial-gradient(70% 80% at 85% 10%,#6f9bcb 0%,transparent 60%),radial-gradient(60% 70% at 0% 100%,#1b3f6c 0%,transparent 65%),linear-gradient(135deg,#2b5c8e 0%,#3b72a8 55%,#5c8fc2 100%)}
 .banner .shape{position:absolute;pointer-events:none;border-radius:50%}
 .banner .s1{width:520px;height:520px;right:-170px;top:-190px;border:70px solid rgba(255,255,255,.10)}
@@ -492,7 +492,6 @@ section{padding-block:clamp(26px,3.4vw,48px)}
       </nav>
       <span class="hdr-sep" aria-hidden="true"></span>
       <a class="pill-ic" href="tel:+380677162224"><svg class="ic"><use href="#i-phone"/></svg><span>+380 67 716 22 24</span></a>
-      <a class="round" href="#contact" aria-label="Домовитись про зустріч"><svg class="ic"><use href="#i-chat"/></svg></a>
     </div>
   </div>
 </header>
@@ -510,39 +509,18 @@ section{padding-block:clamp(26px,3.4vw,48px)}
         <div>
           <h1>Більше часу лікарю.<span>Більше уваги кожному пацієнту.</span></h1>
         </div>
-        <p class="sub">Одна захищена база знань над усіма системами Асклепій: персональний шлях пацієнта, менше рутини в лікаря, більше пацієнтів у тих самих слотах. <b>Ваші системи ми не замінюємо.</b></p>
+        <p class="sub">Захищена ШІ-платформа, яка об'єднує всі системи Асклепій: персональний шлях пацієнта, менше рутини в лікаря, більше пацієнтів у тих самих слотах. <b>Ми не пропонуємо ще одну систему: ми об'єднуємо всі ваші джерела даних в єдине цифрове операційне ядро.</b></p>
         <div class="row">
-          <a class="btn white" href="#contact">Домовитись про зустріч <svg class="ic"><use href="#i-arrow"/></svg></a>
+          <a class="btn white" href="#core">Як це працює <svg class="ic"><use href="#i-arrow"/></svg></a>
           <a class="btn ghost" style="color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.7)" href="#metrics">Дивитись метрики</a>
         </div>
         <div class="glass-row">
           <div class="glass"><b>1 база</b><span>усі ваші джерела в одному захищеному місці</span></div>
-          <div class="glass"><b>300–450</b><span>пацієнтів на лікаря на місяць замість 10–30 (проєкт у США)</span></div>
-          <div class="glass"><b>Ваші дані</b><span>на вашому сервері або на сервері Sinaptic у Польщі</span></div>
+          <div class="glass"><b>Більше пацієнтів</b><span>у супроводі лікаря на місяць. Гіперперсоналізація супроводу</span></div>
+          <div class="glass"><b>Захист даних</b><span>персональних та медичних даних відповідно до регуляторних норм ЄС</span></div>
         </div>
       </div>
 
-      <div class="cards2">
-        <a class="mini a rv" href="#core">
-          <svg class="bg" viewBox="0 0 200 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="150" cy="60" r="70" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="22"/><circle cx="40" cy="170" r="46" fill="#fff" fill-opacity=".14"/></svg>
-          <div class="box"><b>Одна база знань</b><span class="btn sm">Дізнатись більше</span></div>
-        </a>
-        <a class="mini b rv" href="#metrics">
-          <svg class="bg" viewBox="0 0 200 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="50" cy="60" r="60" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="20"/><circle cx="150" cy="190" r="52" fill="#fff" fill-opacity=".14"/></svg>
-          <div class="box"><b>Метрики, а не технологія</b><span class="btn sm">Дізнатись більше</span></div>
-        </a>
-        <a class="mini c rv" href="#safe">
-          <svg class="bg" viewBox="0 0 200 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="140" cy="70" r="64" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="22"/><circle cx="50" cy="190" r="40" fill="#fff" fill-opacity=".12"/></svg>
-          <div class="box"><b>Захист медичних даних</b><span class="btn sm">Дізнатись більше</span></div>
-        </a>
-        <a class="mini white rv" href="#contact">
-          <div class="box">
-            <span class="circ"><svg class="ic"><use href="#i-chat"/></svg></span>
-            <b>Домовимось про зустріч: діагностика і пілот на одному напрямку</b>
-            <span class="arrow"><svg class="ic" style="width:18px;height:18px"><use href="#i-arrow"/></svg></span>
-          </div>
-        </a>
-      </div>
     </div>
   </div>
 </section>
@@ -552,7 +530,7 @@ section{padding-block:clamp(26px,3.4vw,48px)}
   <div class="wrap">
     <div class="band rv"><div class="band-in">
       <div class="title-line" style="border-color:var(--blue)">
-        <h2 class="sec-title">Одна захищена <em>база знань</em> над усіма джерелами</h2>
+        <h2 class="sec-title">Єдина захищена інтерактивна <em>база знань</em>, що об'єднує всі джерела</h2>
       </div>
       <div class="diagram" id="diagram">
         <svg class="dflow" id="dflow" aria-hidden="true"></svg>
@@ -579,7 +557,7 @@ section{padding-block:clamp(26px,3.4vw,48px)}
 
       <div class="cmp2">
         <div class="c a"><span class="tg2">ШІ у вашій МІС</span><b class="t">Бачить лише одну систему</b><p>Працює виключно в межах МІС. Лабораторія, діагностика, дзвінки й месенджери лишаються поза його знаннями.</p></div>
-        <div class="c b"><span class="tg2">Sinaptic</span><b class="t">Об'єднує всі джерела в одну базу знань</b><p>Єдина захищена інтерактивна база: питаєте словами, отримуєте відповідь із джерелом. МІС ми не замінюємо, а працюємо над нею.</p></div>
+        <div class="c b"><span class="tg2">Sinaptic</span><b class="t">Об'єднує всі джерела в одну базу знань</b><p>Єдина захищена інтерактивна база: питаєте словами, отримуєте відповідь із джерелом.</p></div>
       </div>
 
       <div class="outs3">
