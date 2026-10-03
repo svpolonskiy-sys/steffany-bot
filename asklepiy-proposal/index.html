@@ -304,8 +304,8 @@ footer .row{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-betw
 
 /* ===== захист: сховище ===== */
 .vault{align-items:start}
-.vx{--u:calc(min(100vw - 76px,480px) / 46);font-size:var(--u);position:relative;width:46em;max-width:100%;aspect-ratio:1;margin-inline:auto}
-.vx .rg{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%);border:1px solid rgba(255,255,255,.28)}
+.vx{--u:calc(min(100vw - 76px,480px) / 46);font-size:var(--u);position:relative;width:46em;max-width:100%;aspect-ratio:46/66;margin-inline:auto}
+.vx .rg{position:absolute;left:50%;top:26em;border-radius:50%;transform:translate(-50%,-50%);border:1px solid rgba(255,255,255,.28)}
 .vx .v1{width:44em;height:44em;border-style:dashed;animation:spinc 70s linear infinite}
 .vx .v2{width:34em;height:34em;border-style:dashed;border-color:rgba(188,211,238,.5);animation:spinc 45s linear infinite reverse}
 .vx .v3{width:24em;height:24em;border:1.5px solid rgba(255,255,255,.7);background:radial-gradient(circle,rgba(188,211,238,.16),transparent 70%);box-shadow:0 0 3em rgba(188,211,238,.25);animation:guard 3s ease-in-out infinite}
@@ -316,14 +316,14 @@ footer .row{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-betw
 .vsvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .vsvg .vl{fill:none;stroke:#bcd3ee;stroke-width:.2;stroke-dasharray:.7 .9;opacity:.6;animation:dashmove .9s linear infinite;animation-name:vdash}
 @keyframes vdash{to{stroke-dashoffset:-1.6}}
-.vcore{position:absolute;left:50%;top:50%;width:17em;height:17em;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(150deg,#3b72a8,#1b3f6c);border:1.5px solid #fff;display:grid;place-items:center;box-shadow:0 0 5em rgba(188,211,238,.4);animation:absorb 3s ease-in-out infinite}
+.vcore{position:absolute;left:50%;top:26em;width:17em;height:17em;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(150deg,#3b72a8,#1b3f6c);border:1.5px solid #fff;display:grid;place-items:center;box-shadow:0 0 5em rgba(188,211,238,.4);animation:absorb 3s ease-in-out infinite}
 .vcore .ic{width:7em;height:7em;color:#fff;stroke-width:1.3}
 .vcore::before,.vcore::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid #bcd3ee;animation:ripple 3.6s ease-out infinite}
 .vcore::after{animation-delay:1.8s}
 .vtag,.vsrc{position:absolute;display:flex;align-items:center;gap:.5em;padding:.45em .9em;border-radius:999px;font-size:1.2em;font-weight:700;white-space:nowrap;font-family:var(--head)}
 .vtag{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);color:#fff;backdrop-filter:blur(6px);animation:floatv 6s ease-in-out infinite}
 .vtag .ic{width:1.1em;height:1.1em;color:#bcd3ee}
-.vt1{left:50%;top:calc(var(--u) * 1.2);margin-left:calc(var(--u) * -6)}.vt2{left:50%;bottom:calc(var(--u) * .6);margin-left:calc(var(--u) * -5);animation-delay:-2s}.vt3{right:0;bottom:calc(var(--u) * 8);animation-delay:-4s}
+.vt1{left:50%;top:calc(var(--u) * 1.2);margin-left:calc(var(--u) * -6)}.vt2{left:0;top:calc(var(--u) * 44);animation-delay:-2s}.vt3{right:0;top:calc(var(--u) * 44);animation-delay:-4s}
 .vsrc{background:#fff;color:var(--blue);left:0;transform:translateY(-50%);box-shadow:0 8px 20px rgba(0,0,0,.18)}
 .vsrc.r{left:auto;right:0}
 .vs1{top:calc(var(--u) * 9)}.vs2{top:calc(var(--u) * 23)}.vs3{top:calc(var(--u) * 37)}.vsr{top:calc(var(--u) * 23)}
@@ -372,6 +372,18 @@ footer .row{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-betw
 @media(max-width:900px){.rx{grid-template-columns:1fr}}
 .rx h3{font-family:var(--head);font-weight:800;font-size:clamp(1.4rem,2.6vw,2rem);line-height:1.15}
 .rx h3 em{font-style:normal;color:var(--blue)}
+
+
+/* дашборд власника на схемі */
+.vdash{position:absolute;left:50%;top:calc(var(--u) * 50);width:calc(var(--u) * 30);transform:translateX(-50%);background:#fff;color:var(--ink);border-radius:calc(var(--u) * 1.6);padding:calc(var(--u) * 1.4) calc(var(--u) * 1.8);box-shadow:0 14px 34px rgba(0,0,0,.28);font-size:var(--u);animation:vdpulse 2.4s ease-in-out infinite}
+@keyframes vdpulse{0%,100%{box-shadow:0 14px 34px rgba(0,0,0,.28),0 0 0 0 rgba(188,211,238,.0)}50%{box-shadow:0 14px 34px rgba(0,0,0,.28),0 0 0 calc(var(--u) * 1) rgba(188,211,238,.35)}}
+.vdash .vh{display:flex;align-items:center;gap:calc(var(--u) * 1);font-family:var(--head);font-weight:800;font-size:calc(var(--u) * 1.5);line-height:1.1}
+.vdash .vh .ic{width:calc(var(--u) * 2);height:calc(var(--u) * 2);color:var(--blue)}
+.vdash .vs{font-size:calc(var(--u) * 1.15);color:var(--muted);margin-top:calc(var(--u) * .3)}
+.vdash .vb{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u) * 1.2);margin-top:calc(var(--u) * 1.2);align-items:end}
+.vdash .vb div{display:flex;flex-direction:column-reverse;justify-content:flex-start;gap:calc(var(--u) * .3);font-size:calc(var(--u) * 1);color:var(--muted);font-weight:700;font-family:var(--head)}
+.vdash .vb i{display:block;height:calc(var(--u) * var(--h));border-radius:calc(var(--u) * .5);background:linear-gradient(180deg,#8fb1d6,#2b5c8e);transform-origin:bottom;animation:vbar 3.2s ease-in-out infinite;animation-delay:calc(var(--k) * .5s)}
+@keyframes vbar{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1)}}
 
 /* grid-діти не розпирають екран на вузьких телефонах */
 .hero-grid>*,.cta>*,.usa>*,.vault>*,.profile>*,.calc>*,.pilot>*,.factors>*,.diagram>*,.price>*,.vs>*{min-width:0}
@@ -512,12 +524,11 @@ section{padding-block:clamp(26px,3.4vw,48px)}
         <p class="sub">Захищена ШІ-платформа, яка об'єднує всі системи Асклепій: персональний шлях пацієнта, менше рутини в лікаря, більше пацієнтів у тих самих слотах. <b>Ми не пропонуємо ще одну систему: ми об'єднуємо всі ваші джерела даних в єдине цифрове операційне ядро.</b></p>
         <div class="row">
           <a class="btn white" href="#core">Як це працює <svg class="ic"><use href="#i-arrow"/></svg></a>
-          <a class="btn ghost" style="color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.7)" href="#metrics">Дивитись метрики</a>
         </div>
         <div class="glass-row">
           <div class="glass"><b>Єдине операційне ядро Асклепій</b></div>
           <div class="glass"><b>Більше пацієнтів</b><span>у супроводі лікаря на місяць. Гіперперсоналізація супроводу</span></div>
-          <div class="glass"><b>Захист даних</b><span>персональних та медичних даних відповідно до регуляторних норм ЄС</span></div>
+          <div class="glass"><b>Захист даних пацієнтів</b><span>Персональні та медичні дані захищені відповідно до регуляторних вимог ЄС</span></div>
         </div>
       </div>
 
@@ -602,12 +613,12 @@ section{padding-block:clamp(26px,3.4vw,48px)}
 <section id="safe">
   <div class="wrap">
     <div class="sec-dark rv"><div class="band-in" style="position:relative">
-      <div class="title-line"><h2 class="sec-title">Дані пацієнтів під вашим контролем, <em>з досвідом із деменції в США</em></h2></div>
+      <div class="title-line"><h2 class="sec-title">Всі дані мережі під <em>Вашим контролем</em></h2></div>
       <div class="safe-grid">
         <div>
           <div class="vx" role="img" aria-label="Схема: дані з МІС, лабораторії та діагностики шифруються на вході й потрапляють у закрите сховище; спроба стороннього доступу блокується">
             <span class="rg v1"><i></i><i></i><i></i></span><span class="rg v2"></span><span class="rg v3"></span>
-            <svg class="vsvg" id="vsvg" viewBox="0 0 46 46" aria-hidden="true"></svg>
+            <svg class="vsvg" id="vsvg" viewBox="0 0 46 66" aria-hidden="true"></svg>
             <div class="vcore"><svg class="ic"><use href="#i-lock"/></svg></div>
             <span class="vsrc vs1"><svg class="ic" style="width:1.1em;height:1.1em"><use href="#i-db"/></svg>МІС</span>
             <span class="vsrc vs2"><svg class="ic" style="width:1.1em;height:1.1em"><use href="#i-flask"/></svg>Лабораторія</span>
@@ -617,6 +628,7 @@ section{padding-block:clamp(26px,3.4vw,48px)}
             <span class="vtag vt2"><svg class="ic"><use href="#i-file"/></svg>Журнал дій</span>
             <span class="vtag vt3"><svg class="ic"><use href="#i-key"/></svg>Ключ у вас</span>
             <span class="blocked"><svg class="ic"><use href="#i-shield"/></svg>Спробу доступу заблоковано</span>
+            <div class="vdash"><div class="vh"><svg class="ic"><use href="#i-chart"/></svg>Власник клініки</div><div class="vs">Персональний інтерактивний дашборд: усі дані мережі в одному місці</div><div class="vb"><div>Пацієнти<i style="--k:0;--h:2.4"></i></div><div>Слоти<i style="--k:1;--h:3.2"></i></div><div>Дохід<i style="--k:2;--h:2"></i></div></div></div>
           </div>
           <div class="vkey"><span><i style="background:#bcd3ee"></i>дані до шифрування</span><span><i style="background:#fff"></i>зашифровано при вході</span><span><i style="background:#f35e5e"></i>стороння спроба</span></div>
         </div>
@@ -781,14 +793,16 @@ section{padding-block:clamp(26px,3.4vw,48px)}
         el('animate',{attributeName:'opacity',values:'0;1;1;0',keyTimes:'0;.08;.7;1',dur:dur+'s',begin:bg+'s',repeatCount:'indefinite'},g);
       });
     });
+    var dn='M26 34.5 L26 50';el('path',{d:dn,'class':'vl'},P);
+    [0,.8,1.6].forEach(function(o){packet(P,dn,2.4,-o,.7,'#fff')});
     var dd='M26 26 L39 23';el('path',{d:dd,'class':'vl'},P);
     [0,1.6].forEach(function(o){var g=packet(P,dd,3.2,-o,.65,'#fff')});
-    var ring=el('circle',{cx:26,cy:26,r:22,fill:'none',stroke:'#f35e5e','stroke-width':.3,opacity:0},P);
+    var ring=el('circle',{cx:26,cy:26,r:22,fill:'none',stroke:'#f35e5e','stroke-width':.12,opacity:0},P);
     ring.appendChild(el('animate',{attributeName:'opacity',values:'0;0;1;0;0',keyTimes:'0;.27;.3;.55;1',dur:'7s',repeatCount:'indefinite'}));
-    ring.appendChild(el('animate',{attributeName:'stroke-width',values:'.2;.2;.9;.2;.2',keyTimes:'0;.27;.3;.55;1',dur:'7s',repeatCount:'indefinite'}));
+    ring.appendChild(el('animate',{attributeName:'stroke-width',values:'.1;.1;.22;.1;.1',keyTimes:'0;.27;.3;.55;1',dur:'7s',repeatCount:'indefinite'}));
     var burst=el('circle',{cx:40,cy:8.4,r:.7,fill:'#f35e5e',opacity:0},P);
-    burst.appendChild(el('animate',{attributeName:'r',values:'.7;.7;3.4;3.4',keyTimes:'0;.28;.5;1',dur:'7s',repeatCount:'indefinite'}));
-    burst.appendChild(el('animate',{attributeName:'opacity',values:'0;0;.7;0;0',keyTimes:'0;.28;.3;.5;1',dur:'7s',repeatCount:'indefinite'}));
+    burst.appendChild(el('animate',{attributeName:'r',values:'.5;.5;2.2;2.2',keyTimes:'0;.28;.5;1',dur:'7s',repeatCount:'indefinite'}));
+    burst.appendChild(el('animate',{attributeName:'opacity',values:'0;0;.5;0;0',keyTimes:'0;.28;.3;.5;1',dur:'7s',repeatCount:'indefinite'}));
     var g=el('g',{opacity:0},P);
     el('circle',{r:1.6,fill:'#f35e5e',opacity:.28},g);el('circle',{r:.7,fill:'#f35e5e'},g);
     el('animateMotion',{dur:'7s',repeatCount:'indefinite',path:'M47 -2 L40 8.4',keyPoints:'0;1;1',keyTimes:'0;.28;1',calcMode:'linear'},g);
