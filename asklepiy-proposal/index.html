@@ -453,6 +453,37 @@ footer{padding-block:24px 80px}
 @media(max-width:860px){.cert-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.regs{grid-template-columns:1fr}.bdg{grid-template-columns:1fr}.rl li{grid-template-columns:1fr}}
 
+
+/* головний результат: доріжки, що зливаються в підсумок */
+a.hs-a{color:inherit;transition:transform .3s}
+a.hs-a:hover{transform:translateX(4px)}
+.hmore{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-family:var(--head);font-weight:700;font-size:.85rem;border-bottom:1px solid rgba(255,255,255,.6);width:max-content;padding-bottom:2px}
+.hmore .ic{width:1em;height:1em}
+.result-block{margin-bottom:24px}
+.rk{display:block;font-family:var(--head);font-weight:700;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.res-grid{display:grid;grid-template-columns:1fr minmax(240px,300px);gap:clamp(16px,2.4vw,32px);align-items:stretch}
+.lanes{display:flex;flex-direction:column;gap:14px;min-width:0}
+.lane{display:grid;grid-template-columns:124px 1fr;gap:14px;align-items:stretch}
+.ln-l{font-family:var(--head);font-weight:800;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);writing-mode:horizontal-tb;display:flex;align-items:center;border-right:2px solid var(--blue);padding-right:12px;line-height:1.3}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;min-width:0}
+.lane.two .steps{grid-template-columns:repeat(2,1fr)}
+.st{position:relative;background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 1px 0 rgba(34,77,131,.06),0 10px 26px rgba(34,77,131,.08);display:flex;flex-direction:column;gap:6px;min-width:0;animation:slit 12s ease-in-out infinite;animation-delay:calc(var(--i) * 1.6s + var(--l) * .5s)}
+.st .ic{width:1.5em;height:1.5em;color:var(--blue)}
+.st b{font-family:var(--head);font-weight:800;font-size:.95rem;line-height:1.25}
+.st small{font-size:.8rem;color:var(--muted);line-height:1.35}
+.st:not(:last-child)::after{content:"";position:absolute;right:-26px;top:50%;width:26px;height:2px;margin-top:-1px;background:repeating-linear-gradient(90deg,var(--blue) 0 5px,transparent 5px 10px);background-size:10px 2px;animation:dashx .8s linear infinite}
+@keyframes slit{0%,12%{box-shadow:0 0 0 2px var(--blue),0 14px 34px rgba(43,92,142,.22);transform:translateY(-3px)}20%,100%{box-shadow:0 1px 0 rgba(34,77,131,.06),0 10px 26px rgba(34,77,131,.08);transform:none}}
+.res-card{position:relative;overflow:hidden;border-radius:var(--r-l);padding:clamp(20px,2.6vw,32px);color:#fff;background:radial-gradient(70% 80% at 85% 0%,#6f9bcb 0%,transparent 60%),linear-gradient(150deg,#2b5c8e,#1b3f6c);display:flex;flex-direction:column;justify-content:center;gap:10px;animation:absorb 3s ease-in-out infinite}
+.res-card::before,.res-card::after{content:"";position:absolute;right:-70px;top:-70px;width:220px;height:220px;border-radius:50%;border:30px solid rgba(255,255,255,.08);animation:spinr 50s linear infinite}
+.res-card::after{right:auto;left:-90px;top:auto;bottom:-110px;width:240px;height:240px;border-width:26px;animation-direction:reverse}
+.res-card>*{position:relative;z-index:1}
+.res-card .ic{width:2.6em;height:2.6em;color:#bcd3ee}
+.rl2{font-family:var(--head);font-weight:700;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;opacity:.85}
+.res-card b{font-family:var(--head);font-weight:800;font-size:clamp(1.6rem,2.6vw,2.2rem);line-height:1.1;letter-spacing:-.02em}
+.rs{font-size:1.05rem;opacity:.95;line-height:1.4}
+@media(max-width:1060px){.res-grid{grid-template-columns:1fr}.res-card{min-height:170px}}
+@media(max-width:760px){.lane{grid-template-columns:1fr;gap:8px}.ln-l{border-right:0;border-bottom:2px solid var(--blue);padding:0 0 6px;width:max-content}.steps,.lane.two .steps{grid-template-columns:1fr;gap:22px}.st:not(:last-child)::after{right:auto;left:50%;top:auto;bottom:-22px;width:2px;height:22px;margin:0 0 0 -1px;background:repeating-linear-gradient(180deg,var(--blue) 0 5px,transparent 5px 10px)}}
+
 /* grid-діти не розпирають екран на вузьких телефонах */
 .hero-grid>*,.cta>*,.usa>*,.vault>*,.profile>*,.calc>*,.pilot>*,.factors>*,.diagram>*,.price>*,.vs>*{min-width:0}
 .banner .eyebrow{max-width:100%;white-space:normal;line-height:1.3}
@@ -601,7 +632,7 @@ section{padding-block:clamp(26px,3.4vw,48px)}
           </div>
           <aside class="h-side" aria-label="Ключові тези">
             <div class="hs"><span class="hk">01 · Платформа</span><b>Єдине операційне ядро Асклепій</b></div>
-            <div class="hs"><span class="hk">02 · Результат</span><b>Більше пацієнтів у супроводі лікаря на місяць</b><span class="hd">Гіперперсоналізація супроводу</span></div>
+            <a class="hs hs-a" href="#result"><span class="hk">02 · Результат</span><b>Більше пацієнтів у супроводі лікаря на місяць</b><span class="hd">Гіперперсоналізація супроводу</span><span class="hmore">Детальніше <svg class="ic"><use href="#i-arrow"/></svg></span></a>
             <div class="hs"><span class="hk">03 · Безпека</span><b>Захист даних пацієнтів</b><span class="hd">Персональні та медичні дані захищені відповідно до регуляторних вимог ЄС</span></div>
           </aside>
         </div>
@@ -665,6 +696,43 @@ section{padding-block:clamp(26px,3.4vw,48px)}
       <div class="kick"><span class="n">02</span><span class="k">Метрики</span></div>
       <div><h2 class="sec-title">Ми продаємо <em>метрики</em>, а не технологію</h2><p class="deck">Результат цифрової клініки в США та показники, які ми фіксуємо для Асклепій до старту.</p></div>
     </div>
+    <div class="result-block rv" id="result">
+      <span class="rk">Як формується результат</span>
+      <div class="res-grid">
+        <div class="lanes">
+          <div class="lane" style="--l:0">
+            <span class="ln-l">Зростання</span>
+            <div class="steps">
+              <div class="st" style="--i:0"><svg class="ic"><use href="#i-users"/></svg><b>Більше пацієнтів на одного лікаря</b></div>
+              <div class="st" style="--i:1"><svg class="ic"><use href="#i-pulse"/></svg><b>Вища якість супроводу</b><small>гіперперсоналізація кожного пацієнта</small></div>
+              <div class="st" style="--i:2"><svg class="ic"><use href="#i-heart"/></svg><b>Вища задоволеність пацієнтів</b></div>
+              <div class="st" style="--i:3"><svg class="ic"><use href="#i-trend"/></svg><b>Зростання LTV</b><small>цінність пацієнта за весь час</small></div>
+            </div>
+          </div>
+          <div class="lane two" style="--l:1">
+            <span class="ln-l">Ефективність</span>
+            <div class="steps">
+              <div class="st" style="--i:0"><svg class="ic"><use href="#i-bolt"/></svg><b>Автоматизація рутини</b><small>менше ручної роботи</small></div>
+              <div class="st" style="--i:1"><svg class="ic"><use href="#i-chart"/></svg><b>Менші витрати на адміністративний ресурс</b></div>
+            </div>
+          </div>
+          <div class="lane two" style="--l:2">
+            <span class="ln-l">Контроль</span>
+            <div class="steps">
+              <div class="st" style="--i:0"><svg class="ic"><use href="#i-eye"/></svg><b>Повний контроль над усіма процесами</b></div>
+              <div class="st" style="--i:1"><svg class="ic"><use href="#i-shield"/></svg><b>Мінімум помилок через людський фактор</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="res-card">
+          <svg class="ic"><use href="#i-trend"/></svg>
+          <span class="rl2">Головний результат</span>
+          <b>Більше доходу клініки</b>
+          <span class="rs">та більше задоволених пацієнтів</span>
+        </div>
+      </div>
+    </div>
+
     <div class="panel kpi rv" id="kpi">
       <div>
         <span class="tag">Наш досвід в США (цифрова клініка)</span>
