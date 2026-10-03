@@ -38,8 +38,7 @@ button{font:inherit}
 .hdr{position:sticky;top:12px;z-index:60;margin-top:12px}
 .hdr-in{background:#fff;border-radius:var(--r-s);box-shadow:var(--shadow);display:flex;align-items:center;gap:22px;padding:12px 18px}
 .logo{display:flex;flex-direction:column;line-height:1;flex:none}
-.logo b{font-family:var(--head);font-weight:800;font-size:1.75rem;letter-spacing:-.02em;color:var(--blue);display:flex;align-items:center;gap:6px}
-.logo b i{width:15px;height:15px;border:4px solid var(--blue);border-radius:50%;display:inline-block}
+.logo b{font-family:var(--head);font-weight:800;font-size:1.5rem;letter-spacing:.03em;color:var(--blue);display:flex;align-items:center;gap:6px;line-height:1}
 .logo small{font-size:.58rem;letter-spacing:.14em;font-weight:800;color:var(--blue);text-transform:uppercase;margin-top:4px}
 .menu{display:flex;gap:clamp(12px,1.3vw,20px);font-family:var(--head);font-weight:600;font-size:.92rem;margin-left:8px;flex:1;min-width:0}
 .menu a{padding:6px 0;position:relative;white-space:nowrap}
@@ -53,7 +52,7 @@ button{font:inherit}
 .burger{display:none}
 @media(max-width:1400px){.pill-ic span{display:none}.pill-ic{padding:12px}}
 @media(max-width:1180px){.menu{display:none}.hdr-sep{display:none}.hdr-in{justify-content:space-between}}
-@media(max-width:560px){.pill-ic span{display:none}.pill-ic{padding:10px 12px}.logo b{font-size:1.45rem}}
+@media(max-width:560px){.pill-ic span{display:none}.pill-ic{padding:10px 12px}.logo b{font-size:1.25rem}}
 
 /* ---------- buttons, tags, links ---------- */
 .btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--head);font-weight:700;font-size:1rem;padding:15px 28px;border-radius:999px;border:0;cursor:pointer;transition:transform .25s,box-shadow .25s,background .25s;background:var(--blue);color:#fff}
@@ -484,6 +483,42 @@ a.hs-a:hover{transform:translateX(4px)}
 @media(max-width:1060px){.res-grid{grid-template-columns:1fr}.res-card{min-height:170px}}
 @media(max-width:760px){.lane{grid-template-columns:1fr;gap:8px}.ln-l{border-right:0;border-bottom:2px solid var(--blue);padding:0 0 6px;width:max-content}.steps,.lane.two .steps{grid-template-columns:1fr;gap:22px}.st:not(:last-child)::after{right:auto;left:50%;top:auto;bottom:-22px;width:2px;height:22px;margin:0 0 0 -1px;background:repeating-linear-gradient(180deg,var(--blue) 0 5px,transparent 5px 10px)}}
 
+
+/* команда: засновники */
+.usb{display:flex;flex-direction:column;gap:0;padding:18px 20px}
+.usb .usb-h{font-size:1.05rem;padding-bottom:12px;border-bottom:1px solid #e1e8f2;margin-bottom:4px}
+.pr2{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:start;padding:14px 0}
+.pr2+.pr2{border-top:1px solid #e1e8f2}
+.pr2 b{font-family:var(--head);font-weight:800;display:inline;line-height:1.25}
+.pr2 em{display:block;font-style:normal;font-family:var(--head);font-weight:700;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-top:2px}
+.pr2 span{font-size:.9rem;color:var(--muted);display:block;margin-top:4px;line-height:1.5}
+
+
+/* щоденний моніторинг відгуків */
+.fb{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(18px,3vw,40px);align-items:start;margin-top:26px;padding-top:24px;border-top:1px solid #c9d7ea}
+.fbt{font-family:var(--head);font-weight:800;font-size:clamp(1.25rem,2.2vw,1.65rem);line-height:1.2;margin:6px 0 16px;letter-spacing:-.01em}
+.fbs{display:grid;gap:0;position:relative}
+.fbs li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;padding:10px 0;position:relative;animation:fbl 12s ease-in-out infinite;animation-delay:calc(var(--i) * 2s)}
+.fbs li .ic{width:44px;height:44px;padding:11px;border-radius:50%;background:#fff;color:var(--blue);box-shadow:0 6px 16px rgba(34,77,131,.14);position:relative;z-index:1}
+.fbs li:not(:last-child)::after{content:"";position:absolute;left:21px;top:54px;bottom:-10px;width:2px;background:repeating-linear-gradient(180deg,var(--blue) 0 5px,transparent 5px 10px);background-size:2px 10px;animation:downdash .9s linear infinite;opacity:.6}
+.fbs b{font-family:var(--head);font-weight:800;display:block;line-height:1.2}
+.fbs span{font-size:.9rem;color:var(--muted);line-height:1.4}
+@keyframes fbl{0%,12%{transform:translateX(6px)}20%,100%{transform:none}}
+.fbs li:hover .ic{background:var(--blue);color:#fff}
+.digest{background:#fff;border-radius:var(--r-l);padding:clamp(16px,2.2vw,26px);box-shadow:0 1px 0 rgba(34,77,131,.06),0 16px 38px rgba(34,77,131,.12);display:flex;flex-direction:column;gap:10px;min-width:0}
+.dg-h{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e1e8f2;padding-bottom:10px}
+.dg-h b{font-family:var(--head);font-weight:800;font-size:1.1rem}
+.dg-t{display:inline-flex;align-items:center;gap:8px;font-family:var(--head);font-weight:700;color:var(--blue);font-size:.9rem}
+.dg-t i{width:8px;height:8px;border-radius:50%;background:var(--blue);animation:pulsebl 2s infinite}
+.dg-r{display:grid;grid-template-columns:86px 1fr;gap:6px 12px;align-items:start;padding:8px 0}
+.dg-r p{font-size:.93rem;line-height:1.45;margin:0}
+.dg-k{font-family:var(--head);font-weight:800;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);background:var(--pale);border-radius:8px;padding:5px 8px;text-align:center}
+.dg-task{background:var(--bg);border-radius:14px;padding:12px}
+.dg-m{grid-column:2;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.82rem;color:var(--muted)}
+.dg-m em{font-style:normal;font-family:var(--head);font-weight:700;font-size:.72rem;background:var(--blue);color:#fff;border-radius:999px;padding:3px 10px}
+@media(max-width:860px){.fb{grid-template-columns:1fr}}
+@media(max-width:480px){.dg-r{grid-template-columns:1fr}.dg-m{grid-column:1}}
+
 /* grid-діти не розпирають екран на вузьких телефонах */
 .hero-grid>*,.cta>*,.usa>*,.vault>*,.profile>*,.calc>*,.pilot>*,.factors>*,.diagram>*,.price>*,.vs>*{min-width:0}
 .banner .eyebrow{max-width:100%;white-space:normal;line-height:1.3}
@@ -535,10 +570,9 @@ section{padding-block:clamp(26px,3.4vw,48px)}
 .secs{display:flex;flex-wrap:wrap;gap:8px}
 .secs span{display:inline-flex;gap:8px;align-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:7px 14px;font-family:var(--head);font-weight:600;font-size:.88rem}
 .secs .ic{width:1.1em;height:1.1em;color:#bcd3ee}
-.usb{background:#fff;color:var(--ink);border-radius:var(--r-m);padding:16px 18px;display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:start}
+.usb{background:#fff;color:var(--ink);border-radius:var(--r-m)}
 .usb img{width:64px;height:64px;border-radius:50%;object-fit:cover}
-.usb b{font-family:var(--head);font-weight:800;display:block;line-height:1.25}
-.usb span{font-size:.9rem;color:var(--muted);display:block;margin-top:2px}
+.usb .usb-h{font-family:var(--head);font-weight:800;display:block;line-height:1.25}
 .mini-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .mini-badges img{width:44px;height:auto;border-radius:8px}
 @media(max-width:960px){.safe-grid{grid-template-columns:1fr}}
@@ -596,7 +630,7 @@ section{padding-block:clamp(26px,3.4vw,48px)}
   <div class="wrap">
     <div class="hdr-in">
       <a class="logo" href="#top" aria-label="Sinaptic: на початок">
-        <b>sinaptic <i></i></b>
+        <b>SINAPTIC AI</b>
         <small>Пропозиція для МЦ «Асклепій»</small>
       </a>
       <nav class="menu" aria-label="Розділи пропозиції">
@@ -683,6 +717,26 @@ section{padding-block:clamp(26px,3.4vw,48px)}
         <div class="o3"><span class="tag">Пацієнт</span><h3>Гіперперсоналізований супровід кожного пацієнта</h3><p class="o3p">Система не втрачає жодної деталі.</p><div class="bubble">Завтра колоноскопія. Ось <b>ваша схема підготовки</b> з урахуванням ваших ліків.</div></div>
         <div class="o3"><span class="tag">Лікар</span><h3>Менше рутини</h3><div class="bubble">Зведення пацієнта готове <b>до того, як він зайшов у кабінет</b>. Чернетка висновку чекає на ваше підтвердження.</div></div>
         <div class="o3"><span class="tag">Власник</span><h3>Мережа однією відповіддю</h3><div class="bubble">Тиждень: де простій обладнання, <b>скільки пацієнтів не повернулось</b> і чому.</div></div>
+      </div>
+      <div class="fb">
+        <div class="fb-l">
+          <span class="rk" style="color:var(--blue)">Щоденний моніторинг</span>
+          <h3 class="fbt">Відгуки пацієнтів і пропозиції команди перетворюються на звіти, висновки та задачі</h3>
+          <ol class="fbs">
+            <li style="--i:0"><svg class="ic"><use href="#i-chat"/></svg><div><b>Збір</b><span>відгуки пацієнтів і пропозиції команди з усіх каналів</span></div></li>
+            <li style="--i:1"><svg class="ic"><use href="#i-chart"/></svg><div><b>Аналіз</b><span>теми, причини, повторювані проблеми</span></div></li>
+            <li style="--i:2"><svg class="ic"><use href="#i-file"/></svg><div><b>Звіт</b><span>щоденний дайджест для керівників</span></div></li>
+            <li style="--i:3"><svg class="ic"><use href="#i-eye"/></svg><div><b>Висновок</b><span>що змінити і чому</span></div></li>
+            <li style="--i:4"><svg class="ic"><use href="#i-check"/></svg><div><b>Задача</b><span>відповідальний, строк і контроль виконання</span></div></li>
+          </ol>
+        </div>
+        <div class="digest" aria-label="Приклад щоденного звіту">
+          <div class="dg-h"><b>Щоденний звіт</b><span class="dg-t"><i></i>08:30</span></div>
+          <div class="dg-r"><span class="dg-k">Звіт</span><p>За добу: нові відгуки пацієнтів і пропозиції команди розібрано за темами.</p></div>
+          <div class="dg-r"><span class="dg-k">Висновок</span><p>Найчастіша тема: очікування в реєстратурі в години пік.</p></div>
+          <div class="dg-r dg-task"><span class="dg-k">Задача</span><p>Переглянути графік адміністраторів на 9:00–11:00</p><div class="dg-m"><span>Відповідальний: старший адміністратор</span><span>Строк: п'ятниця</span><em>Призначено</em></div></div>
+          <p class="note" style="margin-top:8px">Ілюстрація сценарію, умовні дані.</p>
+        </div>
       </div>
       <p class="note" style="margin-top:12px">Ілюстрація сценарію. Клінічні рішення завжди ухвалює лікар: ШІ не ставить діагнозів.</p>
     </div></div>
@@ -794,15 +848,25 @@ section{padding-block:clamp(26px,3.4vw,48px)}
             <span><svg class="ic"><use href="#i-shield"/></svg>Не навчає чужі моделі</span>
           </div>
           <div class="usb">
-            <img src="img/founder-yuliy-hromyko.png" alt="Юлій Громико" width="64" height="64">
-            <div>
-              <b>ШІ-архітектура цифрової клініки для пацієнтів із деменцією, США</b>
-              <span>Створив Юлій Громико, архітектор Sinaptic: понад 18 років в enterprise-архітектурі, ШІ та кібербезпеці, раніше Thomas Cook Group і Fozzy Group.</span>
-              <div class="mini-badges">
-                <img src="img/badge-pecb-dpo.png" alt="PECB Certified DPO" width="44" height="45">
-                <img src="img/badge-pecb-ciso.png" alt="PECB Certified CISO" width="44" height="45">
-                <img src="img/badge-pecb-iso-42001.png" alt="PECB ISO/IEC 42001 Implementer" width="44" height="45">
-                <img src="img/badge-pecb-iso-31000.png" alt="PECB ISO 31000 Risk Manager" width="44" height="45">
+            <b class="usb-h">ШІ-архітектура цифрової клініки для пацієнтів із деменцією, США</b>
+            <div class="pr2">
+              <img src="img/founder-yuliy-hromyko.png" alt="Юлій Громико" width="64" height="64">
+              <div>
+                <b>Юлій Громико</b><em>Засновник і CTO</em>
+                <span>Створив цю ШІ-архітектуру. Понад 18 років в enterprise-архітектурі, ШІ та кібербезпеці, раніше Principal Architect у Thomas Cook Group, проєктував архітектуру платформ для Thomas Cook і Fozzy Group.</span>
+                <div class="mini-badges">
+                  <img src="img/badge-pecb-dpo.png" alt="PECB Certified DPO" width="44" height="45">
+                  <img src="img/badge-pecb-ciso.png" alt="PECB Certified CISO" width="44" height="45">
+                  <img src="img/badge-pecb-iso-42001.png" alt="PECB ISO/IEC 42001 Implementer" width="44" height="45">
+                  <img src="img/badge-pecb-iso-31000.png" alt="PECB ISO 31000 Risk Manager" width="44" height="45">
+                </div>
+              </div>
+            </div>
+            <div class="pr2">
+              <img src="img/cofounder-serhiy-polonskyi.png" alt="Сергій Полонський" width="64" height="64">
+              <div>
+                <b>Сергій Полонський</b><em>Співзасновник</em>
+                <span>Майже 20 років у побудові й масштабуванні операційних бізнесів: команди, якість, клієнтський сервіс, франчайзинг. Знає болі власника зсередини.</span>
               </div>
             </div>
           </div>
@@ -823,7 +887,7 @@ section{padding-block:clamp(26px,3.4vw,48px)}
     <div class="cert-grid">
       <div class="panel have rv">
         <span class="tag">Вже є</span>
-        <h3>Підтверджена кваліфікація технічного директора</h3>
+        <h3>Підтверджена кваліфікація засновника і CTO</h3>
         <div class="bdg">
           <div class="b1"><img src="img/badge-pecb-dpo.png" alt="PECB Certified Data Protection Officer" width="64" height="65"><div><b>DPO</b><span>Захист персональних даних</span></div></div>
           <div class="b1"><img src="img/badge-pecb-ciso.png" alt="PECB Certified CISO" width="64" height="65"><div><b>CISO</b><span>Інформаційна безпека</span></div></div>
