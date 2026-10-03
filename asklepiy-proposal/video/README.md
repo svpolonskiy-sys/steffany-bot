@@ -2,6 +2,8 @@
 
 - `Sinaptic-AI_Asklepiy_1080p.mp4` — фінальний ролик, 80 с, 1920×1080, 30 к/с, з фоновою музикою.
 - `Sinaptic-AI_Asklepiy_1080p_bez-muzyky.mp4` — та сама версія без звуку (для власної озвучки).
+- `Sinaptic-AI_Asklepiy_tizer_1080p.mp4` — тизер 29,5 с для першого повідомлення, жвава музика 118 BPM.
+- `make_teaser.py`, `audio/synth_music_live.py` — збирання тизера та жвавого треку.
 - `promo.html` — джерело: 12 сцен, анімація керується часом (`window.renderAt(t)`).
 - `render.js` — покадровий рендер через Playwright: `node render.js ./frames`.
 - `audio/synth_music.py` — локальний синтез фонового ембієнт-пада (numpy).
