@@ -624,6 +624,13 @@ section{padding-block:clamp(26px,3.4vw,48px)}
   .band-in{padding-inline:12px}
   .panel,.o3{padding:16px}
 }
+
+/* підстраховка дзвінка */
+.calltoast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;display:flex;gap:10px;align-items:center;background:#1b3f6c;color:#fff;border-radius:16px;padding:12px 14px;box-shadow:0 14px 34px rgba(0,0,0,.35);max-width:min(92vw,520px);font-size:.9rem;line-height:1.35}
+.calltoast[hidden]{display:none}
+.calltoast b{white-space:nowrap}
+.calltoast button{flex:none;border:0;border-radius:10px;background:#fff;color:var(--blue);font-family:var(--head);font-weight:700;font-size:.82rem;padding:8px 12px;cursor:pointer}
+.calltoast #ct-x{background:transparent;color:#fff;font-size:1.3rem;line-height:1;padding:4px 8px}
 </style>
 </head>
 <body>
@@ -680,7 +687,7 @@ section{padding-block:clamp(26px,3.4vw,48px)}
         <a href="#contact">Умови</a>
       </nav>
       <span class="hdr-sep" aria-hidden="true"></span>
-      <a class="pill-ic" href="tel:+380677162224"><svg class="ic"><use href="#i-phone"/></svg><span>+380 67 716 22 24</span></a>
+      <a class="pill-ic" href="tel:+380677162224" title="Зателефонувати Сергію Полонському" aria-label="Зателефонувати Сергію Полонському: +380 67 716 22 24"><svg class="ic"><use href="#i-phone"/></svg><span>+380 67 716 22 24</span></a>
     </div>
   </div>
 </header>
@@ -981,7 +988,12 @@ section{padding-block:clamp(26px,3.4vw,48px)}
   </div>
 </footer>
 
-<a class="fab call" href="tel:+380677162224" aria-label="Зателефонувати"><svg class="ic"><use href="#i-phone"/></svg></a>
+<a class="fab call" href="tel:+380677162224" title="Зателефонувати Сергію Полонському" aria-label="Зателефонувати Сергію Полонському: +380 67 716 22 24"><svg class="ic"><use href="#i-phone"/></svg></a>
+<div class="calltoast" id="calltoast" role="status" hidden>
+  <span>Не відкрилось? Номер Сергія Полонського: <b>+380 67 716 22 24</b></span>
+  <button type="button" id="ct-copy">Копіювати</button>
+  <button type="button" id="ct-x" aria-label="Закрити">×</button>
+</div>
 <button class="fab up" id="up" type="button" aria-label="Нагору"><svg class="ic"><use href="#i-up"/></svg></button>
 
 <script>
@@ -1092,6 +1104,28 @@ section{padding-block:clamp(26px,3.4vw,48px)}
     el('animate',{attributeName:'opacity',values:'0;1;1;0;0',keyTimes:'0;.04;.27;.3;1',dur:'7s',repeatCount:'indefinite'},g);
   })();
 
+
+
+  /* дзвінок: якщо виклик не відкрився, показуємо номер із копіюванням */
+  (function(){
+    var t=$('calltoast'),timer=null,NUM='+380677162224';
+    if(!t)return;
+    function hide(){t.hidden=true}
+    function cancel(){clearTimeout(timer)}
+    document.addEventListener('visibilitychange',function(){if(document.hidden)cancel()});
+    window.addEventListener('pagehide',cancel);window.addEventListener('blur',cancel);
+    document.querySelectorAll('a[href^="tel:"]').forEach(function(a){
+      a.addEventListener('click',function(){
+        cancel();timer=setTimeout(function(){t.hidden=false;setTimeout(hide,9000)},900);
+      });
+    });
+    $('ct-x').addEventListener('click',hide);
+    $('ct-copy').addEventListener('click',function(){
+      var b=this,old=b.textContent;
+      function done(){b.textContent='Скопійовано';setTimeout(function(){b.textContent=old},1500)}
+      try{navigator.clipboard.writeText(NUM).then(done,done)}catch(e){done()}
+    });
+  })();
 
   /* Смуги метрик заповнюються, коли блок у кадрі */
   (function(){
