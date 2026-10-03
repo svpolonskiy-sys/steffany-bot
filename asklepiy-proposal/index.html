@@ -425,11 +425,12 @@ footer{padding-block:24px 80px}
 
 
 /* відповідність */
-.cert-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cert-grid{display:grid;grid-template-columns:1fr;gap:20px}
 .cert-grid h3{font-family:var(--head);font-weight:800;font-size:1.3rem;line-height:1.2;margin:12px 0 0}
 .have .tag,.road .tag{width:max-content}
-.bdg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
-.b1{display:flex;gap:12px;align-items:center;background:var(--bg);border-radius:var(--r-m);padding:12px 14px;transition:transform .3s}
+.bdg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+@media(max-width:1060px){.bdg{grid-template-columns:1fr 1fr}}
+.b1{display:flex;gap:14px;align-items:center;background:var(--bg);border-radius:var(--r-m);padding:12px 14px;transition:transform .3s}
 .b1:hover{transform:translateY(-3px)}
 .b1 img{width:64px;height:auto;border-radius:10px;flex:none}
 .b1 b{font-family:var(--head);font-weight:800;display:block;line-height:1.2}
@@ -895,17 +896,6 @@ section{padding-block:clamp(26px,3.4vw,48px)}
           <div class="b1"><img src="img/badge-pecb-iso-31000.png" alt="PECB ISO 31000 Risk Manager" width="64" height="65"><div><b>ISO 31000</b><span>Управління ризиками, Risk Manager</span></div></div>
         </div>
         <p class="note" style="margin-top:12px">Сертифікації видає міжнародний орган PECB. Це кваліфікація людини, яка проєктує безпеку вашої платформи.</p>
-      </div>
-
-      <div class="panel road rv">
-        <span class="tag">У процесі отримання</span>
-        <h3>Сертифікація компанії та платформи</h3>
-        <ul class="rl">
-          <li><div><b>ISO/IEC 27001</b><span>Система управління інформаційною безпекою</span></div><em>Сертифікація в процесі</em><i class="pb" style="--d:0s"></i></li>
-          <li><div><b>ISO/IEC 42001</b><span>Система управління штучним інтелектом</span></div><em>Сертифікація в процесі</em><i class="pb" style="--d:.5s"></i></li>
-          <li><div><b>ISO 9001</b><span>Система управління якістю</span></div><em>Сертифікація в процесі</em><i class="pb" style="--d:1s"></i></li>
-          <li><div><b>ISO 31000</b><span>Управління ризиками</span></div><em>Впровадження в процесі</em><i class="pb" style="--d:1.5s"></i></li>
-        </ul>
       </div>
     </div>
 
