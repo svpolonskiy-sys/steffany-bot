@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Sinaptic AI × Асклепій: ролик</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Відеоролик 1920×1080. Палітра Асклепій: #2b5c8e, #e5ecf6, #f2f2f2. Шрифти: Montserrat (заголовки), Mulish (текст). */
+:root{--blue:#2b5c8e;--blue-d:#224d83;--deep:#1b3f6c;--pale:#e5ecf6;--bg:#f2f2f2;--ink:#24262f;--muted:#555b66;--warm:#f35e5e;--lb:#bcd3ee}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;font-family:Mulish,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.sc{position:absolute;inset:0;opacity:0;visibility:hidden}
+.in{position:absolute;inset:0;transform-origin:50% 50%}
+.bg{position:absolute;inset:0}
+.bg.light{background:radial-gradient(60% 70% at 85% 10%,#ffffff 0%,transparent 60%),linear-gradient(160deg,#f5f7fb,#eef2f8)}
+.bg.pale{background:radial-gradient(60% 70% at 15% 10%,#ffffff 0%,transparent 60%),linear-gradient(160deg,#e9eff8,#dfe8f4)}
+.bg.blue{background:radial-gradient(70% 80% at 85% 10%,#6f9bcb 0%,transparent 60%),radial-gradient(60% 70% at 0% 100%,#173a64 0%,transparent 65%),linear-gradient(135deg,#2b5c8e 0%,#3b72a8 55%,#5c8fc2 100%)}
+.bg.dark{background:radial-gradient(60% 70% at 20% 30%,#2f5f93 0%,transparent 65%),linear-gradient(135deg,#183a62,#244f80)}
+.ring{position:absolute;border-radius:50%;pointer-events:none}
+.H{font-family:Montserrat,sans-serif;font-weight:800;letter-spacing:-.025em;line-height:1.06}
+.kick{font-family:Montserrat,sans-serif;font-weight:700;font-size:22px;letter-spacing:.28em;text-transform:uppercase;color:var(--blue)}
+.kick.w{color:var(--lb)}
+.rule{height:3px;background:var(--blue);border-radius:2px;transform-origin:left}
+.ic{width:1.3em;height:1.3em;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.a{will-change:transform,opacity}
+.abs{position:absolute}
+.chip{position:absolute;display:flex;align-items:center;gap:16px;background:#fff;border-radius:20px;padding:20px 28px;font-family:Montserrat;font-weight:700;font-size:28px;color:var(--ink);box-shadow:0 1px 0 rgba(34,77,131,.06),0 16px 40px rgba(34,77,131,.14);white-space:nowrap}
+.chip .ic{color:var(--blue);width:34px;height:34px}
+.card{position:absolute;background:#fff;border-radius:32px;box-shadow:0 1px 0 rgba(34,77,131,.06),0 24px 60px rgba(34,77,131,.14)}
+.tag{display:inline-flex;align-items:center;gap:10px;padding:10px 22px;border-radius:999px;background:var(--pale);color:var(--blue);font-family:Montserrat;font-weight:700;font-size:22px;letter-spacing:.14em;text-transform:uppercase}
+svg.ov{position:absolute;inset:0;width:1920px;height:1080px;overflow:visible}
+.note{font-size:20px;color:var(--muted)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M6 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 12l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-4 3-6 6.5-6s6.5 2 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14c3 0 4.5 2 4.5 5"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+<symbol id="i-stetho" viewBox="0 0 24 24"><path d="M6 3v6a4 4 0 0 0 8 0V3M10 13v2a5 5 0 0 0 10 0v-1"/><circle cx="20" cy="12" r="2"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-8-4.6-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.4 12 20 12 20z"/></symbol>
+<symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 13h6l-1 8 8-10h-6z"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+<symbol id="i-cross" viewBox="0 0 24 24"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></symbol>
+</defs></svg>
+
+<div id="stage">
+
+<!-- ===== S1: заставка ===== -->
+<section class="sc" id="s1" data-s="0" data-e="6.6">
+  <div class="bg blue"></div>
+  <div class="in">
+    <div class="ring" id="s1r1" style="width:1100px;height:1100px;right:-300px;top:-380px;border:120px solid rgba(255,255,255,.09)"></div>
+    <div class="ring" style="width:620px;height:620px;right:140px;bottom:-360px;background:rgba(255,255,255,.06)"></div>
+    <svg class="abs" style="right:170px;top:600px;width:220px;height:220px;opacity:.16" viewBox="0 0 24 24" fill="#fff"><use href="#i-cross"/></svg>
+    <div class="abs a" data-d=".3" style="left:180px;top:200px;display:inline-flex;padding:14px 28px;border-radius:999px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-family:Montserrat;font-weight:700;font-size:24px;letter-spacing:.2em">SINAPTIC AI × МЕДИЧНИЙ ЦЕНТР «АСКЛЕПІЙ»</div>
+    <div class="abs H a" data-d=".7" style="left:176px;top:320px;font-size:118px;color:#fff">Більше часу лікарю.</div>
+    <div class="abs a" data-d="1.15" style="left:176px;top:450px;font-family:Montserrat;font-weight:500;font-size:118px;line-height:1.06;letter-spacing:-.025em;color:#fff">Більше уваги<br>кожному пацієнту.</div>
+    <div class="abs rule a" data-d="2.0" data-k="grow" style="left:180px;top:770px;width:520px;background:rgba(255,255,255,.7)"></div>
+    <div class="abs a" data-d="2.3" style="left:180px;top:800px;font-size:36px;color:#e6eef8;max-width:1100px">Захищена ШІ-платформа, що об'єднує всі системи Асклепій в одне цифрове операційне ядро</div>
+  </div>
+</section>
+
+<!-- ===== S2: розрізнені системи ===== -->
+<section class="sc" id="s2" data-s="6" data-e="12.6">
+  <div class="bg light"></div>
+  <div class="in">
+    <div class="abs kick a" data-d=".2" style="left:180px;top:130px">Сьогодні</div>
+    <div class="abs H a" data-d=".4" style="left:176px;top:180px;font-size:96px">Дані є. <span style="color:var(--warm)">Цілісності немає.</span></div>
+    <svg class="ov" id="s2svg"></svg>
+    <div class="chip a" data-d=".8" data-k="scale" data-base="translate(-50%,-50%)" style="left:330px;top:480px"><svg class="ic"><use href="#i-db"/></svg>МІС</div>
+    <div class="chip a" data-d=".95" data-k="scale" data-base="translate(-50%,-50%)" style="left:860px;top:430px"><svg class="ic"><use href="#i-flask"/></svg>Лабораторія</div>
+    <div class="chip a" data-d="1.1" data-k="scale" data-base="translate(-50%,-50%)" style="left:1430px;top:500px"><svg class="ic"><use href="#i-scan"/></svg>Діагностика</div>
+    <div class="chip a" data-d="1.25" data-k="scale" data-base="translate(-50%,-50%)" style="left:450px;top:830px"><svg class="ic"><use href="#i-phone"/></svg>Колл-центр</div>
+    <div class="chip a" data-d="1.4" data-k="scale" data-base="translate(-50%,-50%)" style="left:1010px;top:880px"><svg class="ic"><use href="#i-chat"/></svg>Месенджери</div>
+    <div class="chip a" data-d="1.55" data-k="scale" data-base="translate(-50%,-50%)" style="left:1560px;top:820px"><svg class="ic"><use href="#i-users"/></svg>Відгуки</div>
+    <div class="abs a" data-d="2.2" style="right:150px;top:990px;display:flex;gap:30px;font-size:24px;color:var(--muted);align-items:center">
+      <span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:var(--blue);display:inline-block"></i>дані доходять</span>
+      <span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:var(--warm);display:inline-block"></i>дані губляться</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S3: операційне ядро ===== -->
+<section class="sc" id="s3" data-s="12" data-e="20.6">
+  <div class="bg pale"></div>
+  <div class="in">
+    <div class="abs kick a" data-d=".2" style="left:140px;top:96px">Sinaptic AI</div>
+    <div class="abs H a" data-d=".4" style="left:136px;top:140px;font-size:80px">Єдине операційне ядро <span style="color:var(--blue)">Асклепій</span></div>
+    <svg class="ov" id="s3svg"></svg>
+    <div id="s3src"></div>
+    <div id="s3out"></div>
+    <div class="abs a" data-d=".9" data-k="scale" data-base="translate(-50%,-50%)" style="left:960px;top:650px;width:400px;height:400px">
+      <div class="ring" id="s3ra" style="inset:-60px;border:3px dashed rgba(43,92,142,.45)"></div>
+      <div class="ring" id="s3rb" style="inset:-24px;border:2px solid rgba(43,92,142,.25)"></div>
+      <div id="s3core" style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 25%,#5c8fc2,#2b5c8e 55%,#224d83);color:#fff;display:grid;place-items:center;text-align:center;box-shadow:0 30px 80px rgba(34,77,131,.45)">
+        <div><svg class="ic" style="width:74px;height:74px;margin:0 auto 10px;display:block"><use href="#i-shield"/></svg><div style="font-family:Montserrat;font-weight:800;font-size:40px;line-height:1.1">Захищена<br>база знань</div><div style="font-size:22px;opacity:.9;margin-top:10px">шифрування · ключ у вас</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S4: ШІ в МІС проти Sinaptic ===== -->
+<section class="sc" id="s4" data-s="20" data-e="26.6">
+  <div class="bg light"></div>
+  <div class="in">
+    <div class="abs kick a" data-d=".2" style="left:180px;top:120px">Чим ми відрізняємось</div>
+    <div class="abs H a" data-d=".35" style="left:176px;top:165px;font-size:76px">Не ще одна система, а <span style="color:var(--blue)">одне ціле</span></div>
+    <div class="card a" data-d=".8" data-k="left" style="left:180px;top:340px;width:740px;height:470px;padding:48px">
+      <div class="tag">ШІ у вашій МІС</div>
+      <div class="H" style="font-size:48px;margin-top:26px">Бачить лише одну систему</div>
+      <svg id="s4a" width="640" height="200" style="margin-top:26px;overflow:visible"></svg>
+    </div>
+    <div class="card a" data-d="1.2" data-k="right" style="left:1000px;top:340px;width:740px;height:470px;padding:48px;background:linear-gradient(150deg,#2b5c8e,#1b3f6c);color:#fff">
+      <div class="tag" style="background:rgba(255,255,255,.16);color:#fff">Sinaptic AI</div>
+      <div class="H" style="font-size:44px;margin-top:26px">Усі джерела в одній захищеній інтерактивній базі знань</div>
+      <svg id="s4b" width="640" height="170" style="margin-top:16px;overflow:visible"></svg>
+    </div>
+    <div class="abs a" data-d="2.4" style="left:180px;top:870px;width:1560px;font-size:34px;color:var(--muted);text-align:center">Згідно з рівнем доступу команда в реальному часі отримує <b style="color:var(--ink)">звіти, аналітику, прогнози та рекомендації</b></div>
+  </div>
+</section>
+
+<!-- ===== S5: пацієнт ===== -->
+<section class="sc" id="s5" data-s="26" data-e="33.6">
+  <div class="bg pale"></div>
+  <div class="in">
+    <div class="abs kick a" data-d=".2" style="left:180px;top:300px">Пацієнт</div>
+    <div class="abs H a" data-d=".4" style="left:176px;top:350px;font-size:66px;width:920px">Гіперперсоналізований супровід кожного пацієнта</div>
+    <div class="abs rule a" data-d="1.2" data-k="grow" style="left:180px;top:600px;width:300px"></div>
+    <div class="abs a" data-d="1.4" style="left:180px;top:630px;font-size:40px;color:var(--muted)">Система не втрачає жодної деталі.</div>
+    <div class="abs note a" data-d="2" style="left:180px;top:960px">Ілюстрація сценарію</div>
+    <div class="abs a" data-d=".6" data-k="up" style="left:1180px;top:90px;width:520px;height:900px;border-radius:64px;background:#1d2635;padding:18px;box-shadow:0 40px 90px rgba(20,40,70,.35)">
+      <div style="width:100%;height:100%;border-radius:48px;background:#f4f7fb;overflow:hidden;position:relative">
+        <div style="height:120px;background:#fff;display:flex;align-items:center;gap:18px;padding:40px 30px 0;border-bottom:1px solid #e3e9f2">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff"><svg class="ic" style="width:30px;height:30px"><use href="#i-shield"/></svg></div>
+          <div><div style="font-family:Montserrat;font-weight:800;font-size:24px">Ваш медичний центр</div><div style="font-size:18px;color:#3f9b5a">онлайн</div></div>
+        </div>
+        <div id="s5msgs" style="position:absolute;left:24px;right:24px;top:150px;display:flex;flex-direction:column;gap:18px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S6: лікар і власник ===== -->
+<section class="sc" id="s6" data-s="33" data-e="40.1">
+  <div class="bg light"></div>
+  <div class="in">
+    <div class="abs kick a" data-d=".2" style="left:180px;top:110px">Лікар · Власник</div>
+    <div class="abs H a" data-d=".35" style="left:176px;top:155px;font-size:62px">Менше рутини. <span style="color:var(--blue)">Уся мережа однією відповіддю.</span></div>
+    <div class="card a" data-d=".8" data-k="up" style="left:180px;top:330px;width:760px;height:600px;padding:46px">
+      <div class="tag"><svg class="ic"><use href="#i-stetho"/></svg>Лікар</div>
+      <div class="H" style="font-size:42px;margin-top:22px">Зведення пацієнта готове до прийому</div>
+      <div id="s6list" style="margin-top:30px;display:flex;flex-direction:column;gap:18px"></div>
+    </div>
+    <div class="card a" data-d="1.2" data-k="up" style="left:1000px;top:330px;width:740px;height:600px;padding:46px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><div class="tag"><svg class="ic"><use href="#i-chart"/></svg>Власник клініки</div><div style="font-family:Montserrat;font-weight:700;font-size:24px;color:var(--blue)">● 08:30</div></div>
+      <div class="H" style="font-size:38px;margin-top:22px">Персональний інтерактивний дашборд</div>
+      <div id="s6bars" style="display:flex;gap:34px;align-items:flex-end;height:190px;margin-top:30px"></div>
+      <div id="s6task" style="margin-top:28px;background:var(--bg);border-radius:20px;padding:20px 24px;font-size:22px;line-height:1.4"><b style="font-family:Montserrat;color:var(--blue);letter-spacing:.12em;font-size:16px">ЗАДАЧА</b><br>Переглянути графік адміністраторів на 9:00–11:00 <span style="display:inline-block;margin-left:8px;background:var(--blue);color:#fff;border-radius:999px;padding:4px 14px;font-family:Montserrat;font-weight:700;font-size:16px">Призначено</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S7: метрики США ===== -->
+<section class="sc" id="s7" data-s="39.6" data-e="46.6">
+  <div class="bg pale"></div>
+  <div class="in">
+    <div class="abs a" data-d=".2" style="left:180px;top:130px"><span class="tag">Наш досвід у США · цифрова клініка</span></div>
+    <div class="abs H a" data-d=".5" data-k="scale" style="left:170px;top:210px;font-size:250px;color:var(--blue);letter-spacing:-.05em;transform-origin:left center">×10–30</div>
+    <div class="abs H a" data-d=".9" style="left:180px;top:480px;font-size:60px">пацієнтів на одного лікаря</div>
+    <div class="abs" style="left:180px;top:620px;width:1560px">
+      <div class="a" data-d="1.3" style="display:grid;grid-template-columns:160px 1fr 330px;gap:30px;align-items:center">
+        <div style="font-family:Montserrat;font-weight:700;font-size:30px;color:var(--muted)">Було</div>
+        <div style="height:84px;border-radius:20px;background:#fff;overflow:hidden;position:relative"><i id="s7b1" style="position:absolute;left:0;top:0;bottom:0;width:0;background:var(--warm);border-radius:20px"></i></div>
+        <div style="font-family:Montserrat;font-weight:800;font-size:46px">10–15 <span style="font-size:28px;font-weight:600;color:var(--muted)">(до 30)</span></div>
+      </div>
+      <div class="a" data-d="1.6" style="display:grid;grid-template-columns:160px 1fr 330px;gap:30px;align-items:center;margin-top:30px">
+        <div style="font-family:Montserrat;font-weight:700;font-size:30px;color:var(--muted)">Стало</div>
+        <div style="height:84px;border-radius:20px;background:#fff;overflow:hidden;position:relative"><i id="s7b2" style="position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#8fb1d6,#2b5c8e);border-radius:20px"></i></div>
+        <div id="s7n" style="font-family:Montserrat;font-weight:800;font-size:46px;color:var(--blue)">300–450</div>
+      </div>
+      <div class="note a" data-d="2.6" style="margin-top:30px;font-size:26px">Пацієнтів, яких один лікар веде протягом місяця. Звичайний лікар: система ловить людські помилки й організовує роботу.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S8: рецепт за 5 хвилин ===== -->
+<section class="sc" id="s8" data-s="46" data-e="52.6">
+  <div class="bg light"></div>
+  <div class="in">
+    <div class="abs kick a" data-d=".2" style="left:180px;top:140px">Сценарій, перевірений на практиці</div>
+    <div class="abs H a" data-d=".4" style="left:176px;top:190px;font-size:84px">Рецепт за 5 хв. <span style="color:var(--blue)">замість візиту на 30 хв.</span></div>
+    <div class="abs a" data-d=".9" style="left:180px;top:400px;width:1560px;display:grid;grid-template-columns:160px 1fr;gap:30px;align-items:center">
+      <div style="font-family:Montserrat;font-weight:700;font-size:30px;color:var(--muted)">Було</div>
+      <div style="height:120px;border-radius:24px;border:3px dashed #e3a8a8;background:#fff;padding:14px;display:flex;gap:14px;align-items:stretch">
+        <div style="width:16.6%;border-radius:14px;background:var(--blue);color:#fff;font-family:Montserrat;font-weight:800;font-size:24px;display:grid;place-items:center">5 хв</div>
+        <div style="flex:1;display:flex;align-items:center;padding-left:14px;color:#b53b3b;font-family:Montserrat;font-weight:700;font-size:28px">25 хв слоту не використано</div>
+      </div>
+    </div>
+    <div class="abs a" data-d="1.3" style="left:180px;top:570px;width:1560px;display:grid;grid-template-columns:160px 1fr;gap:30px;align-items:center">
+      <div style="font-family:Montserrat;font-weight:700;font-size:30px;color:var(--muted)">Стало</div>
+      <div id="s8slots" style="height:120px;border-radius:24px;background:var(--pale);padding:14px;display:grid;grid-template-columns:repeat(6,1fr);gap:14px"></div>
+    </div>
+    <div id="s8pts" class="abs" style="left:180px;top:780px;width:1560px;display:grid;grid-template-columns:repeat(3,1fr);gap:30px"></div>
+  </div>
+</section>
+
+<!-- ===== S9: як формується результат ===== -->
+<section class="sc" id="s9" data-s="52" data-e="58.6">
+  <div class="bg pale"></div>
+  <div class="in">
+    <div class="abs kick a" data-d=".2" style="left:140px;top:100px">Результат</div>
+    <div class="abs H a" data-d=".35" style="left:136px;top:145px;font-size:72px">Як формується результат</div>
+    <div id="s9cols" class="abs" style="left:140px;top:290px;width:1160px;display:grid;grid-template-columns:repeat(3,1fr);gap:32px"></div>
+    <svg class="ov" id="s9svg"></svg>
+    <div class="card a" data-d="3.0" data-k="scale" style="left:1380px;top:290px;width:400px;height:640px;padding:44px;background:radial-gradient(70% 80% at 85% 0%,#6f9bcb 0%,transparent 60%),linear-gradient(150deg,#2b5c8e,#1b3f6c);color:#fff;display:flex;flex-direction:column;justify-content:center;gap:18px">
+      <svg class="ic" style="width:80px;height:80px;color:var(--lb)"><use href="#i-trend"/></svg>
+      <div style="font-family:Montserrat;font-weight:700;font-size:20px;letter-spacing:.22em;opacity:.85">ГОЛОВНИЙ РЕЗУЛЬТАТ</div>
+      <div class="H" style="font-size:58px">Більше доходу клініки</div>
+      <div style="font-size:30px;line-height:1.35">та більше задоволених пацієнтів</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== S10: безпека ===== -->
+<section class="sc" id="s10" data-s="58" data-e="65.6">
+  <div class="bg dark"></div>
+  <div class="in">
+    <svg class="ov" id="s10svg"></svg>
+    <div class="abs" id="s10core" style="left:560px;top:560px;width:300px;height:300px;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(150deg,#3b72a8,#1b3f6c);border:2px solid #fff;display:grid;place-items:center;box-shadow:0 0 120px rgba(188,211,238,.45)"><svg class="ic" style="width:120px;height:120px;color:#fff;stroke-width:1.4"><use href="#i-lock"/></svg></div>
+    <div class="chip a" data-d=".6" data-k="scale" data-base="translate(-50%,-50%)" style="left:150px;top:330px;font-size:24px;padding:14px 22px"><svg class="ic" style="width:28px;height:28px"><use href="#i-db"/></svg>МІС</div>
+    <div class="chip a" data-d=".75" data-k="scale" data-base="translate(-50%,-50%)" style="left:150px;top:560px;font-size:24px;padding:14px 22px"><svg class="ic" style="width:28px;height:28px"><use href="#i-flask"/></svg>Лабораторія</div>
+    <div class="chip a" data-d=".9" data-k="scale" data-base="translate(-50%,-50%)" style="left:150px;top:790px;font-size:24px;padding:14px 22px"><svg class="ic" style="width:28px;height:28px"><use href="#i-scan"/></svg>МРТ · КТ</div>
+    <div class="abs" id="s10block" style="left:560px;top:96px;opacity:0;display:flex;gap:10px;align-items:center;background:#fde8e8;color:#b53b3b;border:2px solid var(--warm);border-radius:999px;padding:12px 24px;font-family:Montserrat;font-weight:800;font-size:22px"><svg class="ic" style="width:26px;height:26px"><use href="#i-shield"/></svg>Спробу доступу заблоковано</div>
+    <div class="abs kick w a" data-d=".3" style="left:1080px;top:190px">Безпека</div>
+    <div class="abs H a" data-d=".45" style="left:1076px;top:235px;font-size:72px;color:#fff;width:760px">Всі дані мережі під вашим контролем</div>
+    <div id="s10list" class="abs" style="left:1080px;top:480px;width:720px;display:flex;flex-direction:column;gap:20px"></div>
+  </div>
+</section>
+
+<!-- ===== S11: команда ===== -->
+<section class="sc" id="s11" data-s="65" data-e="71.6">
+  <div class="bg light"></div>
+  <div class="in">
+    <div class="abs kick a" data-d=".2" style="left:180px;top:110px">Команда · досвід у США</div>
+    <div class="abs H a" data-d=".35" style="left:176px;top:155px;font-size:66px;width:1560px">ШІ-архітектура цифрової клініки для пацієнтів із деменцією</div>
+    <div class="card a" data-d=".8" data-k="up" style="left:180px;top:400px;width:760px;height:330px;padding:40px;display:grid;grid-template-columns:150px 1fr;gap:34px;align-items:start">
+      <img src="../img/founder-yuliy-hromyko.png" style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:3px solid var(--pale)" alt="">
+      <div><div class="H" style="font-size:44px">Юлій Громико</div><div style="font-family:Montserrat;font-weight:700;font-size:22px;letter-spacing:.14em;color:var(--blue);margin-top:8px">ЗАСНОВНИК, CTO</div><div style="font-size:24px;color:var(--muted);margin-top:14px;line-height:1.45">Створив ШІ-архітектуру цифрової клініки в США. 18+ років в enterprise-архітектурі, ШІ та кібербезпеці. Thomas Cook Group, Fozzy Group.</div></div>
+    </div>
+    <div class="card a" data-d="1.1" data-k="up" style="left:980px;top:400px;width:760px;height:330px;padding:40px;display:grid;grid-template-columns:150px 1fr;gap:34px;align-items:start">
+      <img src="../img/cofounder-serhiy-polonskyi.png" style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:3px solid var(--pale)" alt="">
+      <div><div class="H" style="font-size:44px">Сергій Полонський</div><div style="font-family:Montserrat;font-weight:700;font-size:22px;letter-spacing:.14em;color:var(--blue);margin-top:8px">СПІВЗАСНОВНИК, ДИРЕКТОР З РОЗВИТКУ</div><div style="font-size:24px;color:var(--muted);margin-top:14px;line-height:1.45">Майже 20 років у побудові й масштабуванні операційних бізнесів. Знає болі власника зсередини.</div></div>
+    </div>
+    <div id="s11badges" class="abs" style="left:180px;top:790px;width:1560px;display:grid;grid-template-columns:repeat(4,1fr);gap:28px"></div>
+  </div>
+</section>
+
+<!-- ===== S12: фінал ===== -->
+<section class="sc" id="s12" data-s="71" data-e="80" data-last="1">
+  <div class="bg blue"></div>
+  <div class="in">
+    <div class="ring" id="s12r" style="width:1000px;height:1000px;left:-360px;bottom:-520px;border:110px solid rgba(255,255,255,.08)"></div>
+    <div class="abs kick w a" data-d=".3" style="left:180px;top:190px">Наступний крок</div>
+    <div class="abs H a" data-d=".5" style="left:176px;top:240px;font-size:86px;color:#fff;width:980px">Обговоримо деталі під час зустрічі</div>
+    <div class="abs a" data-d="1.2" style="left:180px;top:500px;width:880px;font-size:34px;color:#e6eef8;line-height:1.45">Формат інтеграції та умови супроводу формуються індивідуально під структуру вашої мережі.</div>
+    <div class="card a" data-d="1.6" data-k="right" style="left:1180px;top:240px;width:560px;padding:44px;display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;gap:22px;align-items:center;border-bottom:2px solid var(--pale);padding-bottom:22px">
+        <img src="../img/cofounder-serhiy-polonskyi.png" style="width:110px;height:110px;border-radius:50%;object-fit:cover" alt="">
+        <div><div class="H" style="font-size:34px">Сергій Полонський</div><div style="font-size:20px;color:var(--muted);margin-top:6px">Співзасновник, директор з розвитку</div></div>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;font-family:Montserrat;font-weight:800;font-size:36px;color:var(--ink)"><svg class="ic" style="width:40px;height:40px;color:var(--blue)"><use href="#i-phone"/></svg>+380 67 716 22 24</div>
+      <div style="display:flex;gap:16px;align-items:center;font-family:Montserrat;font-weight:700;font-size:30px;color:var(--ink)"><svg class="ic" style="width:38px;height:38px;color:var(--blue)"><use href="#i-mail"/></svg>sergiy@sinaptic.ai</div>
+    </div>
+    <div class="abs a" data-d="2.4" style="left:180px;top:880px;font-family:Montserrat;font-weight:800;font-size:56px;color:#fff;letter-spacing:.04em">SINAPTIC AI</div>
+    <div class="abs a" data-d="2.6" style="left:184px;top:950px;font-family:Montserrat;font-weight:700;font-size:20px;color:#d6e3f3;letter-spacing:.22em">ПРОПОЗИЦІЯ ДЛЯ МЕДИЧНОГО ЦЕНТРУ «АСКЛЕПІЙ»</div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function h(tag,css,html,p){var e=document.createElement(tag);if(css)e.style.cssText=css;if(html!=null)e.innerHTML=html;if(p)p.appendChild(e);return e}
+function cl(x){return x<0?0:x>1?1:x}
+function eo(x){return 1-Math.pow(1-x,3)}
+function eio(x){return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2}
+function pr(L,d,u){return eo(cl((L-d)/(u||.9)))}
+function at(path,f){var len=path.getTotalLength();return path.getPointAtLength(len*f)}
+
+var scenes=[].slice.call(document.querySelectorAll('.sc')).map(function(e){return{el:e,s:+e.dataset.s,e:+e.dataset.e,last:!!e.dataset.last,id:e.id}});
+var U={};
+
+/* ---- S1 ---- */
+U.s1=function(L){document.getElementById('s1r1').style.transform='rotate('+(L*6)+'deg)'};
+
+/* ---- S2: хаос, пакети губляться ---- */
+(function(){
+  var svg=document.getElementById('s2svg');
+  var P=[[330,480],[860,430],[1430,500],[450,830],[1010,880],[1560,820]];
+  var E=[[0,4,-260,240],[0,2,320,-260],[1,3,-300,280],[1,5,260,300],[2,3,-340,-220],[2,4,200,320],[3,5,300,-300],[0,5,120,420],[4,1,-200,-300],[5,0,-260,-380]];
+  var paths=[],packs=[];
+  E.forEach(function(e,i){
+    var a=P[e[0]],b=P[e[1]],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;
+    var d='M'+a[0]+' '+a[1]+' Q'+(mx+e[2])+' '+(my+e[3])+' '+b[0]+' '+b[1];
+    var p=el('path',{d:d,fill:'none',stroke:'#9fb4d1','stroke-width':2.5,'stroke-dasharray':'8 12',opacity:.85},svg);
+    paths.push(p);
+    var g=el('g',{},svg);el('circle',{r:16,opacity:.22},g);el('circle',{r:8},g);
+    packs.push({g:g,p:p,lost:i%2===0,off:i*0.17,sp:0.33+(i%3)*0.06});
+  });
+  U.s2=function(L){
+    var dp=cl((L-1)/1.2);
+    paths.forEach(function(p){p.style.opacity=.85*dp});
+    packs.forEach(function(k){
+      if(L<1.6){k.g.setAttribute('opacity',0);return}
+      var f=((L-1.6)*k.sp+k.off)%1,pt=at(k.p,f);
+      k.g.setAttribute('transform','translate('+pt.x+' '+pt.y+')');
+      var red=k.lost&&f>.5;k.g.setAttribute('fill',red?'#f35e5e':'#2b5c8e');
+      var o=f<.08?f/.08:(k.lost?(f>.62?0:(f>.5?1-(f-.5)/.12:1)):(f>.92?(1-f)/.08:1));
+      k.g.setAttribute('opacity',o);
+    });
+  };
+})();
+
+/* ---- S3: джерела -> ядро -> ролі ---- */
+(function(){
+  var src=[['i-db','Медична інформаційна система'],['i-flask','Власна лабораторія'],['i-scan','Діагностика'],['i-phone','Колл-центр і запис'],['i-chat','Месенджери'],['i-users','Відгуки й пропозиції']];
+  var out=[['i-user','Пацієнту'],['i-stetho','Лікарю'],['i-chat','Реєстратурі'],['i-chart','Власнику']];
+  var sc=document.getElementById('s3src'),oc=document.getElementById('s3out'),svg=document.getElementById('s3svg');
+  var C=[960,650],ins=[],outs=[];
+  src.forEach(function(s,i){
+    var y=330+i*104;
+    var c=h('div','left:140px;top:'+(y-36)+'px;width:540px;padding:18px 24px;font-size:25px','<svg class="ic"><use href="#'+s[0]+'"/></svg>'+s[1],sc);c.className='chip a';c.dataset.d=(0.7+i*.12).toFixed(2);c.dataset.k='left';
+    var d='M680 '+y+' C820 '+y+' '+(C[0]-200)+' '+C[1]+' '+C[0]+' '+C[1];
+    var p=el('path',{d:d,fill:'none',stroke:'#2b5c8e','stroke-width':3,opacity:.5},svg);
+    var lk=el('g',{},svg);el('circle',{r:20,fill:'#fff',stroke:'#2b5c8e','stroke-width':2.5},lk);var u=el('use',{href:'#i-lock',x:-12,y:-12,width:24,height:24,stroke:'#2b5c8e',fill:'none','stroke-width':2},lk);
+    ins.push({p:p,lk:lk,i:i,g:[mk(svg,'#2b5c8e'),mk(svg,'#2b5c8e')]});
+  });
+  out.forEach(function(s,i){
+    var y=440+i*112;
+    var c=h('div','left:1280px;top:'+(y-36)+'px;width:500px;padding:18px 24px;font-size:27px;border-left:6px solid #2b5c8e','<svg class="ic"><use href="#'+s[0]+'"/></svg>'+s[1],oc);c.className='chip a';c.dataset.d=(2.4+i*.15).toFixed(2);c.dataset.k='right';
+    var d='M'+C[0]+' '+C[1]+' C'+(C[0]+200)+' '+C[1]+' 1140 '+y+' 1280 '+y;
+    var p=el('path',{d:d,fill:'none',stroke:'#5c8fc2','stroke-width':3,opacity:.5},svg);
+    outs.push({p:p,i:i,g:[mk(svg,'#5c8fc2'),mk(svg,'#5c8fc2')]});
+  });
+  function mk(svg,c){var g=el('g',{fill:c,opacity:0},svg);el('circle',{r:15,opacity:.22},g);el('circle',{r:7.5},g);return g}
+  function draw(p,f){var l=p.getTotalLength();p.style.strokeDasharray=l;p.style.strokeDashoffset=l*(1-f)}
+  U.s3=function(L){
+    document.getElementById('s3ra').style.transform='rotate('+(L*14)+'deg)';
+    document.getElementById('s3rb').style.transform='rotate('+(-L*9)+'deg)';
+    var core=document.getElementById('s3core');core.style.boxShadow='0 30px 80px rgba(34,77,131,.45),0 0 0 '+(10+10*Math.sin(L*3.2))+'px rgba(43,92,142,.12)';
+    ins.forEach(function(k){
+      var f=eo(cl((L-1.2-k.i*.1)/1));draw(k.p,f);
+      var pt=at(k.p,.4);k.lk.setAttribute('transform','translate('+pt.x+' '+pt.y+') scale('+f+')');
+      k.g.forEach(function(g,j){if(L<2.2){g.setAttribute('opacity',0);return}var q=((L-2.2)*.42+k.i*.13+j*.5)%1,pp=at(k.p,q);g.setAttribute('transform','translate('+pp.x+' '+pp.y+')');g.setAttribute('opacity',q<.08?q/.08:(q>.88?0:1))});
+    });
+    outs.forEach(function(k){
+      var f=eo(cl((L-2.6-k.i*.12)/.9));draw(k.p,f);
+      k.g.forEach(function(g,j){if(L<3.4){g.setAttribute('opacity',0);return}var q=((L-3.4)*.45+k.i*.15+j*.5)%1,pp=at(k.p,q);g.setAttribute('transform','translate('+pp.x+' '+pp.y+')');g.setAttribute('opacity',q<.12?0:(q>.92?(1-q)/.08:1))});
+    });
+  };
+})();
+
+/* ---- S4: одна система проти всіх ---- */
+(function(){
+  var a=document.getElementById('s4a'),b=document.getElementById('s4b');
+  var lab=['МІС','Лаб','Діагн.','Дзвінки','Чати','Відгуки'];
+  var na=[],nb=[],lb=[];
+  lab.forEach(function(t,i){
+    var x=50+i*108;
+    var g=el('g',{transform:'translate('+x+' 110)'},a);
+    el('circle',{r:34,fill:i===0?'#2b5c8e':'#e8edf4',stroke:i===0?'#2b5c8e':'#cfd9e6','stroke-width':2},g);
+    var tx=el('text',{y:72,'text-anchor':'middle','font-family':'Montserrat','font-weight':700,'font-size':18,fill:i===0?'#2b5c8e':'#9aa6b5'},g);tx.textContent=t;
+    na.push(g);
+    var ang=Math.PI*(0.15+0.7*(i/5)),bx=320+Math.cos(Math.PI+ang)*-250,by=150-Math.sin(ang)*120;
+    var ln=el('line',{x1:320,y1:150,x2:bx,y2:by,stroke:'rgba(255,255,255,.55)','stroke-width':2.5},b);lb.push(ln);
+    var g2=el('g',{transform:'translate('+bx+' '+by+')'},b);el('circle',{r:26,fill:'#fff'},g2);
+    var t2=el('text',{y:6,'text-anchor':'middle','font-family':'Montserrat','font-weight':800,'font-size':13,fill:'#2b5c8e'},g2);t2.textContent=t;nb.push(g2);
+  });
+  var hub=el('circle',{cx:320,cy:150,r:30,fill:'#bcd3ee'},b);
+  U.s4=function(L){
+    na.forEach(function(g,i){g.style.opacity=i===0?1:.55});
+    lb.forEach(function(l,i){var f=eo(cl((L-1.8-i*.08)/.6));l.setAttribute('opacity',f)});
+    nb.forEach(function(g,i){var f=eo(cl((L-1.6-i*.08)/.6));g.style.opacity=f});
+    hub.setAttribute('r',30+4*Math.sin(L*4));
+  };
+})();
+
+/* ---- S5: повідомлення пацієнту ---- */
+(function(){
+  var box=document.getElementById('s5msgs');
+  var M=[['Завтра колоноскопія. Ось <b>ваша схема підготовки</b> з урахуванням ваших ліків.',1.3],['Результати аналізів готові. Лікар радить <b>контроль через 3 місяці</b>. Записати вас?',3.0],['Наближається термін щеплення дитини. <b>Є вільні години</b> цього тижня.',4.7]];
+  var items=M.map(function(m){
+    var w=h('div','display:flex;flex-direction:column;gap:6px',null,box);
+    var dots=h('div','align-self:flex-start;background:#fff;border-radius:22px;padding:16px 22px;display:flex;gap:8px;box-shadow:0 6px 16px rgba(34,77,131,.1)','<i></i><i></i><i></i>',w);
+    [].forEach.call(dots.children,function(i){i.style.cssText='width:12px;height:12px;border-radius:50%;background:#9fb4d1;display:block'});
+    var b=h('div','align-self:flex-start;max-width:92%;background:#fff;border-radius:24px 24px 24px 6px;padding:20px 22px;font-size:23px;line-height:1.4;box-shadow:0 8px 20px rgba(34,77,131,.1);color:#24262f',m[0],w);
+    [].forEach.call(b.querySelectorAll('b'),function(x){x.style.color='#2b5c8e'});
+    return {w:w,d:dots,b:b,t:m[1]};
+  });
+  U.s5=function(L){
+    items.forEach(function(it){
+      var typing=L>=it.t-0.9&&L<it.t,shown=L>=it.t;
+      it.w.style.display=(typing||shown)?'flex':'none';
+      it.d.style.display=typing?'flex':'none';
+      [].forEach.call(it.d.children,function(i,k){i.style.opacity=.35+.65*Math.max(0,Math.sin(L*9-k*.9))});
+      var p=eo(cl((L-it.t)/.45));it.b.style.display=shown?'block':'none';it.b.style.opacity=p;it.b.style.transform='translateY('+(1-p)*16+'px)';
+    });
+  };
+})();
+
+/* ---- S6: зведення лікаря, дашборд власника ---- */
+(function(){
+  var list=document.getElementById('s6list');
+  var R=['Історія візитів зібрана','Свіжі результати аналізів','Питання пацієнта до прийому','Чернетка висновку чекає на підтвердження'];
+  var rows=R.map(function(t,i){return h('div','display:flex;gap:18px;align-items:center;font-size:28px;opacity:0','<span style="width:46px;height:46px;border-radius:50%;background:#e5ecf6;color:#2b5c8e;display:grid;place-items:center;flex:none"><svg class="ic" style="width:26px;height:26px"><use href="#i-check"/></svg></span>'+t,list)});
+  var bars=document.getElementById('s6bars');
+  var B=[['Пацієнти',.72],['Слоти',.9],['Дохід',.64]];
+  var bs=B.map(function(b){var c=h('div','flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;height:100%',null,bars);var bar=h('div','height:0;border-radius:14px;background:linear-gradient(180deg,#8fb1d6,#2b5c8e)',null,c);h('div','font-family:Montserrat;font-weight:700;font-size:22px;color:#555b66',b[0],c);return {bar:bar,v:b[1]}});
+  var task=document.getElementById('s6task');
+  U.s6=function(L){
+    rows.forEach(function(r,i){var p=eo(cl((L-1.4-i*.45)/.6));r.style.opacity=p;r.style.transform='translateX('+(1-p)*-30+'px)'});
+    bs.forEach(function(b,i){var p=eo(cl((L-1.8-i*.25)/1.1));b.bar.style.height=(150*b.v*p*(0.92+0.08*Math.sin(L*2+i)))+'px'});
+    var p=eo(cl((L-3.6)/.6));task.style.opacity=p;task.style.transform='translateY('+(1-p)*20+'px)';
+  };
+})();
+
+/* ---- S7: смуги ---- */
+U.s7=function(L){
+  document.getElementById('s7b1').style.width=(6.7*eo(cl((L-1.6)/.8)))+'%';
+  document.getElementById('s7b2').style.width=(100*eo(cl((L-2.0)/1.8)))+'%';
+};
+
+/* ---- S8: слоти ---- */
+(function(){
+  var s=document.getElementById('s8slots');
+  var cells=[];for(var i=0;i<6;i++)cells.push(h('div','border-radius:14px;border:2px dashed #9fb4d1;background:#fff;display:grid;place-items:center;font-family:Montserrat;font-weight:800;font-size:26px;color:#2b5c8e','5 хв',s));
+  var pts=document.getElementById('s8pts');
+  var T=[['i-user','Пацієнт не їде в клініку'],['i-stetho','Лікар звільняє час'],['i-trend','Окрема оплата: додатковий дохід']];
+  var ps=T.map(function(t){return h('div','display:flex;gap:18px;align-items:center;font-family:Montserrat;font-weight:700;font-size:30px;opacity:0','<span style="width:64px;height:64px;border-radius:18px;background:#2b5c8e;color:#fff;display:grid;place-items:center;flex:none"><svg class="ic" style="width:34px;height:34px"><use href="#'+t[0]+'"/></svg></span>'+t[1],pts)});
+  U.s8=function(L){
+    cells.forEach(function(c,i){var on=L>1.8+i*.35;c.style.background=on?'#2b5c8e':'#fff';c.style.color=on?'#fff':'#2b5c8e';c.style.borderStyle=on?'solid':'dashed';c.style.borderColor=on?'#2b5c8e':'#9fb4d1';c.style.transform='scale('+(on?1+0.06*Math.max(0,1-(L-1.8-i*.35)*3):1)+')'});
+    ps.forEach(function(p,i){var q=eo(cl((L-3.9-i*.3)/.6));p.style.opacity=q;p.style.transform='translateY('+(1-q)*20+'px)'});
+  };
+})();
+
+/* ---- S9: доріжки результату ---- */
+(function(){
+  var cols=document.getElementById('s9cols');
+  var C=[['Зростання',[['i-users','Більше пацієнтів на одного лікаря'],['i-pulse','Вища якість супроводу'],['i-heart','Вища задоволеність пацієнтів'],['i-trend','Зростання LTV']]],
+         ['Ефективність',[['i-bolt','Автоматизація рутини'],['i-chart','Менші витрати на адміністративний ресурс']]],
+         ['Контроль',[['i-eye','Повний контроль над усіма процесами'],['i-shield','Мінімум помилок через людський фактор']]]];
+  var all=[];
+  C.forEach(function(c,ci){
+    var col=h('div','display:flex;flex-direction:column;gap:16px',null,cols);
+    h('div','font-family:Montserrat;font-weight:800;font-size:22px;letter-spacing:.16em;color:#2b5c8e;border-bottom:3px solid #2b5c8e;padding-bottom:10px;text-transform:uppercase',c[0],col);
+    c[1].forEach(function(s,si){
+      var card=h('div','background:#fff;border-radius:20px;padding:18px 22px;display:flex;gap:16px;align-items:center;font-family:Montserrat;font-weight:700;font-size:23px;line-height:1.3;box-shadow:0 12px 30px rgba(34,77,131,.1);opacity:0','<svg class="ic" style="width:34px;height:34px;color:#2b5c8e"><use href="#'+s[0]+'"/></svg><span>'+s[1]+'</span>',col);
+      all.push({el:card,d:0.7+ci*.25+si*.35});
+    });
+  });
+  U.s9=function(L){all.forEach(function(a){var p=eo(cl((L-a.d)/.6));a.el.style.opacity=p;a.el.style.transform='translateY('+(1-p)*24+'px)'})};
+})();
+
+/* ---- S10: сховище ---- */
+(function(){
+  var svg=document.getElementById('s10svg'),C=[560,560];
+  var r1=el('circle',{cx:C[0],cy:C[1],r:390,fill:'none',stroke:'rgba(255,255,255,.3)','stroke-width':2,'stroke-dasharray':'10 14'},svg);
+  var r2=el('circle',{cx:C[0],cy:C[1],r:300,fill:'none',stroke:'rgba(188,211,238,.5)','stroke-width':2,'stroke-dasharray':'6 12'},svg);
+  var r3=el('circle',{cx:C[0],cy:C[1],r:215,fill:'rgba(188,211,238,.08)',stroke:'rgba(255,255,255,.75)','stroke-width':3},svg);
+  var flash=el('circle',{cx:C[0],cy:C[1],r:390,fill:'none',stroke:'#f35e5e','stroke-width':5,opacity:0},svg);
+  var S=[[230,330],[260,560],[230,790]],pk=[];
+  S.forEach(function(s,i){
+    var d='M'+s[0]+' '+s[1]+' L'+C[0]+' '+C[1];
+    var p=el('path',{d:d,stroke:'rgba(188,211,238,.6)','stroke-width':2.5,'stroke-dasharray':'8 10',fill:'none'},svg);
+    var L=Math.hypot(C[0]-s[0],C[1]-s[1]);
+    [0,.5].forEach(function(o){var g=el('g',{},svg);el('circle',{r:16,opacity:.25},g);el('circle',{r:8},g);pk.push({g:g,p:p,o:o+i*.17,tc:(L-215)/L,tend:(L-150)/L})});
+  });
+  var intr=el('g',{opacity:0},svg);el('circle',{r:22,fill:'#f35e5e',opacity:.3},intr);el('circle',{r:11,fill:'#f35e5e'},intr);
+  var blk=document.getElementById('s10block'),core=document.getElementById('s10core');
+  var list=document.getElementById('s10list');
+  var T=[['i-lock','Шифрування при вході'],['i-key','Ключ належить вам'],['i-file','Журнал кожної дії'],['i-globe','Ваш сервер або сервер у ЄС (Польща)'],['i-shield','Захист даних відповідно до регуляторних вимог ЄС']];
+  var rows=T.map(function(t){return h('div','display:flex;gap:20px;align-items:center;font-family:Montserrat;font-weight:700;font-size:30px;color:#fff;opacity:0','<span style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.4);display:grid;place-items:center;flex:none"><svg class="ic" style="width:30px;height:30px;color:#bcd3ee"><use href="#'+t[0]+'"/></svg></span>'+t[1],list)});
+  U.s10=function(L){
+    r1.setAttribute('transform','rotate('+(L*8)+' '+C[0]+' '+C[1]+')');r2.setAttribute('transform','rotate('+(-L*12)+' '+C[0]+' '+C[1]+')');
+    r3.setAttribute('stroke-opacity',.55+.35*Math.sin(L*2.4));
+    core.style.boxShadow='0 0 '+(100+30*Math.sin(L*3))+'px rgba(188,211,238,.45)';
+    pk.forEach(function(k){
+      if(L<1){k.g.setAttribute('opacity',0);return}
+      var f=((L-1)*.38+k.o)%1,pt=at(k.p,f);k.g.setAttribute('transform','translate('+pt.x+' '+pt.y+')');
+      k.g.setAttribute('fill',f>k.tc?'#ffffff':'#9fc0e6');k.g.setAttribute('opacity',f<.06?f/.06:(f>k.tend?0:1));
+    });
+    var c=((L-1.5)%4+4)%4,hit=1.6;
+    if(L>1.5){var f=cl(c/hit),sx=1500,sy=-60,ex=C[0]+390*Math.cos(-0.85),ey=C[1]+390*Math.sin(-0.85);intr.setAttribute('transform','translate('+(sx+(ex-sx)*f)+' '+(sy+(ey-sy)*f)+')');intr.setAttribute('opacity',c<hit?1:0);
+      var fl=c>=hit?Math.max(0,1-(c-hit)/.8):0;flash.setAttribute('opacity',fl);flash.setAttribute('stroke-width',3+6*fl);
+      var bo=c>=hit&&c<hit+1.9?Math.min(1,(c-hit)/.25):0;blk.style.opacity=bo;blk.style.transform='scale('+(.9+.1*bo)+')';}
+    rows.forEach(function(r,i){var p=eo(cl((L-1.2-i*.35)/.6));r.style.opacity=p;r.style.transform='translateX('+(1-p)*30+'px)'});
+  };
+})();
+
+/* ---- S11: бейджі ---- */
+(function(){
+  var b=document.getElementById('s11badges');
+  var B=[['badge-pecb-dpo','DPO','Захист даних'],['badge-pecb-ciso','CISO','Інформаційна безпека'],['badge-pecb-iso-42001','ISO/IEC 42001','Управління ШІ'],['badge-pecb-iso-31000','ISO 31000','Управління ризиками']];
+  var items=B.map(function(x){return h('div','background:#fff;border-radius:22px;padding:18px 22px;display:flex;gap:18px;align-items:center;box-shadow:0 12px 30px rgba(34,77,131,.1);opacity:0','<img src="../img/'+x[0]+'.png" style="width:90px;height:auto;border-radius:12px" alt=""><div><div style="font-family:Montserrat;font-weight:800;font-size:28px">'+x[1]+'</div><div style="font-size:20px;color:#555b66">'+x[2]+' · PECB</div></div>',b)});
+  U.s11=function(L){items.forEach(function(it,i){var p=eo(cl((L-1.6-i*.2)/.6));it.style.opacity=p;it.style.transform='translateY('+(1-p)*24+'px)'})};
+})();
+
+U.s12=function(L){document.getElementById('s12r').style.transform='rotate('+(L*5)+'deg)'};
+
+window.DURATION=80;
+window.renderAt=function(t){
+  scenes.forEach(function(S){
+    var vis=t>=S.s-0.001&&t<=S.e+0.001;
+    if(!vis){S.el.style.visibility='hidden';S.el.style.opacity=0;return}
+    S.el.style.visibility='visible';
+    // чистий кросфейд: наступна сцена (вище в DOM) проявляється поверх повністю видимої попередньої
+    var fi=S.s===0?1:eio(cl((t-S.s)/0.6));
+    S.el.style.opacity=fi;
+    var L=t-S.s,D=S.e-S.s,inn=S.el.querySelector('.in');
+    if(inn)inn.style.transform='scale('+(1.03-0.03*eo(cl(L/D)))+')';
+    [].forEach.call(S.el.querySelectorAll('.a'),function(a){
+      var d=+(a.dataset.d||0),k=a.dataset.k||'up',p=pr(L,d,+(a.dataset.u||0.9)),tr='';
+      if(k==='up')tr='translateY('+((1-p)*46)+'px)';
+      else if(k==='left')tr='translateX('+((1-p)*-70)+'px)';
+      else if(k==='right')tr='translateX('+((1-p)*70)+'px)';
+      else if(k==='scale')tr='scale('+(0.88+0.12*p)+')';
+      else if(k==='grow'){a.style.opacity=1;a.style.transform='scaleX('+p+')';return}
+      a.style.opacity=p;a.style.transform=(a.dataset.base||'')+' '+tr;
+    });
+    if(U[S.id])U[S.id](L,D,t);
+  });
+};
+window.renderAt(0);
+})();
+</script>
+</body>
+</html>
