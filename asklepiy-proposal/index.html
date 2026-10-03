@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sinaptic для МЦ «Асклепій» — пропозиція</title>
+<meta name="description" content="Пропозиція інтеграції інтелектуального ядра Sinaptic в мережу медичного центру «Асклепій»: персональний сервіс пацієнтам, більше часу лікарям, захист медичних даних.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#2b5c8e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%232b5c8e' stroke-width='6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Mulish:wght@400;500;600;700;800&display=swap">
+<style>
+/* Палітра й типографіка перенесені зі стилю asklepiy.com:
+   бренд-синій #2b5c8e, блідо-блакитні секції #e5ecf6, сіре тло #f2f2f2, білі картки з радіусом 12–32px.
+   Gilroy (їхній шрифт заголовків) комерційний, тому запасний варіант Montserrat. Основний текст Mulish. */
+:root{
+  --blue:#2b5c8e; --blue-d:#224d83; --blue-l:#7d9fc7; --pale:#e5ecf6; --pale-2:#e6eff9;
+  --bg:#f2f2f2; --card:#fff; --ink:#24262f; --muted:#555b66; --line:#d9d9d9; --warm:#f35e5e;
+  --r-s:12px; --r-m:20px; --r-l:32px;
+  --head:Gilroy,'Montserrat','Segoe UI',Arial,sans-serif; --body:'Mulish','Segoe UI',Arial,sans-serif;
+  --shadow:0 10px 30px rgba(34,77,131,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:110px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+button{font:inherit}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:clamp(14px,2.4vw,32px)}
+.ic{width:1.4em;height:1.4em;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:8px}
+
+/* ---------- header ---------- */
+.hdr{position:sticky;top:12px;z-index:60;margin-top:12px}
+.hdr-in{background:#fff;border-radius:var(--r-s);box-shadow:var(--shadow);display:flex;align-items:center;gap:22px;padding:12px 18px}
+.logo{display:flex;flex-direction:column;line-height:1;flex:none}
+.logo b{font-family:var(--head);font-weight:800;font-size:1.75rem;letter-spacing:-.02em;color:var(--blue);display:flex;align-items:center;gap:6px}
+.logo b i{width:15px;height:15px;border:4px solid var(--blue);border-radius:50%;display:inline-block}
+.logo small{font-size:.58rem;letter-spacing:.14em;font-weight:800;color:var(--blue);text-transform:uppercase;margin-top:4px}
+.menu{display:flex;gap:22px;font-family:var(--head);font-weight:600;font-size:.98rem;margin-left:8px;flex:1}
+.menu a{padding:6px 0;position:relative;white-space:nowrap}
+.menu a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--blue);transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.menu a:hover::after,.menu a.on::after{transform:scaleX(1)}
+.hdr-sep{width:2px;align-self:stretch;background:var(--blue);opacity:.8;margin-block:4px}
+.pill-ic{display:inline-flex;align-items:center;gap:10px;border-radius:999px;background:linear-gradient(180deg,#eef3fa,#e1eaf5);color:var(--blue);padding:10px 20px;font-family:var(--head);font-weight:600;font-size:1rem;white-space:nowrap}
+.pill-ic .ic{width:1.25em;height:1.25em}
+.round{width:52px;height:52px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;flex:none;transition:transform .25s,background .25s}
+.round:hover{transform:scale(1.06);background:var(--blue-d)}
+.burger{display:none}
+@media(max-width:1180px){.menu{display:none}.hdr-sep{display:none}.hdr-in{justify-content:space-between}}
+@media(max-width:560px){.pill-ic span{display:none}.pill-ic{padding:10px 12px}.logo b{font-size:1.45rem}}
+
+/* ---------- buttons, tags, links ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--head);font-weight:700;font-size:1rem;padding:15px 28px;border-radius:999px;border:0;cursor:pointer;transition:transform .25s,box-shadow .25s,background .25s;background:var(--blue);color:#fff}
+.btn:hover{background:var(--blue-d);transform:translateY(-2px);box-shadow:0 12px 26px rgba(34,77,131,.28)}
+.btn .ic{width:1.1em;height:1.1em;transition:transform .25s}
+.btn:hover .ic{transform:translateX(4px)}
+.btn.sm{padding:11px 20px;font-size:.92rem;border-radius:10px}
+.btn.white{background:#fff;color:var(--blue)}
+.btn.white:hover{background:#eef3fa}
+.btn.ghost{background:transparent;color:var(--blue);box-shadow:inset 0 0 0 2px var(--blue)}
+.btn.ghost:hover{background:var(--pale)}
+.more{display:inline-flex;align-items:center;gap:8px;color:var(--blue);font-family:var(--head);font-weight:600;border-bottom:2px solid var(--blue);padding:4px 2px 6px;width:max-content}
+.more .ic{width:1em;height:1em}
+.tag{display:inline-flex;align-items:center;padding:6px 16px;border-radius:999px;background:var(--pale);color:var(--blue);font-family:var(--head);font-weight:600;font-size:.88rem}
+.date{color:var(--muted);font-family:var(--head);font-weight:600;font-size:.9rem}
+.note{font-size:.84rem;color:var(--muted)}
+
+/* ---------- section scaffolding ---------- */
+section{padding-block:clamp(40px,5.2vw,72px)}
+.sec-title{font-family:var(--head);font-weight:800;font-size:clamp(1.8rem,3.6vw,2.9rem);line-height:1.12;letter-spacing:-.02em;color:var(--ink);text-wrap:balance}
+.sec-title em{font-style:normal;color:var(--blue)}
+.title-line{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;border-bottom:2px solid var(--blue);padding-bottom:14px;margin-bottom:clamp(24px,3.5vw,44px)}
+.title-line .sec-title{max-width:880px}
+.lead{font-size:clamp(1.02rem,1.5vw,1.2rem);color:var(--muted);max-width:68ch;margin-top:14px}
+.panel{background:#fff;border-radius:var(--r-l);padding:clamp(18px,2.6vw,34px);box-shadow:var(--shadow)}
+.pale{background:var(--pale)}
+.band{background:var(--pale);border-radius:var(--r-l);padding-inline:0}
+.band-in{padding:clamp(24px,4vw,56px) clamp(14px,3vw,40px)}
+
+/* ---------- hero ---------- */
+.hero{padding-block:24px 0}
+.hero-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:28px;align-items:stretch}
+.banner{position:relative;border-radius:var(--r-l);overflow:hidden;min-height:560px;color:#fff;padding:clamp(24px,3.4vw,52px);display:flex;flex-direction:column;justify-content:space-between;gap:28px;
+  background:radial-gradient(70% 80% at 85% 10%,#6f9bcb 0%,transparent 60%),radial-gradient(60% 70% at 0% 100%,#1b3f6c 0%,transparent 65%),linear-gradient(135deg,#2b5c8e 0%,#3b72a8 55%,#5c8fc2 100%)}
+.banner .shape{position:absolute;pointer-events:none;border-radius:50%}
+.banner .s1{width:520px;height:520px;right:-170px;top:-190px;border:70px solid rgba(255,255,255,.10)}
+.banner .s2{width:340px;height:340px;right:60px;bottom:-190px;background:rgba(255,255,255,.07)}
+.banner .cross{position:absolute;right:7%;top:12%;width:150px;height:150px;opacity:.22}
+.banner>*{position:relative;z-index:1}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--head);font-weight:700;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase}
+.banner .eyebrow{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:8px 16px;width:max-content;backdrop-filter:blur(6px)}
+.banner h1{font-family:var(--head);font-weight:800;font-size:clamp(2.1rem,4.7vw,4rem);line-height:1.04;letter-spacing:-.03em;max-width:15ch;text-wrap:balance}
+.banner h1 span{display:block;font-weight:600;opacity:.92}
+.banner p.sub{font-size:clamp(1rem,1.5vw,1.2rem);max-width:56ch;opacity:.94}
+.banner .row{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.glass-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.glass{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:var(--r-m);padding:16px 18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.glass b{display:block;font-family:var(--head);font-size:1.8rem;line-height:1;font-weight:800}
+.glass span{font-size:.9rem;opacity:.92}
+.cards2{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:14px}
+.mini{position:relative;border-radius:var(--r-m);overflow:hidden;min-height:260px;padding:14px;display:flex;align-items:flex-end;color:var(--ink);isolation:isolate}
+.mini::before{content:"";position:absolute;inset:0;z-index:-1}
+.mini.a::before{background:linear-gradient(160deg,#5c8fc2,#2b5c8e)}
+.mini.b::before{background:linear-gradient(160deg,#8fb1d6,#3b72a8)}
+.mini.c::before{background:linear-gradient(160deg,#4a7cb0,#1f4a7a)}
+.mini svg.bg{position:absolute;inset:0;width:100%;height:100%;z-index:-1;opacity:.5}
+.mini .box{background:rgba(255,255,255,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:14px;padding:12px;width:100%;display:flex;flex-direction:column;gap:10px}
+.mini .box b{font-family:var(--head);font-weight:700;font-size:1.02rem;line-height:1.2}
+.mini.white{background:#fff;align-items:stretch;box-shadow:var(--shadow)}
+.mini.white::before{display:none}
+.mini.white .box{background:transparent;backdrop-filter:none;justify-content:space-between;border:2px solid var(--pale);border-radius:var(--r-m);padding:18px}
+.mini.white .circ{width:68px;height:68px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff}
+.mini.white .circ .ic{width:30px;height:30px}
+.mini.white b{font-size:1.05rem}
+.mini .arrow{align-self:flex-end;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--blue);display:grid;place-items:center;color:var(--blue)}
+@media(max-width:1060px){.hero-grid{grid-template-columns:1fr}.cards2{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.glass-row{grid-template-columns:1fr}.cards2{grid-template-columns:1fr}.mini{min-height:170px}.banner{min-height:0}}
+
+/* ---------- 4 reasons ---------- */
+.why{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.why article{background:var(--pale);border:1.5px solid var(--ink);border-radius:var(--r-l);padding:20px 22px 0;display:flex;flex-direction:column;gap:18px;transition:transform .3s,box-shadow .3s}
+.why article:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.sq{position:relative;width:104px;height:104px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff,#dde7f4);display:grid;place-items:center;box-shadow:0 8px 20px rgba(34,77,131,.12)}
+.sq i{width:58px;height:58px;border-radius:14px;background:linear-gradient(180deg,#8fb0d8,#5f88bb);display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 6px 12px rgba(34,77,131,.25)}
+.sq .ic{width:30px;height:30px}
+.why h3{font-family:var(--head);font-weight:700;font-size:1.08rem;line-height:1.3;border-top:1.5px solid var(--blue);padding-top:14px}
+.why p{font-size:.95rem;color:var(--muted);margin-top:-8px;padding-bottom:22px}
+@media(max-width:1060px){.why{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.why{grid-template-columns:1fr}}
+
+/* ---------- stats (glass tiles) ---------- */
+.stats{position:relative;border-radius:var(--r-l);overflow:hidden;padding:clamp(28px,5vw,64px) clamp(14px,3vw,48px);
+  background:radial-gradient(60% 90% at 15% 15%,#ffffff 0%,transparent 60%),radial-gradient(60% 80% at 90% 90%,#bcd0e8 0%,transparent 65%),linear-gradient(135deg,#dfe9f6,#c9d9ee)}
+.stats::before,.stats::after{content:"";position:absolute;border-radius:50%;border:60px solid rgba(43,92,142,.08);pointer-events:none}
+.stats::before{width:420px;height:420px;left:-120px;bottom:-200px}
+.stats::after{width:300px;height:300px;right:-80px;top:-120px}
+.tiles{position:relative;z-index:1;display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.tile{background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.85);border-radius:var(--r-m);box-shadow:0 10px 30px rgba(34,77,131,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:26px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:180px}
+.tile b{font-family:var(--head);font-weight:800;font-size:clamp(2.2rem,4vw,3.2rem);line-height:1;color:var(--blue);letter-spacing:-.02em}
+.tile b small{font-size:.45em;font-weight:700}
+.tile span{font-family:var(--head);font-weight:600;line-height:1.3;font-size:1rem}
+.stats-note{position:relative;z-index:1;margin-top:18px;text-align:center}
+@media(max-width:1060px){.tiles{grid-template-columns:repeat(2,1fr)}.tile:last-child{grid-column:1/-1}}
+
+/* ---------- pains ---------- */
+.pains{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pain{background:#fff;border-radius:var(--r-m);padding:26px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;transition:transform .3s}
+.pain:hover{transform:translateY(-4px)}
+.pain .tags{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pain h3{font-family:var(--head);font-weight:700;font-size:1.3rem;line-height:1.22}
+.pain p{color:var(--muted);font-size:.98rem}
+.pain .cost{margin-top:auto;border-top:1.5px solid var(--pale);padding-top:14px;font-family:var(--head);font-weight:700;font-size:.92rem;color:var(--blue);display:flex;gap:8px;align-items:center}
+.pain .cost .ic{width:1.2em;height:1.2em;color:var(--warm)}
+@media(max-width:1060px){.pains{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.pains{grid-template-columns:1fr}}
+
+/* ---------- solution diagram ---------- */
+.diagram{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:clamp(14px,2.4vw,34px);align-items:center}
+.src,.out{display:flex;flex-direction:column;gap:10px}
+.chip{background:#fff;border-radius:14px;padding:12px 16px;display:flex;gap:12px;align-items:center;font-family:var(--head);font-weight:600;font-size:.95rem;box-shadow:0 4px 14px rgba(34,77,131,.08)}
+.chip .ic{color:var(--blue)}
+.chip small{display:block;font-family:var(--body);font-weight:500;color:var(--muted);font-size:.78rem;line-height:1.2}
+.core{position:relative;aspect-ratio:1;max-width:380px;width:100%;margin-inline:auto;display:grid;place-items:center}
+.core .ring{position:absolute;inset:0;border-radius:50%;border:2px dashed var(--blue-l);animation:spin 40s linear infinite}
+.core .ring.r2{inset:12%;border-style:solid;border-color:rgba(43,92,142,.25);animation-direction:reverse;animation-duration:60s}
+.core .mid{position:relative;width:62%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 30% 25%,#5c8fc2,#2b5c8e 55%,#224d83);color:#fff;display:grid;place-items:center;text-align:center;padding:12px;box-shadow:0 20px 50px rgba(34,77,131,.35)}
+.core .mid b{font-family:var(--head);font-weight:800;font-size:1.25rem;line-height:1.1;display:block}
+.core .mid span{font-size:.8rem;opacity:.9;display:block;margin-top:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.out .chip{border-left:4px solid var(--blue)}
+@media(max-width:900px){.diagram{grid-template-columns:1fr}.core{max-width:300px}}
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:clamp(24px,3vw,40px)}
+.step3{background:#fff;border-radius:var(--r-m);padding:24px;box-shadow:var(--shadow)}
+.step3 .tag{margin-bottom:12px}
+.step3 h3{font-family:var(--head);font-weight:800;font-size:1.5rem;margin-bottom:8px;color:var(--blue)}
+.step3 p{color:var(--muted);font-size:.97rem}
+.levels{margin-top:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.lvl{border:1.5px solid var(--blue-l);border-radius:var(--r-m);padding:16px 18px;background:rgba(255,255,255,.6)}
+.lvl b{font-family:var(--head);color:var(--blue);display:block;margin-bottom:2px}
+.lvl span{font-size:.93rem;color:var(--muted)}
+@media(max-width:860px){.steps3,.levels{grid-template-columns:1fr}}
+
+/* ---------- patient journey ---------- */
+.journey{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;counter-reset:j}
+.jstep{background:#fff;border-radius:var(--r-m);padding:20px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;position:relative}
+.jstep::before{counter-increment:j;content:counter(j);width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-family:var(--head);font-weight:800}
+.jstep h3{font-family:var(--head);font-weight:700;font-size:1.05rem;line-height:1.2}
+.jstep .when{font-size:.8rem;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.bubble{background:var(--pale);border-radius:14px 14px 14px 4px;padding:12px 14px;font-size:.9rem;line-height:1.45;color:var(--ink)}
+.bubble b{color:var(--blue)}
+.jstep .res{margin-top:auto;font-size:.82rem;font-weight:800;color:var(--blue);font-family:var(--head)}
+@media(max-width:1180px){.journey{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.journey{grid-template-columns:1fr}}
+.personas{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px}
+.persona{background:#fff;border-radius:var(--r-m);padding:22px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.persona h3{font-family:var(--head);font-weight:700;font-size:1.12rem;line-height:1.25}
+.persona p{font-size:.93rem;color:var(--muted)}
+.persona .tag{width:max-content}
+@media(max-width:1060px){.personas{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.personas{grid-template-columns:1fr}}
+.profile{display:grid;grid-template-columns:1fr 1.3fr;gap:clamp(18px,3vw,40px);align-items:center}
+.pcard{background:#fff;border-radius:var(--r-l);padding:26px;box-shadow:var(--shadow)}
+.pcard header{display:flex;align-items:center;gap:14px;border-bottom:1.5px solid var(--pale);padding-bottom:16px;margin-bottom:12px}
+.avatar{width:54px;height:54px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-family:var(--head);font-weight:800}
+.pcard header b{font-family:var(--head);display:block;line-height:1.2}
+.pcard header div span{font-size:.82rem;color:var(--muted)}
+.pcard dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:9px 18px;font-size:.95rem}
+.pcard dt{color:var(--muted)}
+.pcard dd{margin:0;font-weight:700;text-align:right}
+.pcard .ok{color:var(--blue)}
+@media(max-width:900px){.profile{grid-template-columns:1fr}}
+
+/* ---------- doctor / chain / calculator ---------- */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.vs .col{border-radius:var(--r-l);padding:clamp(20px,2.6vw,32px)}
+.vs .was{background:#fff;box-shadow:var(--shadow)}
+.vs .now{background:var(--blue);color:#fff}
+.vs h3{font-family:var(--head);font-weight:800;font-size:1.35rem;margin-bottom:14px}
+.vs li{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid rgba(128,148,176,.28);font-size:.98rem}
+.vs .was li{color:var(--muted)}
+.vs li .ic{margin-top:.2em;width:1.2em;height:1.2em}
+.vs .was li .ic{color:var(--warm)}
+.chain{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:14px;align-items:stretch;margin-top:24px}
+.link{background:#fff;border-radius:var(--r-m);padding:22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px}
+.link b{font-family:var(--head);font-weight:800;font-size:1.5rem;color:var(--blue);line-height:1.1}
+.link span{font-size:.95rem;color:var(--muted)}
+.link .tag{width:max-content;margin-bottom:6px}
+.arr{display:grid;place-items:center;color:var(--blue)}
+.arr .ic{width:34px;height:34px}
+@media(max-width:900px){.vs{grid-template-columns:1fr}.chain{grid-template-columns:1fr}.arr{transform:rotate(90deg)}}
+.calc{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;margin-top:24px}
+.calc .inputs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.calc label{display:flex;flex-direction:column;gap:6px;font-family:var(--head);font-weight:600;font-size:.88rem;color:var(--muted)}
+.calc input[type=number]{font:inherit;font-weight:700;color:var(--ink);background:var(--bg);border:1.5px solid transparent;border-radius:10px;padding:12px 14px;width:100%}
+.calc input[type=number]:focus{outline:none;border-color:var(--blue);background:#fff}
+.calc .range{grid-column:1/-1}
+.calc input[type=range]{accent-color:var(--blue);width:100%}
+.calc .range output{color:var(--blue);font-weight:800}
+.result{background:var(--blue);color:#fff;border-radius:var(--r-l);padding:clamp(20px,2.6vw,32px);display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden}
+.result::after{content:"";position:absolute;right:-90px;top:-90px;width:260px;height:260px;border-radius:50%;border:44px solid rgba(255,255,255,.09)}
+.result .r{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid rgba(255,255,255,.22);padding-bottom:10px;position:relative;z-index:1}
+.result .r span{font-size:.95rem;opacity:.92}
+.result .r b{font-family:var(--head);font-weight:800;font-size:1.25rem;white-space:nowrap}
+.result .big{display:block;font-family:var(--head);font-weight:800;font-size:clamp(2rem,4vw,3rem);line-height:1;position:relative;z-index:1}
+.result .note{color:rgba(255,255,255,.82);position:relative;z-index:1}
+@media(max-width:900px){.calc{grid-template-columns:1fr}.calc .inputs{grid-template-columns:1fr 1fr}}
+
+/* ---------- security ---------- */
+.sec-dark{background:linear-gradient(135deg,#1b3f6c,#2b5c8e);color:#fff;border-radius:var(--r-l);position:relative;overflow:hidden}
+.sec-dark::before{content:"";position:absolute;width:520px;height:520px;border-radius:50%;border:80px solid rgba(255,255,255,.05);right:-160px;top:-200px}
+.sec-dark .sec-title{color:#fff}
+.sec-dark .sec-title em{color:#bcd3ee}
+.sec-dark .lead{color:#d3e0f1}
+.sec-dark .title-line{border-color:rgba(255,255,255,.55)}
+.vault{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(18px,3vw,40px);align-items:stretch;position:relative}
+.vflow{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-l);padding:clamp(18px,2.4vw,30px);display:flex;flex-direction:column;gap:12px}
+.vstep{display:flex;gap:14px;align-items:flex-start;background:rgba(255,255,255,.1);border-radius:var(--r-m);padding:14px 16px}
+.vstep>b{width:34px;height:34px;border-radius:50%;background:#fff;color:var(--blue);display:grid;place-items:center;font-family:var(--head);font-weight:800;flex:none}
+.vstep h3{font-family:var(--head);font-size:1.02rem;font-weight:700;line-height:1.25}
+.vstep p{font-size:.9rem;color:#d3e0f1;margin-top:2px}
+.log{background:#fff;color:var(--ink);border-radius:var(--r-l);padding:clamp(18px,2.4vw,28px);display:flex;flex-direction:column;gap:6px}
+.log h3{font-family:var(--head);font-weight:800;font-size:1.25rem}
+.log .sub{font-size:.86rem;color:var(--muted);margin-bottom:8px}
+.log li{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;border-top:1px solid var(--pale);padding:9px 0;font-size:.9rem}
+.log time{font-family:var(--head);font-weight:700;color:var(--blue);font-size:.85rem}
+.log .st{font-size:.76rem;font-weight:800;border-radius:999px;padding:3px 10px;background:var(--pale);color:var(--blue);white-space:nowrap}
+.log .st.bad{background:#fde8e8;color:#b53b3b}
+.guards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px;position:relative}
+.guard{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-m);padding:20px;display:flex;flex-direction:column;gap:8px}
+.guard .ic{width:1.7em;height:1.7em;color:#bcd3ee}
+.guard h3{font-family:var(--head);font-weight:700;font-size:1.05rem;line-height:1.25}
+.guard p{font-size:.92rem;color:#d3e0f1}
+@media(max-width:1060px){.vault{grid-template-columns:1fr}.guards{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.guards{grid-template-columns:1fr}.log li{grid-template-columns:56px 1fr}.log .st{grid-column:2;width:max-content}}
+.stds{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px;position:relative}
+.std{background:#fff;color:var(--ink);border-radius:var(--r-m);padding:18px 20px}
+.std b{font-family:var(--head);font-weight:800;color:var(--blue);font-size:1.15rem;display:block}
+.std span{font-size:.9rem;color:var(--muted)}
+.std em{font-style:normal;display:inline-block;margin-top:6px;font-size:.74rem;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--pale);color:var(--blue)}
+@media(max-width:860px){.stds{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.stds{grid-template-columns:1fr}}
+
+/* ---------- USA / dementia ---------- */
+.usa{display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(18px,3vw,40px);align-items:stretch}
+.usa .story{background:#fff;border-radius:var(--r-l);padding:clamp(22px,3vw,40px);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px}
+.usa .story p{color:var(--muted)}
+.usa .story p b{color:var(--ink)}
+.quote{border-left:4px solid var(--blue);padding:6px 0 6px 18px;font-family:var(--head);font-weight:700;font-size:1.15rem;line-height:1.35;color:var(--blue)}
+.princ{display:grid;gap:12px}
+.pr{background:var(--pale);border-radius:var(--r-m);padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:flex-start}
+.pr .sq{width:56px;height:56px}
+.pr .sq i{width:34px;height:34px;border-radius:9px}
+.pr .sq .ic{width:18px;height:18px}
+.pr h3{font-family:var(--head);font-weight:700;font-size:1.02rem;line-height:1.25}
+.pr p{font-size:.9rem;color:var(--muted);margin-top:2px}
+@media(max-width:960px){.usa{grid-template-columns:1fr}}
+.team{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+.person{background:#fff;border-radius:var(--r-m);padding:22px;box-shadow:var(--shadow);display:grid;grid-template-columns:96px 1fr;gap:18px;align-items:start}
+.person img{width:96px;height:96px;border-radius:50%;object-fit:cover}
+.person h3{font-family:var(--head);font-weight:800;font-size:1.15rem;line-height:1.2}
+.person .role{color:var(--blue);font-weight:800;font-size:.88rem;font-family:var(--head);margin:2px 0 8px}
+.person p{font-size:.92rem;color:var(--muted)}
+@media(max-width:760px){.team{grid-template-columns:1fr}.person{grid-template-columns:72px 1fr}.person img{width:72px;height:72px}}
+.badges{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px}
+.badge{background:#fff;border-radius:var(--r-m);padding:16px;text-align:center;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:8px}
+.badge img{width:104px;height:auto;border-radius:12px}
+.badge b{font-family:var(--head);font-size:.95rem}
+.badge span{font-size:.8rem;color:var(--muted);line-height:1.3}
+@media(max-width:860px){.badges{grid-template-columns:1fr 1fr}}
+
+/* ---------- how / steps ---------- */
+.how{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;counter-reset:h}
+.hstep{background:#fff;border-radius:var(--r-m);padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.hstep::before{counter-increment:h;content:"0" counter(h);font-family:var(--head);font-weight:800;font-size:2.4rem;color:var(--blue-l);line-height:1}
+.hstep h3{font-family:var(--head);font-weight:800;font-size:1.25rem}
+.hstep p{font-size:.95rem;color:var(--muted)}
+.hstep .tag{width:max-content;margin-top:auto}
+@media(max-width:1060px){.how{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.how{grid-template-columns:1fr}}
+.deliver{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}
+.deliver div{background:var(--pale);border-radius:var(--r-m);padding:18px;display:flex;gap:12px;align-items:flex-start;font-family:var(--head);font-weight:600;line-height:1.3;font-size:.98rem}
+.deliver .ic{color:var(--blue);margin-top:.1em}
+@media(max-width:1060px){.deliver{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.deliver{grid-template-columns:1fr}}
+.pilot{margin-top:20px;background:#fff;border-radius:var(--r-l);padding:clamp(20px,3vw,36px);box-shadow:var(--shadow);display:grid;grid-template-columns:1fr 1.4fr;gap:clamp(18px,3vw,40px);align-items:center}
+.pilot ul{display:grid;gap:10px}
+.pilot li{display:flex;gap:12px;align-items:flex-start;font-size:.98rem}
+.pilot li .ic{color:var(--blue);margin-top:.15em}
+@media(max-width:860px){.pilot{grid-template-columns:1fr}}
+
+/* ---------- pricing ---------- */
+.price{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.plan{border-radius:var(--r-l);padding:clamp(24px,3.2vw,42px);display:flex;flex-direction:column;gap:18px;position:relative;overflow:hidden}
+.plan.one{background:var(--blue);color:#fff}
+.plan.one::after{content:"";position:absolute;right:-110px;top:-110px;width:320px;height:320px;border-radius:50%;border:56px solid rgba(255,255,255,.08)}
+.plan.sub{background:#fff;box-shadow:var(--shadow);border:2px solid var(--blue)}
+.plan .tag{width:max-content}
+.plan.one .tag{background:rgba(255,255,255,.18);color:#fff}
+.plan .amount{font-family:var(--head);font-weight:800;font-size:clamp(2.6rem,5vw,4rem);line-height:1;letter-spacing:-.03em}
+.plan .amount small{font-size:.38em;font-weight:700;letter-spacing:0;margin-left:6px}
+.plan.sub .amount{color:var(--blue)}
+.plan .desc{font-size:1rem;opacity:.92}
+.plan ul{display:grid;gap:10px;border-top:1px solid rgba(128,148,176,.35);padding-top:18px}
+.plan li{display:flex;gap:12px;align-items:flex-start;font-size:.97rem}
+.plan li .ic{margin-top:.2em;width:1.2em;height:1.2em}
+.plan.sub li .ic{color:var(--blue)}
+.plan .btn{margin-top:auto;width:max-content}
+@media(max-width:860px){.price{grid-template-columns:1fr}}
+.factors{margin-top:20px;background:var(--pale);border-radius:var(--r-l);padding:clamp(20px,3vw,34px);display:grid;grid-template-columns:1fr 1.5fr;gap:clamp(16px,3vw,40px);align-items:center}
+.factors h3{font-family:var(--head);font-weight:800;font-size:1.4rem;line-height:1.2}
+.factors ul{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+.factors li{display:flex;gap:10px;font-size:.96rem;align-items:flex-start}
+.factors li .ic{color:var(--blue);margin-top:.2em;width:1.15em;height:1.15em}
+@media(max-width:860px){.factors{grid-template-columns:1fr}.factors ul{grid-template-columns:1fr}}
+
+/* ---------- FAQ ---------- */
+.faq{display:grid;gap:12px}
+.faq details{background:#fff;border-radius:var(--r-m);box-shadow:var(--shadow);padding:0 24px}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:18px;align-items:center;padding:20px 0;font-family:var(--head);font-weight:700;font-size:1.08rem;line-height:1.3}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";flex:none;width:34px;height:34px;border-radius:50%;background:var(--pale);color:var(--blue);display:grid;place-items:center;font-size:1.4rem;line-height:1;transition:transform .25s,background .25s}
+.faq details[open] summary::after{transform:rotate(45deg);background:var(--blue);color:#fff}
+.faq details p{padding:0 0 22px;color:var(--muted);max-width:90ch}
+
+/* ---------- contact / footer ---------- */
+.cta{background:linear-gradient(135deg,#2b5c8e,#4a7cb0);color:#fff;border-radius:var(--r-l);padding:clamp(26px,4.4vw,64px);display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(20px,4vw,56px);align-items:center;position:relative;overflow:hidden}
+.cta::after{content:"";position:absolute;right:-120px;bottom:-160px;width:420px;height:420px;border-radius:50%;border:70px solid rgba(255,255,255,.07)}
+.cta h2{font-family:var(--head);font-weight:800;font-size:clamp(1.9rem,3.8vw,3.1rem);line-height:1.1;letter-spacing:-.02em;text-wrap:balance}
+.cta p{opacity:.93;margin-top:14px;max-width:56ch}
+.cta .three{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.cta .three span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);padding:7px 16px;border-radius:999px;font-family:var(--head);font-weight:600;font-size:.9rem}
+.contact{background:#fff;color:var(--ink);border-radius:var(--r-l);padding:clamp(20px,2.6vw,32px);display:flex;flex-direction:column;gap:14px;position:relative;z-index:1}
+.contact .who{display:flex;gap:14px;align-items:center;border-bottom:1.5px solid var(--pale);padding-bottom:14px}
+.contact .who img{width:64px;height:64px;border-radius:50%;object-fit:cover}
+.contact .who b{font-family:var(--head);font-weight:800;display:block;line-height:1.2}
+.contact .who span{font-size:.85rem;color:var(--muted)}
+.copy{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--bg);border-radius:12px;padding:12px 14px;font-family:var(--head);font-weight:700;font-size:.98rem}
+.copy button{border:0;background:var(--pale);color:var(--blue);font-family:var(--head);font-weight:700;font-size:.8rem;border-radius:8px;padding:6px 12px;cursor:pointer}
+.copy button:hover{background:var(--blue);color:#fff}
+.msgrs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:900px){.cta{grid-template-columns:1fr}}
+footer{padding-block:34px 90px;color:var(--muted);font-size:.88rem}
+footer .row{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:center;border-top:1.5px solid var(--line);padding-top:22px}
+
+/* grid-діти не розпирають екран на вузьких телефонах */
+.hero-grid>*,.cta>*,.usa>*,.vault>*,.profile>*,.calc>*,.pilot>*,.factors>*,.diagram>*,.price>*,.vs>*{min-width:0}
+.banner .eyebrow{max-width:100%;white-space:normal;line-height:1.3}
+.cta .three span{white-space:normal}
+
+/* ---------- floating bits (як на asklepiy.com) ---------- */
+.fab{position:fixed;z-index:70;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;border:0;cursor:pointer;color:#fff;background:var(--blue);box-shadow:0 8px 22px rgba(34,77,131,.35);transition:transform .25s}
+.fab:hover{transform:scale(1.08)}
+.fab.up{right:18px;bottom:18px;opacity:0;pointer-events:none;transition:opacity .3s,transform .25s}
+.fab.up.show{opacity:1;pointer-events:auto}
+.fab.call{left:18px;bottom:18px;width:60px;height:60px;background:#7d9fc7}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.core .ring{animation:none}html{scroll-behavior:auto}}
+@media print{.hdr,.fab{display:none}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M6 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 12l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-4 3-6 6.5-6s6.5 2 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14c3 0 4.5 2 4.5 5"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3"/></symbol>
+<symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-8-4.6-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.4 12 20 12 20z"/></symbol>
+<symbol id="i-core" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8" stroke-dasharray="2 3"/><circle cx="12" cy="3.5" r="1"/><circle cx="19.4" cy="16.2" r="1"/><circle cx="4.6" cy="16.2" r="1"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 13h6l-1 8 8-10h-6z"/></symbol>
+<symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></symbol>
+<symbol id="i-stetho" viewBox="0 0 24 24"><path d="M6 3v6a4 4 0 0 0 8 0V3M10 13v2a5 5 0 0 0 10 0v-1"/><circle cx="20" cy="12" r="2"/></symbol>
+<symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 18V6M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="1.6"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1z"/><path d="M12 6v14"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.4"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+<symbol id="i-telegram" viewBox="0 0 24 24"><path d="M21 4L3 11l6 2.2L11 19l3.2-4L19 19z"/><path d="M9 13.2L21 4"/></symbol>
+<symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M4 20l1.4-4.3A8.5 8.5 0 1 1 8.4 18.7z"/><path d="M9.2 8.8c-.3 2.6 2.6 5.6 5.6 5.7l1.1-1.4-2-1-.9.7c-.9-.4-1.7-1.2-2.1-2.1l.7-.9-1-2z"/></symbol>
+<symbol id="i-cross" viewBox="0 0 24 24"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></symbol>
+</defs></svg>
+
+<!-- ======================= HEADER ======================= -->
+<header class="hdr">
+  <div class="wrap">
+    <div class="hdr-in">
+      <a class="logo" href="#top" aria-label="Sinaptic: на початок">
+        <b>sinaptic <i></i></b>
+        <small>Пропозиція для МЦ «Асклепій»</small>
+      </a>
+      <nav class="menu" aria-label="Розділи пропозиції">
+        <a href="#pains">Болі</a>
+        <a href="#solution">Рішення</a>
+        <a href="#patient">Пацієнт</a>
+        <a href="#doctor">Лікарі</a>
+        <a href="#security">Безпека даних</a>
+        <a href="#usa">Досвід у США</a>
+        <a href="#how">Запуск</a>
+        <a href="#price">Інвестиція</a>
+      </nav>
+      <span class="hdr-sep" aria-hidden="true"></span>
+      <a class="pill-ic" href="tel:+380677162224"><svg class="ic"><use href="#i-phone"/></svg><span>+380 67 716 22 24</span></a>
+      <a class="round" href="#contact" aria-label="Обговорити пропозицію"><svg class="ic"><use href="#i-chat"/></svg></a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ======================= HERO ======================= -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="banner rv">
+        <span class="shape s1"></span><span class="shape s2"></span>
+        <svg class="cross" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><use href="#i-cross"/></svg>
+        <span class="eyebrow">Sinaptic × Медичний центр «Асклепій»</span>
+        <div>
+          <h1>Більше часу лікарю.<span>Більше уваги кожному пацієнту.</span></h1>
+        </div>
+        <p class="sub">Інтелектуальне ядро над системами Асклепій: персональний шлях для кожного пацієнта, менше рутини для лікарів, більше прийомів у тих самих слотах і сувора охорона медичної таємниці. <b>Ми не міняємо ваші системи.</b></p>
+        <div class="row">
+          <a class="btn white" href="#price">Умови та вартість <svg class="ic"><use href="#i-arrow"/></svg></a>
+          <a class="btn ghost" style="color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.7)" href="#pains">Які болі вирішуємо</a>
+        </div>
+        <div class="glass-row">
+          <div class="glass"><b>1 профіль</b><span>пацієнта замість розрізнених записів</span></div>
+          <div class="glass"><b>+час</b><span>лікарю: підготовка і документи за хвилини</span></div>
+          <div class="glass"><b>0</b><span>даних пацієнтів для навчання чужих моделей</span></div>
+        </div>
+      </div>
+
+      <div class="cards2">
+        <a class="mini a rv" href="#patient">
+          <svg class="bg" viewBox="0 0 200 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="150" cy="60" r="70" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="22"/><circle cx="40" cy="170" r="46" fill="#fff" fill-opacity=".14"/></svg>
+          <div class="box"><b>Для пацієнта</b><span class="btn sm">Дізнатись більше</span></div>
+        </a>
+        <a class="mini b rv" href="#doctor">
+          <svg class="bg" viewBox="0 0 200 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="50" cy="60" r="60" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="20"/><circle cx="150" cy="190" r="52" fill="#fff" fill-opacity=".14"/></svg>
+          <div class="box"><b>Для лікаря</b><span class="btn sm">Дізнатись більше</span></div>
+        </a>
+        <a class="mini c rv" href="#security">
+          <svg class="bg" viewBox="0 0 200 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="140" cy="70" r="64" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="22"/><circle cx="50" cy="190" r="40" fill="#fff" fill-opacity=".12"/></svg>
+          <div class="box"><b>Захист медичних даних</b><span class="btn sm">Дізнатись більше</span></div>
+        </a>
+        <a class="mini white rv" href="#calc">
+          <div class="box">
+            <span class="circ"><svg class="ic"><use href="#i-chart"/></svg></span>
+            <b>Скільки це може означати для мережі? Порахуйте на своїх цифрах</b>
+            <span class="arrow"><svg class="ic" style="width:18px;height:18px"><use href="#i-arrow"/></svg></span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= WHY ======================= -->
+<section>
+  <div class="wrap">
+    <div class="title-line rv"><h2 class="sec-title">Чому Sinaptic підходить саме <em>Асклепій</em></h2></div>
+    <div class="why">
+      <article class="rv"><span class="sq"><i><svg class="ic"><use href="#i-heart"/></svg></i></span><h3>Починаємо з болю, а не з технології</h3><p>Кожна функція прив'язана до проблеми пацієнта чи лікаря і до показника, який ви бачите до й після.</p></article>
+      <article class="rv"><span class="sq"><i><svg class="ic"><use href="#i-link"/></svg></i></span><h3>Працюємо над вашими системами</h3><p>МІС, лабораторія, діагностика, колл-центр, месенджери лишаються на місці. Ми додаємо розумний шар над ними.</p></article>
+      <article class="rv"><span class="sq"><i><svg class="ic"><use href="#i-lock"/></svg></i></span><h3>Медична таємниця закладена в архітектуру</h3><p>Закрите сховище, ключ у вас, журнал кожної дії, мінімум даних для ШІ.</p></article>
+      <article class="rv"><span class="sq"><i><svg class="ic"><use href="#i-stetho"/></svg></i></span><h3>Досвід цифрової медицини США</h3><p>Команда створювала ШІ-архітектуру цифрової клініки для пацієнтів з деменцією, де помилка в даних коштує найдорожче.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= STATS ======================= -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="stats rv">
+      <div class="tiles">
+        <div class="tile"><b>25<small>+</small></b><span>років довіри<br>(з 1999 року)</span></div>
+        <div class="tile"><b>170<small>+</small></b><span>лікарів у команді</span></div>
+        <div class="tile"><b>90<small>+</small></b><span>напрямків діагностики, лікування та хірургії</span></div>
+        <div class="tile"><b>7</b><span>адрес сімейної медицини: Житомир і Бердичів</span></div>
+        <div class="tile"><b>2<small> тис.+</small></b><span>оперативних втручань на рік</span></div>
+      </div>
+      <p class="note stats-note">Це масштаб, який вже є в Асклепій (за даними asklepiy.com). Чим більший потік пацієнтів і даних, тим дорожче коштує кожна втрачена хвилина і кожен витік.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PAINS ======================= -->
+<section id="pains">
+  <div class="wrap">
+    <div class="title-line rv">
+      <h2 class="sec-title">Де мережа щодня втрачає <em>час, довіру і гроші</em></h2>
+    </div>
+    <p class="lead rv" style="margin:-20px 0 28px">Ми не пропонуємо «ще одну технологію». Нижче шість проблем, знайомих будь-якій багатопрофільній мережі зі власною лабораторією, діагностикою і стаціонаром. Підтвердимо їх цифрами Асклепій на діагностиці.</p>
+    <div class="pains">
+      <article class="pain rv"><div class="tags"><span class="tag">Пацієнт</span></div><h3>Пацієнт щоразу розповідає свою історію спочатку</h3><p>Лабораторія, УЗД, МРТ, сімейний лікар, стаціонар: інформація є, але розкидана. Кожен візит починається майже з нуля.</p><div class="cost"><svg class="ic"><use href="#i-warn"/></svg>Втрачений контекст і довіра</div></article>
+      <article class="pain rv"><div class="tags"><span class="tag">Лікар</span></div><h3>Лікар витрачає прийом на папери й пошук результатів</h3><p>Відкрити історію, знайти аналізи, записати висновок: хвилини, які мали б належати пацієнту.</p><div class="cost"><svg class="ic"><use href="#i-warn"/></svg>Менше прийомів у тих самих слотах</div></article>
+      <article class="pain rv"><div class="tags"><span class="tag">Запис</span></div><h3>Дзвінки, черги на лінії, пропущені звернення</h3><p>Частина пацієнтів так і не дозвонюється або не отримує відповіді в месенджері вчасно й іде до конкурента.</p><div class="cost"><svg class="ic"><use href="#i-warn"/></svg>Втрачені записи</div></article>
+      <article class="pain rv"><div class="tags"><span class="tag">Діагностика</span></div><h3>Неготові до процедури пацієнти й перенесені візити</h3><p>МРТ, колоноскопія, операція: правила підготовки є, але не кожен пацієнт їх прочитав і зрозумів. Підготовка зірвана, апарат простоює.</p><div class="cost"><svg class="ic"><use href="#i-warn"/></svg>Простій обладнання й часу лікаря</div></article>
+      <article class="pain rv"><div class="tags"><span class="tag">Утримання</span></div><h3>Пацієнт пройшов обстеження і зник</h3><p>Контрольний візит, щеплення дитини, щорічний профогляд, декларація: нагадати вчасно і персонально зазвичай нікому.</p><div class="cost"><svg class="ic"><use href="#i-warn"/></svg>Недоотриманий повторний дохід</div></article>
+      <article class="pain rv"><div class="tags"><span class="tag">Власник</span></div><h3>Мережа видна лише через десятки окремих звітів</h3><p>Щоб зрозуміти, де простій, де відтік і куди йдуть гроші, дані зводять вручну і з запізненням.</p><div class="cost"><svg class="ic"><use href="#i-warn"/></svg>Рішення ухвалюються пізно</div></article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= SOLUTION ======================= -->
+<section id="solution" style="padding-top:0">
+  <div class="wrap">
+    <div class="band rv"><div class="band-in">
+      <div class="title-line" style="border-color:var(--blue)">
+        <h2 class="sec-title">Одне <em>інтелектуальне ядро</em> над усіма системами Асклепій</h2>
+      </div>
+      <p class="lead" style="margin:-20px 0 30px">Sinaptic збирає дані з ваших джерел у єдине закрите сховище, розуміє контекст кожного пацієнта і допомагає діяти: підказати, підготувати, нагадати, передати людині те, що потребує її рішення.</p>
+      <div class="diagram">
+        <div class="src">
+          <div class="chip"><svg class="ic"><use href="#i-db"/></svg><div>Медична інформаційна система<small>картка пацієнта, візити, декларації</small></div></div>
+          <div class="chip"><svg class="ic"><use href="#i-flask"/></svg><div>Власна лабораторія<small>аналізи, терміни виконання</small></div></div>
+          <div class="chip"><svg class="ic"><use href="#i-scan"/></svg><div>Діагностика<small>МРТ, КТ, УЗД, ендоскопія, рентген</small></div></div>
+          <div class="chip"><svg class="ic"><use href="#i-phone"/></svg><div>Колл-центр і запис<small>дзвінки, онлайн-запис</small></div></div>
+          <div class="chip"><svg class="ic"><use href="#i-chat"/></svg><div>Месенджери й Telegram<small>звернення пацієнтів</small></div></div>
+        </div>
+        <div class="core"><span class="ring"></span><span class="ring r2"></span>
+          <div class="mid"><div><b>Інтелектуальне ядро</b><span>закрите сховище · журнал дій · ваші ключі</span></div></div>
+        </div>
+        <div class="out">
+          <div class="chip"><svg class="ic"><use href="#i-user"/></svg><div>Пацієнту<small>персональний шлях і підготовка</small></div></div>
+          <div class="chip"><svg class="ic"><use href="#i-stetho"/></svg><div>Лікарю<small>зведення перед прийомом, чернетки документів</small></div></div>
+          <div class="chip"><svg class="ic"><use href="#i-chat"/></svg><div>Реєстратурі<small>відповіді та запис без черг</small></div></div>
+          <div class="chip"><svg class="ic"><use href="#i-chart"/></svg><div>Власнику й керівникам<small>одна відповідь замість десятка звітів</small></div></div>
+        </div>
+      </div>
+      <div class="steps3">
+        <div class="step3"><span class="tag">Дані та події</span><h3>Бачить</h3><p>Збирає інформацію з усіх систем центру і не вимагає змінювати робочі процеси.</p></div>
+        <div class="step3"><span class="tag">Контекст і причини</span><h3>Розуміє</h3><p>Визначає, кому що потрібно: який пацієнт не підготовлений, кому час на контроль, де простій.</p></div>
+        <div class="step3"><span class="tag">Дозволені дії</span><h3>Діє</h3><p>Виконує лише дозволене вами, а складні й чутливі випадки передає людині з повним контекстом.</p></div>
+      </div>
+      <div class="levels">
+        <div class="lvl"><b>Рівень 1 · Рекомендує</b><span>Готує варіант, людина вирішує.</span></div>
+        <div class="lvl"><b>Рівень 2 · Після погодження</b><span>Створює задачу чи повідомлення, ви підтверджуєте.</span></div>
+        <div class="lvl"><b>Рівень 3 · Виконує сам</b><span>Лише типове й дозволене: нагадування, інструкції, сповіщення.</span></div>
+      </div>
+      <p class="note" style="margin-top:14px"><b>Принципово:</b> ШІ не ставить діагнозів і не призначає лікування. Клінічні рішення завжди ухвалює лікар. Ядро забирає рутину, пошук і координацію навколо цих рішень.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= PATIENT ======================= -->
+<section id="patient">
+  <div class="wrap">
+    <div class="title-line rv">
+      <h2 class="sec-title">Гіперперсоналізація: <em>кожен пацієнт отримує сервіс за власним контекстом</em></h2>
+    </div>
+    <p class="lead rv" style="margin:-20px 0 28px">Не масова розсилка, а правильне повідомлення, правильній людині, у правильний момент. Приклад шляху одного пацієнта в мережі Асклепій.</p>
+    <div class="journey">
+      <article class="jstep rv"><span class="when">Запис</span><h3>Відповідь миттєво, у зручному каналі</h3><div class="bubble">Добрий день! Підібрав час до лікаря на <b>четвер, 10:20</b>, ближче до вашого дому. Підтвердити?</div><span class="res">Менше пропущених звернень</span></article>
+      <article class="jstep rv"><span class="when">За 2 дні до процедури</span><h3>Персональна підготовка</h3><div class="bubble">Завтра колоноскопія. Ось <b>ваша схема харчування і прийому препарату</b>, з урахуванням ваших ліків.</div><span class="res">Менше зірваних процедур</span></article>
+      <article class="jstep rv"><span class="when">У день візиту</span><h3>Лікар вже в курсі</h3><div class="bubble">Лікар бачить історію, свіжі результати й питання пацієнта <b>до того, як той зайшов у кабінет</b>.</div><span class="res">Більше часу на розмову</span></article>
+      <article class="jstep rv"><span class="when">Після візиту</span><h3>Зрозуміло, що робити далі</h3><div class="bubble">Результати готові. Лікар радить <b>контроль через 3 місяці</b>. Записати вас на зручний день?</div><span class="res">Повторний візит без зусиль</span></article>
+      <article class="jstep rv"><span class="when">Через місяці</span><h3>Турбота про родину</h3><div class="bubble">Наближається термін щеплення дитині й щорічний профогляд. <b>Є вільні години</b> цього тижня.</div><span class="res">Довіра й лояльність</span></article>
+    </div>
+    <p class="note" style="margin-top:12px">Тексти ілюструють сценарій і не є реальними даними. Тон і правила спілкування задає медичний центр.</p>
+
+    <div class="personas">
+      <div class="persona rv"><span class="tag">Асклепій Родина</span><h3>Сімейна медицина й декларації</h3><p>Нагадування про профілактику, зручний вибір лікаря й запис, повернення пацієнтів, які давно не були.</p></div>
+      <div class="persona rv"><span class="tag">Діагностика й лабораторія</span><h3>Підготовка та швидкі результати</h3><p>Персональна підготовка до МРТ, КТ, колоноскопії. Сповіщення, коли результати готові.</p></div>
+      <div class="persona rv"><span class="tag">Хірургія й стаціонар</span><h3>Шлях пацієнта до і після операції</h3><p>Передопераційні інструкції, що брати з собою, контроль після виписки, без дзвінків у реєстратуру.</p></div>
+      <div class="persona rv"><span class="tag">Відновлення</span><h3>Курс, а не разовий візит</h3><p>План реабілітації, нагадування про сеанси, контроль динаміки: пацієнт доходить курс до кінця.</p></div>
+    </div>
+
+    <div class="profile" style="margin-top:28px">
+      <div class="rv">
+        <h3 class="sec-title" style="font-size:clamp(1.5rem,2.6vw,2.1rem)">Один профіль замість <em>десятка розрізнених систем</em></h3>
+        <p class="lead">Кожна взаємодія додає знання про пацієнта. Профіль наповнюється з МІС, лабораторії, діагностики, запису й месенджерів, а лікар бачить лише те, що потрібно для його задачі.</p>
+      </div>
+      <div class="pcard rv">
+        <header><span class="avatar">ІП</span><div><b>Умовний пацієнт</b><span>Профіль · оновлено сьогодні · приклад</span></div></header>
+        <dl>
+          <dt>Візити за рік</dt><dd>4</dd>
+          <dt>Зручний канал</dt><dd>Telegram</dd>
+          <dt>Результати аналізів</dt><dd class="ok">Готові · лікар переглянув</dd>
+          <dt>Наступний крок</dt><dd>Контроль через 3 міс.</dd>
+          <dt>Підготовка до обстеження</dt><dd class="ok">Інструкцію отримано</dd>
+          <dt>Згода на комунікації</dt><dd>Є, можна відкликати</dd>
+        </dl>
+        <p class="note" style="margin-top:12px">Ілюстрація сценарію. Умовні дані, без реальних пацієнтів.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= DOCTOR ======================= -->
+<section id="doctor" style="padding-top:0">
+  <div class="wrap">
+    <div class="title-line rv">
+      <h2 class="sec-title">Економія часу лікаря → пропускна здатність → <em>дохід мережі</em></h2>
+    </div>
+    <div class="vs">
+      <div class="col was rv"><h3>Було</h3>
+        <ul>
+          <li><svg class="ic"><use href="#i-x"/></svg>Пошук історії, результатів і висновків колег у кількох системах</li>
+          <li><svg class="ic"><use href="#i-x"/></svg>Рутинні записи й документи займають частину прийому</li>
+          <li><svg class="ic"><use href="#i-x"/></svg>Пацієнт приходить непідготовленим, візит йде на з'ясування</li>
+          <li><svg class="ic"><use href="#i-x"/></svg>Однотипні питання пацієнтів у месенджерах і по телефону</li>
+        </ul>
+      </div>
+      <div class="col now rv"><h3>Стало з Sinaptic</h3>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Зведення пацієнта перед прийомом: головне, зміни, свіжі результати</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Чернетки документів і висновків, які лікар перевіряє й підписує сам</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Пацієнт підготовлений, потрібні аналізи вже зроблені</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Типові запитання пацієнтів закриває асистент у тоні центру</li>
+        </ul>
+      </div>
+    </div>
+    <div class="chain">
+      <div class="link rv"><span class="tag">Крок 1</span><b>Час лікаря</b><span>Хвилини з кожного прийому повертаються до розмови з пацієнтом.</span></div>
+      <div class="arr"><svg class="ic"><use href="#i-arrow"/></svg></div>
+      <div class="link rv"><span class="tag">Крок 2</span><b>Пропускна здатність</b><span>У тих самих кабінетах, на тому ж обладнанні й тих самих лікарях можна прийняти більше пацієнтів.</span></div>
+      <div class="arr"><svg class="ic"><use href="#i-arrow"/></svg></div>
+      <div class="link rv"><span class="tag">Крок 3</span><b>Дохід мережі</b><span>Додаткові прийоми та повторні візити без нових ставок і нових площ.</span></div>
+    </div>
+
+    <div class="calc" id="calc">
+      <div class="panel rv">
+        <h3 class="sec-title" style="font-size:1.5rem;margin-bottom:6px">Порахуйте на своїх цифрах</h3>
+        <p class="note" style="margin-bottom:16px">Сценарний розрахунок для пілоту. Це не гарантія: реальні показники ми фіксуємо до старту й порівнюємо після.</p>
+        <div class="inputs">
+          <label>Лікарів у пілоті<input type="number" id="c-doc" value="20" min="1" max="500"></label>
+          <label>Прийомів на лікаря за день<input type="number" id="c-vis" value="14" min="1" max="60"></label>
+          <label>Економія хвилин на прийом<input type="number" id="c-min" value="2" min="0" max="15" step="0.5"></label>
+          <label>Середній чек прийому, грн<input type="number" id="c-chk" value="800" min="100" max="20000" step="50"></label>
+          <label>Тривалість прийому, хв<input type="number" id="c-len" value="20" min="5" max="90"></label>
+          <label>Робочих днів на місяць<input type="number" id="c-day" value="22" min="1" max="31"></label>
+          <label class="range">Яка частка звільненого часу перетворюється на додаткові прийоми: <output id="c-shv">25%</output>
+            <input type="range" id="c-sh" min="5" max="100" step="5" value="25"></label>
+        </div>
+      </div>
+      <div class="result rv" aria-live="polite">
+        <span class="note" style="opacity:.9">Додатковий дохід на місяць (умовно)</span>
+        <span class="big" id="o-inc">—</span>
+        <div class="r"><span>Звільнено часу лікарів</span><b id="o-h">—</b></div>
+        <div class="r"><span>Додаткових прийомів на місяць</span><b id="o-v">—</b></div>
+        <div class="r"><span>Чистий ефект після підписки (від 650 € ≈ 31 200 грн на місяць)</span><b id="o-net">—</b></div>
+        <div class="r"><span>Інтеграція 4 500 € окупається приблизно за</span><b id="o-pay">—</b></div>
+        <p class="note">Розрахунок у гривнях за умовним курсом 48 грн/€. Показник «чистий ефект» = додатковий дохід мінус щомісячна підписка. Попит на додаткові прийоми має бути, тому ми не закладаємо 100%.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= SECURITY ======================= -->
+<section id="security" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-dark rv"><div class="band-in" style="position:relative">
+      <div class="title-line"><h2 class="sec-title">Медична таємниця пацієнта: <em>не опція, а основа архітектури</em></h2></div>
+      <p class="lead" style="margin:-20px 0 28px">Дані здоров'я належать до найчутливіших персональних даних. Тому ми будуємо ядро так, що приватність пацієнта закладена в саму конструкцію, а не додана «зверху».</p>
+      <div class="vault">
+        <div class="vflow">
+          <div class="vstep"><b>1</b><div><h3>Дані шифруються при вході</h3><p>Усе, що приходить з МІС, лабораторії та діагностики, одразу закривається шифруванням.</p></div></div>
+          <div class="vstep"><b>2</b><div><h3>Окреме закрите сховище Асклепій</h3><p>Дані не змішуються з даними інших клієнтів. У сховищі лежать лише зашифровані записи.</p></div></div>
+          <div class="vstep"><b>3</b><div><h3>Ключ належить вам</h3><p>Ключ зберігається у вас, поза сховищем. Немає ключа, немає доступу. Забрати свої дані або видалити їх можна за запитом.</p></div></div>
+          <div class="vstep"><b>4</b><div><h3>ШІ бачить лише потрібне</h3><p>Для кожної задачі беремо мінімум полів. Прізвища, документи й контакти маскуються там, де вони не потрібні.</p></div></div>
+        </div>
+        <div class="log">
+          <h3>Журнал дій: хто, що і коли</h3>
+          <p class="sub">Кожне звернення до даних пацієнта записується. Ілюстрація сценарію, не реальні дані.</p>
+          <ul>
+            <li><time>08:30</time><span>Ядро зібрало оновлення з МІС</span><span class="st">Записано</span></li>
+            <li><time>08:41</time><span>Лікар відкрив зведення свого пацієнта</span><span class="st">Записано</span></li>
+            <li><time>08:42</time><span>Спроба відкрити картку чужого пацієнта без підстав</span><span class="st bad">Заблоковано</span></li>
+            <li><time>09:05</time><span>Пацієнту надіслано інструкцію з підготовки</span><span class="st">Записано</span></li>
+            <li><time>09:18</time><span>Вхід з невідомого пристрою</span><span class="st bad">Заблоковано, власника сповіщено</span></li>
+            <li><time>09:40</time><span>Адміністратор переглянув журнал за тиждень</span><span class="st">Записано</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="guards">
+        <div class="guard"><svg class="ic"><use href="#i-users"/></svg><h3>Доступ за ролями й за пацієнтами</h3><p>Лікар бачить лише своїх пацієнтів і лише потрібні поля. Фінанси мережі відкриті лише вповноваженим ролям.</p></div>
+        <div class="guard"><svg class="ic"><use href="#i-shield"/></svg><h3>Дані не навчають чужі моделі</h3><p>Інформація пацієнтів Асклепій не використовується для навчання моделей інших компаній.</p></div>
+        <div class="guard"><svg class="ic"><use href="#i-key"/></svg><h3>Права пацієнта виконуються</h3><p>Згода, доступ до своїх даних, виправлення й видалення за запитом, з підтвердженням.</p></div>
+        <div class="guard"><svg class="ic"><use href="#i-eye"/></svg><h3>Людина контролює ШІ</h3><p>Діагнози й лікування лишаються за лікарем. Система не вигадує: якщо даних бракує, вона так і скаже.</p></div>
+        <div class="guard"><svg class="ic"><use href="#i-file"/></svg><h3>Відкрито до аудиту</h3><p>Надамо тестове середовище, щоб ваша служба безпеки й юристи перевірили все самостійно.</p></div>
+        <div class="guard"><svg class="ic"><use href="#i-bell"/></svg><h3>Сповіщення про інциденти</h3><p>Спроби стороннього доступу блокуються, а відповідальна особа отримує сповіщення одразу.</p></div>
+      </div>
+      <div class="stds">
+        <div class="std"><b>Закон України про захист персональних даних і лікарська таємниця</b><span>Мета обробки, мінімізація даних, права пацієнта, контроль доступу.</span></div>
+        <div class="std"><b>GDPR</b><span>Принципи ЄС із захисту персональних даних, на які спроєктована платформа.</span></div>
+        <div class="std"><b>EU AI Act</b><span>Відповідальне використання ШІ: прозорість, документація, нагляд людини.</span></div>
+        <div class="std"><b>ISO/IEC 27001</b><span>Інформаційна безпека</span><br><em>Сертифікація в процесі</em></div>
+        <div class="std"><b>ISO/IEC 42001</b><span>Управління ШІ</span><br><em>Сертифікація в процесі</em></div>
+        <div class="std"><b>ISO 31000</b><span>Управління ризиками</span><br><em>Впровадження в процесі</em></div>
+      </div>
+      <p class="note" style="margin-top:14px;color:#d3e0f1">Застосовність вимог ми визначаємо для конкретного рішення, даних і ролей сторін разом з юристами та DPO Асклепій.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= USA / DEMENTIA ======================= -->
+<section id="usa" style="padding-top:0">
+  <div class="wrap">
+    <div class="title-line rv">
+      <h2 class="sec-title">Досвід цифрової медицини США: <em>ШІ-архітектура клініки для пацієнтів з деменцією</em></h2>
+    </div>
+    <div class="usa">
+      <div class="story rv">
+        <span class="tag" style="width:max-content">Реальний досвід у медицині</span>
+        <p>Sinaptic створювала <b>архітектуру штучного інтелекту для цифрової клініки пацієнтів з деменцією в США</b>. Це одна з найвимогливіших сфер цифрової медицини: пацієнт може не повністю контролювати власні рішення, поруч з ним доглядальники й родичі, а дані стосуються когнітивного здоров'я.</p>
+        <div class="quote">Якщо система здатна безпечно працювати з такими даними, вона готова до будь-якої клініки.</div>
+        <p>У такому проєкті неможливо «додати безпеку потім». Доступ, згода, пояснення і контроль людини мусять бути закладені в архітектуру з першого дня. Саме ці принципи ми переносимо в Асклепій, з урахуванням українського законодавства та GDPR.</p>
+        <p class="note">Робота виконувалась у регульованому середовищі медичних даних США. Деталі проєкту розкриваємо на зустрічі в межах умов конфіденційності.</p>
+      </div>
+      <div class="princ">
+        <div class="pr rv"><span class="sq"><i><svg class="ic"><use href="#i-key"/></svg></i></span><div><h3>Згода й повноваження</h3><p>Хто має право бачити і змінювати дані: сам пацієнт, його представник чи лікар. Права розмежовані й фіксуються.</p></div></div>
+        <div class="pr rv"><span class="sq"><i><svg class="ic"><use href="#i-eye"/></svg></i></span><div><h3>Мінімум даних для ШІ</h3><p>Модель отримує лише поля, потрібні для конкретної задачі, а ідентифікатори відокремлені від змісту.</p></div></div>
+        <div class="pr rv"><span class="sq"><i><svg class="ic"><use href="#i-stetho"/></svg></i></span><div><h3>Рішення лишаються за людиною</h3><p>ШІ допомагає готувати й нагадувати. Клінічні рішення ухвалює лікар, а нетипові випадки передаються йому з повним контекстом.</p></div></div>
+        <div class="pr rv"><span class="sq"><i><svg class="ic"><use href="#i-heart"/></svg></i></span><div><h3>Зрозуміла й тепла комунікація</h3><p>Прості формулювання, спокійний тон, повага до пацієнта й родини. Це переноситься на будь-яку вразливу категорію пацієнтів.</p></div></div>
+        <div class="pr rv"><span class="sq"><i><svg class="ic"><use href="#i-file"/></svg></i></span><div><h3>Повний слід дій</h3><p>Кожна дія системи записана, тому будь-яке рішення можна пояснити й перевірити.</p></div></div>
+      </div>
+    </div>
+
+    <div class="team">
+      <div class="person rv"><img src="img/founder-yuliy-hromyko.png" alt="Юлій Громико" width="96" height="96"><div><h3>Юлій Громико</h3><div class="role">Архітектор технологічної платформи Sinaptic</div><p>Понад 18 років у технологіях, enterprise-архітектурі, ШІ, cloud і кібербезпеці. Раніше Principal Architect у Thomas Cook Group, проєктував архітектуру платформ для Thomas Cook і Fozzy Group.</p></div></div>
+      <div class="person rv"><img src="img/cofounder-serhiy-polonskyi.png" alt="Сергій Полонський" width="96" height="96"><div><h3>Сергій Полонський</h3><div class="role">Співзасновник, операції та масштабування</div><p>Майже 20 років у побудові й масштабуванні операційних бізнесів: команди, якість, клієнтський сервіс, франчайзинг. Знає болі власника зсередини.</p></div></div>
+    </div>
+    <div class="badges">
+      <div class="badge rv"><img src="img/badge-pecb-dpo.png" alt="PECB Certified Data Protection Officer" width="104" height="106"><b>DPO</b><span>Захист даних · PECB Certified</span></div>
+      <div class="badge rv"><img src="img/badge-pecb-ciso.png" alt="PECB Certified CISO" width="104" height="106"><b>CISO</b><span>Інформаційна безпека · PECB Certified</span></div>
+      <div class="badge rv"><img src="img/badge-pecb-iso-42001.png" alt="PECB ISO/IEC 42001 Implementer" width="104" height="106"><b>ISO/IEC 42001</b><span>Управління ШІ · PECB Certified Implementer</span></div>
+      <div class="badge rv"><img src="img/badge-pecb-iso-31000.png" alt="PECB ISO 31000 Risk Manager" width="104" height="106"><b>ISO 31000</b><span>Управління ризиками · PECB Certified Risk Manager</span></div>
+    </div>
+    <p class="note" style="margin-top:12px">Сертифікації належать технічному директору Sinaptic. Їх видає міжнародний орган сертифікації PECB.</p>
+  </div>
+</section>
+
+<!-- ======================= HOW ======================= -->
+<section id="how" style="padding-top:0">
+  <div class="wrap">
+    <div class="title-line rv"><h2 class="sec-title">Як ми інтегруємо Sinaptic в мережу: <em>спочатку бізнес, потім технологія</em></h2></div>
+    <div class="how">
+      <article class="hstep rv"><h3>Діагностика</h3><p>Аналіз систем, даних, процесів, шляху пацієнта й втрат часу. Фіксуємо показники до старту.</p><span class="tag">Систем і даних</span></article>
+      <article class="hstep rv"><h3>Архітектура</h3><p>Карта джерел даних, ролей і доступів, схема захисту та узгодження з вашою службою безпеки.</p><span class="tag">Безпечний шлях для кожного джерела</span></article>
+      <article class="hstep rv"><h3>Інтеграція</h3><p>Підключення джерел, запуск сценаріїв для пацієнтів і лікарів, навчання команди.</p><span class="tag">Без зміни ваших систем</span></article>
+      <article class="hstep rv"><h3>Оптимізація</h3><p>Вимірюємо ті самі показники після запуску, налаштовуємо й масштабуємо на інші напрямки.</p><span class="tag">Порівняння до і після</span></article>
+    </div>
+    <div class="deliver">
+      <div class="rv"><svg class="ic"><use href="#i-trend"/></svg>Карта потенціалу додаткового доходу</div>
+      <div class="rv"><svg class="ic"><use href="#i-db"/></svg>Карта систем і даних мережі</div>
+      <div class="rv"><svg class="ic"><use href="#i-cal"/></svg>План впровадження за пріоритетами</div>
+      <div class="rv"><svg class="ic"><use href="#i-chart"/></svg>Показники до старту для чесного порівняння</div>
+    </div>
+    <div class="pilot rv">
+      <div>
+        <span class="tag">Рекомендований початок</span>
+        <h3 class="sec-title" style="font-size:1.6rem;margin-top:12px">Один напрямок, потім мережа</h3>
+        <p class="note" style="margin-top:8px">Гіпотеза, яку підтвердимо на діагностиці.</p>
+      </div>
+      <ul>
+        <li><svg class="ic"><use href="#i-check"/></svg>Пілот на напрямках із найбільшим потоком і найдорожчими слотами: сімейна медицина «Асклепій Родина» та діагностика.</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Вимірювані цілі: час на документацію, пропущені звернення, зірвані підготовки, повторні візити.</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Після підтвердженого ефекту підключаємо інші напрямки, лабораторію, стаціонар і адреси мережі.</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Дані кожного підрозділу лежать окремо, доступ розмежований за ролями.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PRICE ======================= -->
+<section id="price" style="padding-top:0">
+  <div class="wrap">
+    <div class="title-line rv"><h2 class="sec-title">Інвестиція: <em>зрозуміла вартість запуску й прозора підписка</em></h2></div>
+    <div class="price">
+      <article class="plan one rv">
+        <span class="tag">Одноразово</span>
+        <div class="amount">4 500 €<small>комплексна інтеграція</small></div>
+        <p class="desc">Від діагностики до працюючого ядра в мережі. Вартість фіксується до старту.</p>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Діагностика систем, даних і процесів, показники «до»</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Архітектура ядра й схема захисту даних, узгодження зі службою безпеки</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Інтеграція початкового набору джерел даних</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Налаштування сценаріїв для пацієнтів, лікарів і керівників</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Закрите сховище, ролі доступу, журнал дій</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Навчання команди й запуск пілоту</li>
+        </ul>
+        <a class="btn white" href="#contact">Обговорити запуск <svg class="ic"><use href="#i-arrow"/></svg></a>
+      </article>
+      <article class="plan sub rv">
+        <span class="tag">Щомісяця</span>
+        <div class="amount">від 650 €<small>на місяць</small></div>
+        <p class="desc">Розмір підписки залежить від структури підключених джерел даних.</p>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg>Робота ядра, моніторинг і супровід</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Оновлення сценаріїв і постійне вимірювання результатів</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Підтримка безпеки: журнал, права доступу, сповіщення</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Підключення нових джерел і напрямків у міру масштабування</li>
+          <li><svg class="ic"><use href="#i-check"/></svg>Регулярні звіти про ефект для керівництва</li>
+        </ul>
+        <a class="btn" href="#contact">Уточнити склад джерел <svg class="ic"><use href="#i-arrow"/></svg></a>
+      </article>
+    </div>
+    <div class="factors rv">
+      <h3>Від чого залежить розмір підписки</h3>
+      <ul>
+        <li><svg class="ic"><use href="#i-check"/></svg>Кількість підключених джерел даних</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Складність кожної інтеграції (API, експорт, інший канал)</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Кількість адрес і підрозділів у роботі</li>
+        <li><svg class="ic"><use href="#i-check"/></svg>Набір сценаріїв: пацієнти, лікарі, керівники</li>
+      </ul>
+    </div>
+    <p class="note rv" style="margin-top:12px">Точну суму підписки називаємо після діагностики, коли видно перелік джерел.</p>
+  </div>
+</section>
+
+<!-- ======================= FAQ ======================= -->
+<section id="faq" style="padding-top:0">
+  <div class="wrap">
+    <div class="title-line rv"><h2 class="sec-title">Питання, які <em>ставлять власники й лікарі</em></h2></div>
+    <div class="faq">
+      <details class="rv"><summary>Ви замінюєте нашу медичну інформаційну систему?</summary><p>Ні. Ми працюємо над наявними системами і з'єднуємо їх. МІС, лабораторна система, діагностика та колл-центр лишаються на місці. Для кожного джерела на діагностиці обираємо найбезпечніший спосіб підключення.</p></details>
+      <details class="rv"><summary>Чи ставить ШІ діагнози або призначає лікування?</summary><p>Ні. Клінічні рішення завжди ухвалює лікар. ШІ готує зведення, чернетки документів, нагадування й інструкції, а нетипові або чутливі випадки передає людині з повним контекстом.</p></details>
+      <details class="rv"><summary>Де зберігаються дані пацієнтів і хто має до них доступ?</summary><p>У закритому сховищі, окремому для Асклепій, у зашифрованому вигляді. Ключ належить вам. Доступ розмежований за ролями, кожне звернення записується в журнал. Дані не використовуються для навчання моделей інших компаній.</p></details>
+      <details class="rv"><summary>Як ШІ працює з персональними даними, якщо вони потрібні для задачі?</summary><p>Для кожної задачі беруться лише потрібні поля. Прізвища, документи й контакти маскуються там, де вони не потрібні для відповіді. Це принцип мінімізації даних.</p></details>
+      <details class="rv"><summary>Чи зможе лікар довіряти тому, що пише система?</summary><p>Система будує відповіді на даних пацієнта, показує джерело й не вигадує. Якщо даних бракує або вони суперечать одні одним, вона так і скаже й покличе людину. Усе, що потрапляє до документів, лікар перевіряє сам.</p></details>
+      <details class="rv"><summary>Лікарі не будуть спротивлятись новому інструменту?</summary><p>Ми запускаємо пілот на невеликій групі і проєктуємо сценарії разом з лікарями. Інструмент не додає полів і кліків: він прибирає пошук і рутину, а в інтерфейс лікаря вбудовується в звичний робочий процес.</p></details>
+      <details class="rv"><summary>Як ви вимірюєте результат?</summary><p>До старту фіксуємо базові показники: час на документацію, пропущені звернення, зірвані підготовки, повторні візити, завантаженість слотів. Після впровадження порівнюємо ті самі показники. Без абстрактних відсотків.</p></details>
+      <details class="rv"><summary>Що буде з даними, якщо ми завершимо співпрацю?</summary><p>Ви можете забрати свої дані, а ми видалимо їх за вашим запитом з підтвердженням видалення.</p></details>
+      <details class="rv"><summary>З чого почати?</summary><p>З діагностики: аналіз систем, даних і втрат. Потім обираємо один напрямок або підрозділ, де ефект буде найшвидшим, і масштабуємо на мережу.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= CONTACT ======================= -->
+<section id="contact" style="padding-top:0">
+  <div class="wrap">
+    <div class="cta rv">
+      <div style="position:relative;z-index:1">
+        <h2>Обговоримо, де Асклепій може приймати більше пацієнтів і краще їх захищати</h2>
+        <p>Почнемо з діагностики: покажемо карту втрат часу, потенціал додаткового доходу й схему захисту даних саме для вашої мережі.</p>
+        <div class="three"><span>01 Діагностика</span><span>02 Карта впровадження</span><span>03 Вимірюваний результат</span></div>
+      </div>
+      <div class="contact">
+        <div class="who"><img src="img/cofounder-serhiy-polonskyi.png" alt="Сергій Полонський" width="64" height="64"><div><b>Сергій Полонський</b><span>Співзасновник, директор з розвитку</span></div></div>
+        <div class="copy"><span>+380 67 716 22 24</span><button type="button" data-copy="+380677162224">Копіювати</button></div>
+        <div class="copy"><span>sergiy@sinaptic.ai</span><button type="button" data-copy="sergiy@sinaptic.ai">Копіювати</button></div>
+        <div class="msgrs">
+          <a class="btn" href="https://t.me/+380677162224" rel="noopener"><svg class="ic"><use href="#i-telegram"/></svg>Telegram</a>
+          <a class="btn" href="https://wa.me/380677162224" rel="noopener"><svg class="ic"><use href="#i-whatsapp"/></svg>WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="row">
+      <span>© Sinaptic · Пропозиція підготовлена для медичного центру «Асклепій»</span>
+      <span>Ілюстрації сценаріїв не містять реальних даних пацієнтів.</span>
+    </div>
+  </div>
+</footer>
+
+<a class="fab call" href="tel:+380677162224" aria-label="Зателефонувати"><svg class="ic"><use href="#i-phone"/></svg></a>
+<button class="fab up" id="up" type="button" aria-label="Нагору"><svg class="ic"><use href="#i-up"/></svg></button>
+
+<script>
+(function(){
+  // поява блоків при прокрутці
+  var els=document.querySelectorAll('.rv');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.08,rootMargin:'0px 0px -4% 0px'});
+    els.forEach(function(el){io.observe(el)});
+  } else { els.forEach(function(el){el.classList.add('in')}); }
+
+  // підсвітка пункту меню
+  var links=[].slice.call(document.querySelectorAll('.menu a'));
+  var map=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  function spy(){
+    var y=window.scrollY+160,cur=-1;
+    map.forEach(function(s,i){if(s&&s.offsetTop<=y)cur=i});
+    links.forEach(function(a,i){a.classList.toggle('on',i===cur)});
+    document.getElementById('up').classList.toggle('show',window.scrollY>700);
+  }
+  window.addEventListener('scroll',spy,{passive:true});spy();
+  document.getElementById('up').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});
+
+  // копіювання контактів
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var v=b.getAttribute('data-copy'),t=b.textContent;
+      function done(){b.textContent='Скопійовано';setTimeout(function(){b.textContent=t},1600)}
+      try{navigator.clipboard.writeText(v).then(done,done)}catch(e){done()}
+    });
+  });
+
+  // калькулятор сценарію
+  var RATE=48,SUB=650,ONE=4500;
+  var $=function(id){return document.getElementById(id)};
+  function n(id){var v=parseFloat($(id).value);return isFinite(v)&&v>0?v:0}
+  var f=new Intl.NumberFormat('uk-UA',{maximumFractionDigits:0});
+  function calc(){
+    var d=n('c-doc'),v=n('c-vis'),m=n('c-min'),chk=n('c-chk'),len=Math.max(n('c-len'),1),days=n('c-day'),sh=parseFloat($('c-sh').value)/100;
+    $('c-shv').textContent=Math.round(sh*100)+'%';
+    var freedMin=d*v*m*days;
+    var extra=freedMin*sh/len;
+    var income=extra*chk;
+    var sub=SUB*RATE;
+    var net=income-sub;
+    $('o-inc').textContent=f.format(Math.round(income/100)*100)+' грн';
+    $('o-h').textContent=f.format(Math.round(freedMin/60))+' год';
+    $('o-v').textContent='≈ '+f.format(Math.round(extra));
+    $('o-net').textContent=(net>=0?'+':'−')+f.format(Math.abs(Math.round(net/100)*100))+' грн';
+    $('o-pay').textContent=net>0?(Math.max(ONE*RATE/net,0.1)).toFixed(1).replace('.',',')+' міс':'—';
+  }
+  ['c-doc','c-vis','c-min','c-chk','c-len','c-day','c-sh'].forEach(function(id){$(id).addEventListener('input',calc)});
+  calc();
+})();
+</script>
+</body>
+</html>
