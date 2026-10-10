@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0f1217">
+<title>CRM · VMU Wash&amp;Wheel</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/crm/crm.css">
+</head>
+<body>
+<div id="login" class="login" hidden>
+  <form id="loginForm" class="login-card">
+    <div class="logo"><span>VMU</span><b>CRM</b></div>
+    <p>Вхід для менеджерів мийки</p>
+    <input id="pw" type="password" placeholder="Пароль" autocomplete="current-password" required autofocus>
+    <button class="btn primary" type="submit">Увійти</button>
+    <div class="login-err" id="loginErr" role="alert"></div>
+  </form>
+</div>
+
+<div id="app" class="app" hidden>
+  <aside class="side">
+    <div class="logo"><span>VMU</span><b>CRM</b></div>
+    <nav id="tabs">
+      <button data-tab="today" class="on"><i>📋</i><span>Записи</span><em id="newBadge" hidden>0</em></button>
+      <button data-tab="board"><i>🚗</i><span>Пости</span></button>
+      <button data-tab="clients"><i>👥</i><span>Клієнти</span></button>
+      <button data-tab="prices"><i>💰</i><span>Прайс</span></button>
+      <button data-tab="settings"><i>⚙️</i><span>Налаштування</span></button>
+    </nav>
+    <div class="side-foot">
+      <label class="sound"><input type="checkbox" id="soundOn"> <span>Звук нових записів</span></label>
+      <a href="/" target="_blank" rel="noopener">Відкрити сайт ↗</a>
+      <button id="logout" class="link">Вийти</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <h1 id="title">Записи</h1>
+      <div class="top-actions">
+        <span class="live-dot" id="liveDot" title="Оновлюється автоматично"></span>
+        <button class="btn primary" id="addBtn">+ Новий запис</button>
+      </div>
+    </header>
+
+    <!-- Записи -->
+    <section data-view="today">
+      <div class="stats" id="stats"></div>
+      <div class="toolbar">
+        <div class="seg" id="range">
+          <button data-r="today" class="on">Сьогодні</button>
+          <button data-r="tomorrow">Завтра</button>
+          <button data-r="week">7 днів</button>
+          <button data-r="upcoming">Майбутні</button>
+          <button data-r="past">Минулі</button>
+          <button data-r="all">Усі</button>
+        </div>
+        <select id="statusFilter" aria-label="Статус">
+          <option value="">Усі статуси</option><option value="new">Нові</option><option value="confirmed">Підтверджені</option>
+          <option value="in_progress">В роботі</option><option value="done">Виконані</option><option value="cancelled">Скасовані</option><option value="no_show">Не приїхали</option>
+        </select>
+        <input id="search" type="search" placeholder="Пошук: ім'я, телефон, авто, код" aria-label="Пошук">
+        <a class="btn ghost" href="/crm/api/export.csv" download>⬇ CSV</a>
+      </div>
+      <div id="list" class="list"></div>
+    </section>
+
+    <!-- Пости -->
+    <section data-view="board" hidden>
+      <div class="toolbar">
+        <button class="btn ghost" id="dPrev">‹</button>
+        <input type="date" id="boardDate" aria-label="Дата">
+        <button class="btn ghost" id="dNext">›</button>
+        <button class="btn ghost" id="dToday">Сьогодні</button>
+      </div>
+      <div id="board" class="board"></div>
+    </section>
+
+    <!-- Клієнти -->
+    <section data-view="clients" hidden>
+      <div class="toolbar"><input id="clientSearch" type="search" placeholder="Пошук клієнта: ім'я, телефон, авто" aria-label="Пошук клієнта"></div>
+      <div id="clients" class="list"></div>
+    </section>
+
+    <!-- Прайс -->
+    <section data-view="prices" hidden>
+      <p class="muted">Тут можна змінити ціни та орієнтовну тривалість послуг (тривалість визначає, скільки часу займе пост). Нові ціни діють для нових записів.</p>
+      <div class="toolbar"><input id="priceSearch" type="search" placeholder="Пошук послуги" aria-label="Пошук послуги"></div>
+      <div id="prices" class="prices"></div>
+    </section>
+
+    <!-- Налаштування -->
+    <section data-view="settings" hidden>
+      <form id="settingsForm" class="card form-grid"></form>
+      <form id="pwForm" class="card form-grid">
+        <h3>Змінити пароль</h3>
+        <label>Поточний пароль<input type="password" name="current" autocomplete="current-password" required></label>
+        <label>Новий пароль (мінімум 8 символів)<input type="password" name="next" autocomplete="new-password" minlength="8" required></label>
+        <button class="btn primary" type="submit">Змінити пароль</button>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- Модалка запису -->
+<dialog id="modal"></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="/crm/crm.js" defer></script>
+</body>
+</html>

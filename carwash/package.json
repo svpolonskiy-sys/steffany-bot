@@ -1,0 +1,12 @@
+{
+  "name": "vmu-wash-booking",
+  "version": "1.0.0",
+  "description": "Сайт онлайн-запису на мийку VMU Wash&Wheel та CRM для менеджерів",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test --no-warnings test/*.test.js"
+  }
+}

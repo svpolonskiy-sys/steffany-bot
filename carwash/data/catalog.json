@@ -1,0 +1,2217 @@
+{
+ "source": "https://info.vmu.ua/",
+ "tiers": [
+  {
+   "id": "abc",
+   "type": "car",
+   "label": "A, B, C",
+   "title": "Малі та компактні",
+   "classes": "A, B, C"
+  },
+  {
+   "id": "de",
+   "type": "car",
+   "label": "D, E",
+   "title": "Середній та бізнес-клас",
+   "classes": "D, E"
+  },
+  {
+   "id": "sf",
+   "type": "car",
+   "label": "S, F",
+   "title": "Преміум та представницькі",
+   "classes": "S, F"
+  },
+  {
+   "id": "k1",
+   "type": "suv",
+   "label": "K1",
+   "title": "Компактні кросовери",
+   "classes": "K1"
+  },
+  {
+   "id": "k2",
+   "type": "suv",
+   "label": "K2",
+   "title": "Середні позашляховики",
+   "classes": "K2"
+  },
+  {
+   "id": "k3",
+   "type": "suv",
+   "label": "K3",
+   "title": "Великі позашляховики",
+   "classes": "K3"
+  },
+  {
+   "id": "m1",
+   "type": "van",
+   "label": "M1",
+   "title": "Мікроавтобуси",
+   "classes": "M1"
+  },
+  {
+   "id": "m2",
+   "type": "van",
+   "label": "M2",
+   "title": "Великі мікроавтобуси",
+   "classes": "M2"
+  }
+ ],
+ "models": {
+  "abc": [
+   "Audi A1",
+   "Audi A3",
+   "BMW 1",
+   "Chery A13",
+   "Chery Amulet",
+   "Chery Kio",
+   "Chery QQ",
+   "Chevrolet Aveo",
+   "Chevrolet Cruze",
+   "Chevrolet Lacetti",
+   "Citroen C-Elysee",
+   "Citroen C1",
+   "Citroen C4",
+   "Daewoo Lanos",
+   "Daewoo Matiz",
+   "Daewoo Nexia",
+   "Fiat 500",
+   "Fiat Linea",
+   "Fiat Panda",
+   "Fiat Punto",
+   "Ford C Max",
+   "Ford Fiesta",
+   "Ford Focus",
+   "Ford Fusion",
+   "Ford Ka",
+   "Geely CK",
+   "Geely MK",
+   "Honda Civic",
+   "Honda Jazz",
+   "Hyundai Accent",
+   "Hyundai Getz",
+   "Hyundai i10",
+   "Kia Ceed",
+   "Kia Cerato",
+   "Kia Picanto",
+   "Kia Rio",
+   "Mazda 3",
+   "Mazda2",
+   "MercedesA",
+   "Mitsubishi Colt",
+   "Mitsubishi Lancer",
+   "Nissan Almera",
+   "Nissan Micra",
+   "Nissan Note",
+   "Nissan Tiida",
+   "Opel Adam",
+   "Opel Astra",
+   "Opel Corsa",
+   "Opel Meriva",
+   "Peugeot 107",
+   "Peugeot 206-08",
+   "Peugeot 301",
+   "Peugeot 308",
+   "Peugeot Bipper",
+   "Ranault Megane",
+   "Renault Captur",
+   "Renault Logan",
+   "Renault Sandero",
+   "Renault Symbol",
+   "Renault Twingo",
+   "Seat Ibiza",
+   "Skoda Fabia",
+   "Skoda Octavia стара",
+   "Skoda Rapid",
+   "Smart",
+   "Subaru Impreza",
+   "Suzuki Splash",
+   "Toyota Auris",
+   "Toyota Corolla",
+   "Toyota Yaris",
+   "VW Golf",
+   "VW Jetta",
+   "VW Polo",
+   "VW Up!",
+   "ВАЗ 2101 - ВАЗ 2115",
+   "ЗАЗ Vida",
+   "ЗАЗ Таврия"
+  ],
+  "de": [
+   "Acura RL",
+   "Audi A4",
+   "Audi A5",
+   "Audi A6",
+   "Audi A7",
+   "BMW 3",
+   "BMW 4",
+   "BMW 5",
+   "Chevrolet Epica",
+   "Chrysler 300С",
+   "Citroen C5",
+   "Citroen DS5",
+   "Ford Mondeo",
+   "Ford Scorpio",
+   "Geely EmgrandEC7",
+   "Honda Accord",
+   "Honda Legend",
+   "Hyundai Elantra",
+   "Hyundai Grandeur",
+   "Hyundai Sonata",
+   "Infiniti M",
+   "Infinity G",
+   "Jaguar XF",
+   "Kia Magentis",
+   "Kia Optima",
+   "Lexus ES",
+   "Lexus GS",
+   "Lexus IS",
+   "Mazda 3 new",
+   "Mazda 6",
+   "Mazda 6 new",
+   "Mercedes C",
+   "Mercedes-Benz E",
+   "Mitsubishi Galant",
+   "Nissan Primera",
+   "Nissan Teana",
+   "Opel Insignia",
+   "Opel Omega",
+   "Opel Vectra",
+   "Peugeot 508",
+   "Peugeoy 407",
+   "Reault Fluence",
+   "Renault Laguna",
+   "Renault Latitude",
+   "Renault Talisman",
+   "Skoda Octavia new",
+   "Skoda Superb",
+   "Subaru Legacy",
+   "Toyota Avalon",
+   "Toyota Avensis",
+   "Toyota Camry",
+   "Toyota Solara",
+   "Volkswagen Passat CC",
+   "Volvo S60",
+   "Volvo S70",
+   "Volvo S90",
+   "VW Passat"
+  ],
+  "sf": [
+   "Audi A8",
+   "BMW 7",
+   "Jaguar XJ",
+   "Lexus LS",
+   "Mercedes-Benz S",
+   "Volkswagen Phaeton"
+  ],
+  "k1": [
+   "Audi Q3",
+   "Audi Q5",
+   "BMW X1",
+   "BMW X3",
+   "Chery Tiggo",
+   "Chevrolet Niva",
+   "Chevrolet Tacuma",
+   "Citroen Berlingo",
+   "Fiat 500X",
+   "Fiat Doblo",
+   "Ford Connect",
+   "Ford Kuga",
+   "Hyundai Tucson",
+   "Kia Carens",
+   "Kia Soul",
+   "Kia Sportage",
+   "LADA Niva",
+   "Land Rover Freelander",
+   "Mazda CX-5",
+   "Mercedes GLK",
+   "Nissan Juke",
+   "Nissan Qashkai",
+   "Opel Combo",
+   "Peugeot Partner",
+   "Porsche Macan",
+   "Range Rover Evoque",
+   "Renault Duster",
+   "Renault Kangoo",
+   "Seat Inca",
+   "Skoda Yeti",
+   "Ssang Yong Korando",
+   "SsangYong Actyon",
+   "Subaru Forester",
+   "Subaru Outback",
+   "Suzuki Grand Vitara",
+   "Suzuki SX4",
+   "Toyota RAV-4",
+   "VW Caddy",
+   "VW Tiguan"
+  ],
+  "k2": [
+   "BMW X5",
+   "BMW X6",
+   "Chevrolet Captiva",
+   "Chrysler Voyager",
+   "Citroen Jumpy",
+   "Citroen Picasso",
+   "Fiat Freemont",
+   "Fiat Scudo",
+   "Ford Galaxy",
+   "Honda CR-V",
+   "Hyundai Santa Fe",
+   "Infiniti FX",
+   "KIA Sorento",
+   "Land Cruiser Prado",
+   "Lexus GX",
+   "Lexus RX",
+   "Mazda CX-7",
+   "Mercedes ML",
+   "Mitsubishi Grandis",
+   "Mitsubishi Outlander",
+   "Mitsubishi Pajero",
+   "Nissan Murano",
+   "Nissan Terrano",
+   "Nissan X-Trail",
+   "Opel Zafira",
+   "Porsche Cayenne",
+   "Ssang Yong Kyron",
+   "Subaru Tribeca",
+   "Toyota FJ Cruiser",
+   "Toyota Venza",
+   "Volkswagen Touareg",
+   "Volkswagen Touran",
+   "Volvo XC80",
+   "Volvo XC90",
+   "Уаз Патриот"
+  ],
+  "k3": [
+   "Acura MDX",
+   "Audi Q7",
+   "Cadillac Escalade",
+   "Ford Explorer",
+   "Honda Pilot",
+   "Infinity QX56",
+   "Jeep Grand Cherokee",
+   "Lexus LX",
+   "Mazda CX-9",
+   "Mercedes GL",
+   "Nissan Armada",
+   "Nissan Patrol",
+   "Range Rover",
+   "Ssang Yong Rexton",
+   "Terrano",
+   "Toyota Highlander",
+   "Toyota Hilux",
+   "Toyota L200",
+   "Toyota Land Cruiser",
+   "Toyota Sequoia",
+   "Toyota Tundra",
+   "VW Amarok"
+  ],
+  "m1": [
+   "Ford Transit",
+   "GMC Express",
+   "Hyundai H-1",
+   "Mercedes Vito",
+   "Nissan Primastar",
+   "Opel Vivaro",
+   "VW Transporter"
+  ],
+  "m2": [
+   "Mercedes Sprinter",
+   "Peugeot Boxer",
+   "Renault Master",
+   "VW Crafter",
+   "VW LT"
+  ]
+ },
+ "categories": [
+  "Базові послуги",
+  "Комплексні послуги",
+  "Нанесення захисного покриття в салоні",
+  "Нанесення захисного покриття на кузов автомобіля",
+  "Окремі послуги чистки",
+  "Чистка килимів"
+ ],
+ "services": [
+  {
+   "id": "s01",
+   "category": "Базові послуги",
+   "part": "body",
+   "name": "Мийка",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 300,
+     "from": false
+    },
+    "de": {
+     "price": 350,
+     "from": false
+    },
+    "sf": {
+     "price": 400,
+     "from": false
+    },
+    "k1": {
+     "price": 350,
+     "from": false
+    },
+    "k2": {
+     "price": 400,
+     "from": false
+    },
+    "k3": {
+     "price": 450,
+     "from": false
+    },
+    "m1": {
+     "price": 400,
+     "from": false
+    },
+    "m2": {
+     "price": 450,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s02",
+   "category": "Базові послуги",
+   "part": "body",
+   "name": "Експрес-збивка",
+   "description": "",
+   "duration": 15,
+   "prices": {
+    "abc": {
+     "price": 200,
+     "from": false
+    },
+    "de": {
+     "price": 250,
+     "from": false
+    },
+    "sf": {
+     "price": 300,
+     "from": false
+    },
+    "k1": {
+     "price": 250,
+     "from": false
+    },
+    "k2": {
+     "price": 300,
+     "from": false
+    },
+    "k3": {
+     "price": 350,
+     "from": false
+    },
+    "m1": {
+     "price": 300,
+     "from": false
+    },
+    "m2": {
+     "price": 350,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s03",
+   "category": "Базові послуги",
+   "part": "body",
+   "name": "Збивка",
+   "description": "",
+   "duration": 20,
+   "prices": {
+    "abc": {
+     "price": 250,
+     "from": false
+    },
+    "de": {
+     "price": 300,
+     "from": false
+    },
+    "sf": {
+     "price": 300,
+     "from": false
+    },
+    "k1": {
+     "price": 300,
+     "from": false
+    },
+    "k2": {
+     "price": 350,
+     "from": false
+    },
+    "k3": {
+     "price": 400,
+     "from": false
+    },
+    "m1": {
+     "price": 350,
+     "from": false
+    },
+    "m2": {
+     "price": 400,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s04",
+   "category": "Базові послуги",
+   "part": "engine",
+   "name": "Мийка двигуна",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 500,
+     "from": true,
+     "note": "500/1000"
+    },
+    "de": {
+     "price": 500,
+     "from": true,
+     "note": "500/1000"
+    },
+    "sf": {
+     "price": 500,
+     "from": true,
+     "note": "500/1000"
+    },
+    "k1": {
+     "price": 500,
+     "from": true,
+     "note": "500/1000"
+    },
+    "k2": {
+     "price": 500,
+     "from": true,
+     "note": "500/1000"
+    },
+    "k3": {
+     "price": 500,
+     "from": true,
+     "note": "500/1000"
+    },
+    "m1": {
+     "price": 500,
+     "from": true,
+     "note": "500/1000"
+    },
+    "m2": {
+     "price": 500,
+     "from": true,
+     "note": "500/1000"
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s05",
+   "category": "Базові послуги",
+   "part": "engine",
+   "name": "Мийка та консервація двигуна",
+   "description": "",
+   "duration": 60,
+   "prices": {
+    "abc": {
+     "price": 1500,
+     "from": false
+    },
+    "de": {
+     "price": 1500,
+     "from": false
+    },
+    "sf": {
+     "price": 1500,
+     "from": false
+    },
+    "k1": {
+     "price": 1500,
+     "from": false
+    },
+    "k2": {
+     "price": 1500,
+     "from": false
+    },
+    "k3": {
+     "price": 1500,
+     "from": false
+    },
+    "m1": {
+     "price": 1500,
+     "from": false
+    },
+    "m2": {
+     "price": 1500,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s06",
+   "category": "Базові послуги",
+   "part": "interior",
+   "name": "Прибирання салону",
+   "description": "",
+   "duration": 20,
+   "prices": {
+    "abc": {
+     "price": 200,
+     "from": false
+    },
+    "de": {
+     "price": 230,
+     "from": false
+    },
+    "sf": {
+     "price": 250,
+     "from": false
+    },
+    "k1": {
+     "price": 230,
+     "from": false
+    },
+    "k2": {
+     "price": 250,
+     "from": false
+    },
+    "k3": {
+     "price": 300,
+     "from": false
+    },
+    "m1": {
+     "price": 250,
+     "from": true,
+     "note": "250 (вант) · 300 (вант-пас) · 350 (пас)"
+    },
+    "m2": {
+     "price": 450,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s07",
+   "category": "Базові послуги",
+   "part": "trunk",
+   "name": "Прибирання багажнику",
+   "description": "",
+   "duration": 10,
+   "prices": {
+    "abc": {
+     "price": 100,
+     "from": false
+    },
+    "de": {
+     "price": 120,
+     "from": false
+    },
+    "sf": {
+     "price": 150,
+     "from": false
+    },
+    "k1": {
+     "price": 120,
+     "from": false
+    },
+    "k2": {
+     "price": 150,
+     "from": false
+    },
+    "k3": {
+     "price": 170,
+     "from": false
+    },
+    "m1": {
+     "price": 200,
+     "from": false
+    },
+    "m2": {
+     "price": 200,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s08",
+   "category": "Базові послуги",
+   "part": "wheels",
+   "name": "Чистка дисків",
+   "description": "за 1 диск",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 500,
+     "from": false
+    },
+    "de": {
+     "price": 500,
+     "from": false
+    },
+    "sf": {
+     "price": 500,
+     "from": false
+    },
+    "k1": {
+     "price": 500,
+     "from": false
+    },
+    "k2": {
+     "price": 500,
+     "from": false
+    },
+    "k3": {
+     "price": 500,
+     "from": false
+    },
+    "m1": {
+     "price": 500,
+     "from": false
+    },
+    "m2": {
+     "price": 500,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": true
+  },
+  {
+   "id": "s09",
+   "category": "Базові послуги",
+   "part": "body",
+   "name": "Видалення бітуму",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 150,
+     "from": true
+    },
+    "de": {
+     "price": 150,
+     "from": true
+    },
+    "sf": {
+     "price": 150,
+     "from": true
+    },
+    "k1": {
+     "price": 150,
+     "from": true
+    },
+    "k2": {
+     "price": 150,
+     "from": true
+    },
+    "k3": {
+     "price": 150,
+     "from": true
+    },
+    "m1": {
+     "price": 150,
+     "from": true
+    },
+    "m2": {
+     "price": 150,
+     "from": true
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s10",
+   "category": "Базові послуги",
+   "part": "body",
+   "name": "Глибоке очищення кузову",
+   "description": "",
+   "duration": 120,
+   "prices": {
+    "abc": {
+     "price": 1500,
+     "from": false
+    },
+    "de": {
+     "price": 1600,
+     "from": false
+    },
+    "sf": {
+     "price": 1700,
+     "from": false
+    },
+    "k1": {
+     "price": 1600,
+     "from": false
+    },
+    "k2": {
+     "price": 1700,
+     "from": false
+    },
+    "k3": {
+     "price": 1800,
+     "from": false
+    },
+    "m1": {
+     "price": 2000,
+     "from": false
+    },
+    "m2": {
+     "price": 2200,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s11",
+   "category": "Базові послуги",
+   "part": "doors",
+   "name": "Розморожування дверних замків",
+   "description": "за 1 замок",
+   "duration": 10,
+   "prices": {
+    "abc": {
+     "price": 100,
+     "from": false
+    },
+    "de": {
+     "price": 100,
+     "from": false
+    },
+    "sf": {
+     "price": 100,
+     "from": false
+    },
+    "k1": {
+     "price": 100,
+     "from": false
+    },
+    "k2": {
+     "price": 100,
+     "from": false
+    },
+    "k3": {
+     "price": 100,
+     "from": false
+    },
+    "m1": {
+     "price": 100,
+     "from": false
+    },
+    "m2": {
+     "price": 100,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": true
+  },
+  {
+   "id": "s12",
+   "category": "Базові послуги",
+   "part": "doors",
+   "name": "Обробка \"Антилід\" (дверні замки)",
+   "description": "за 1 замок",
+   "duration": 10,
+   "prices": {
+    "abc": {
+     "price": 100,
+     "from": false
+    },
+    "de": {
+     "price": 100,
+     "from": false
+    },
+    "sf": {
+     "price": 100,
+     "from": false
+    },
+    "k1": {
+     "price": 100,
+     "from": false
+    },
+    "k2": {
+     "price": 100,
+     "from": false
+    },
+    "k3": {
+     "price": 100,
+     "from": false
+    },
+    "m1": {
+     "price": 100,
+     "from": false
+    },
+    "m2": {
+     "price": 100,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": true
+  },
+  {
+   "id": "s13",
+   "category": "Базові послуги",
+   "part": "doors",
+   "name": "Обробка дверних завісів",
+   "description": "за 1 завісу",
+   "duration": 10,
+   "prices": {
+    "abc": {
+     "price": 100,
+     "from": false
+    },
+    "de": {
+     "price": 100,
+     "from": false
+    },
+    "sf": {
+     "price": 100,
+     "from": false
+    },
+    "k1": {
+     "price": 100,
+     "from": false
+    },
+    "k2": {
+     "price": 100,
+     "from": false
+    },
+    "k3": {
+     "price": 100,
+     "from": false
+    },
+    "m1": {
+     "price": 100,
+     "from": false
+    },
+    "m2": {
+     "price": 100,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": true
+  },
+  {
+   "id": "s14",
+   "category": "Базові послуги",
+   "part": "doors",
+   "name": "Обробка дверних отворів силіконом",
+   "description": "за 1 отвір",
+   "duration": 10,
+   "prices": {
+    "abc": {
+     "price": 100,
+     "from": false
+    },
+    "de": {
+     "price": 100,
+     "from": false
+    },
+    "sf": {
+     "price": 100,
+     "from": false
+    },
+    "k1": {
+     "price": 100,
+     "from": false
+    },
+    "k2": {
+     "price": 100,
+     "from": false
+    },
+    "k3": {
+     "price": 100,
+     "from": false
+    },
+    "m1": {
+     "price": 100,
+     "from": false
+    },
+    "m2": {
+     "price": 100,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": true
+  },
+  {
+   "id": "s15",
+   "category": "Базові послуги",
+   "part": "interior",
+   "name": "Хімчистка салону повна",
+   "description": "",
+   "duration": 240,
+   "prices": {
+    "abc": {
+     "price": 4500,
+     "from": true
+    },
+    "de": {
+     "price": 5000,
+     "from": true
+    },
+    "sf": {
+     "price": 5500,
+     "from": true
+    },
+    "k1": {
+     "price": 6000,
+     "from": true
+    },
+    "k2": {
+     "price": 6500,
+     "from": true
+    },
+    "k3": {
+     "price": 7000,
+     "from": true
+    },
+    "m1": {
+     "price": 5000,
+     "from": true,
+     "note": "5000 (вант) · 8000 (пас)"
+    },
+    "m2": {
+     "price": 5000,
+     "from": true,
+     "note": "5000 (вант) · 8000 (пас)"
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s16",
+   "category": "Базові послуги",
+   "part": "glass",
+   "name": "Антикальцій",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "de": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "sf": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "k1": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "k2": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "k3": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "m1": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "m2": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s17",
+   "category": "Базові послуги",
+   "part": "glass",
+   "name": "Антидощ",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "de": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "sf": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "k1": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "k2": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "k3": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "m1": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    },
+    "m2": {
+     "price": 500,
+     "from": true,
+     "note": "500/1500"
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s18",
+   "category": "Комплексні послуги",
+   "part": "combo",
+   "name": "Стандарт",
+   "description": "мийка + прибирання салону + багажник",
+   "duration": 60,
+   "prices": {
+    "abc": {
+     "price": 600,
+     "from": false
+    },
+    "de": {
+     "price": 700,
+     "from": false
+    },
+    "sf": {
+     "price": 800,
+     "from": false
+    },
+    "k1": {
+     "price": 700,
+     "from": false
+    },
+    "k2": {
+     "price": 800,
+     "from": false
+    },
+    "k3": {
+     "price": 920,
+     "from": false
+    },
+    "m1": {
+     "price": 850,
+     "from": true,
+     "note": "850, 900, 950"
+    },
+    "m2": {
+     "price": 1100,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s19",
+   "category": "Комплексні послуги",
+   "part": "combo",
+   "name": "Комплекс СТАНДАРТ",
+   "description": "",
+   "duration": 150,
+   "prices": {
+    "abc": {
+     "price": 1350,
+     "from": false
+    },
+    "de": {
+     "price": 1500,
+     "from": false
+    },
+    "sf": {
+     "price": 1670,
+     "from": false
+    },
+    "k1": {
+     "price": 1500,
+     "from": false
+    },
+    "k2": {
+     "price": 1670,
+     "from": false
+    },
+    "k3": {
+     "price": 1840,
+     "from": false
+    },
+    "m1": {
+     "price": 1910,
+     "from": true,
+     "note": "1910, 1960, 2010"
+    },
+    "m2": {
+     "price": 2400,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s20",
+   "category": "Комплексні послуги",
+   "part": "combo",
+   "name": "Комплекс ПРЕМІУМ",
+   "description": "Koch-Chemie",
+   "duration": 180,
+   "prices": {
+    "abc": {
+     "price": 1680,
+     "from": false
+    },
+    "de": {
+     "price": 1830,
+     "from": false
+    },
+    "sf": {
+     "price": 2000,
+     "from": false
+    },
+    "k1": {
+     "price": 1830,
+     "from": false
+    },
+    "k2": {
+     "price": 2000,
+     "from": false
+    },
+    "k3": {
+     "price": 2180,
+     "from": false
+    },
+    "m1": {
+     "price": 2290,
+     "from": true,
+     "note": "2290, 2340, 2390"
+    },
+    "m2": {
+     "price": 2850,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s21",
+   "category": "Нанесення захисного покриття в салоні",
+   "part": "glass",
+   "name": "Натирання скла всередині салону",
+   "description": "",
+   "duration": 20,
+   "prices": {
+    "abc": {
+     "price": 300,
+     "from": false
+    },
+    "de": {
+     "price": 320,
+     "from": false
+    },
+    "sf": {
+     "price": 350,
+     "from": false
+    },
+    "k1": {
+     "price": 320,
+     "from": false
+    },
+    "k2": {
+     "price": 350,
+     "from": false
+    },
+    "k3": {
+     "price": 370,
+     "from": false
+    },
+    "m1": {
+     "price": 500,
+     "from": false
+    },
+    "m2": {
+     "price": 700,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s22",
+   "category": "Нанесення захисного покриття в салоні",
+   "part": "glass",
+   "name": "Натирання лобового скла",
+   "description": "",
+   "duration": 10,
+   "prices": {
+    "abc": {
+     "price": 150,
+     "from": false
+    },
+    "de": {
+     "price": 160,
+     "from": false
+    },
+    "sf": {
+     "price": 180,
+     "from": false
+    },
+    "k1": {
+     "price": 160,
+     "from": false
+    },
+    "k2": {
+     "price": 180,
+     "from": false
+    },
+    "k3": {
+     "price": 190,
+     "from": false
+    },
+    "m1": {
+     "price": 200,
+     "from": false
+    },
+    "m2": {
+     "price": 200,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s23",
+   "category": "Нанесення захисного покриття в салоні",
+   "part": "interior",
+   "name": "Пластик салону базовий",
+   "description": "",
+   "duration": 15,
+   "prices": {
+    "abc": {
+     "price": 200,
+     "from": false
+    },
+    "de": {
+     "price": 200,
+     "from": false
+    },
+    "sf": {
+     "price": 200,
+     "from": false
+    },
+    "k1": {
+     "price": 200,
+     "from": false
+    },
+    "k2": {
+     "price": 200,
+     "from": false
+    },
+    "k3": {
+     "price": 200,
+     "from": false
+    },
+    "m1": {
+     "price": 220,
+     "from": false
+    },
+    "m2": {
+     "price": 250,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s24",
+   "category": "Нанесення захисного покриття в салоні",
+   "part": "interior",
+   "name": "Пластик салону преміум",
+   "description": "",
+   "duration": 25,
+   "prices": {
+    "abc": {
+     "price": 350,
+     "from": false
+    },
+    "de": {
+     "price": 350,
+     "from": false
+    },
+    "sf": {
+     "price": 350,
+     "from": false
+    },
+    "k1": {
+     "price": 350,
+     "from": false
+    },
+    "k2": {
+     "price": 350,
+     "from": false
+    },
+    "k3": {
+     "price": 350,
+     "from": false
+    },
+    "m1": {
+     "price": 400,
+     "from": false
+    },
+    "m2": {
+     "price": 500,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s25",
+   "category": "Нанесення захисного покриття в салоні",
+   "part": "interior",
+   "name": "Кондиціонер шкіри базовий",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 400,
+     "from": false
+    },
+    "de": {
+     "price": 500,
+     "from": false
+    },
+    "sf": {
+     "price": 600,
+     "from": false
+    },
+    "k1": {
+     "price": 500,
+     "from": false
+    },
+    "k2": {
+     "price": 600,
+     "from": false
+    },
+    "k3": {
+     "price": 800,
+     "from": false
+    },
+    "m1": {
+     "price": 900,
+     "from": false
+    },
+    "m2": {
+     "price": 1800,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s26",
+   "category": "Нанесення захисного покриття в салоні",
+   "part": "interior",
+   "name": "Кондиціонер шкіри преміум",
+   "description": "",
+   "duration": 40,
+   "prices": {
+    "abc": {
+     "price": 800,
+     "from": false
+    },
+    "de": {
+     "price": 900,
+     "from": false
+    },
+    "sf": {
+     "price": 1000,
+     "from": false
+    },
+    "k1": {
+     "price": 900,
+     "from": false
+    },
+    "k2": {
+     "price": 1000,
+     "from": false
+    },
+    "k3": {
+     "price": 1100,
+     "from": false
+    },
+    "m1": {
+     "price": 1300,
+     "from": false
+    },
+    "m2": {
+     "price": 2600,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s27",
+   "category": "Нанесення захисного покриття на кузов автомобіля",
+   "part": "body",
+   "name": "Холодний віск базовий",
+   "description": "",
+   "duration": 15,
+   "prices": {
+    "abc": {
+     "price": 100,
+     "from": false
+    },
+    "de": {
+     "price": 110,
+     "from": false
+    },
+    "sf": {
+     "price": 120,
+     "from": false
+    },
+    "k1": {
+     "price": 110,
+     "from": false
+    },
+    "k2": {
+     "price": 120,
+     "from": false
+    },
+    "k3": {
+     "price": 130,
+     "from": false
+    },
+    "m1": {
+     "price": 140,
+     "from": false
+    },
+    "m2": {
+     "price": 150,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s28",
+   "category": "Нанесення захисного покриття на кузов автомобіля",
+   "part": "body",
+   "name": "Холодний віск преміум",
+   "description": "",
+   "duration": 20,
+   "prices": {
+    "abc": {
+     "price": 180,
+     "from": false
+    },
+    "de": {
+     "price": 190,
+     "from": false
+    },
+    "sf": {
+     "price": 200,
+     "from": false
+    },
+    "k1": {
+     "price": 190,
+     "from": false
+    },
+    "k2": {
+     "price": 200,
+     "from": false
+    },
+    "k3": {
+     "price": 220,
+     "from": false
+    },
+    "m1": {
+     "price": 240,
+     "from": false
+    },
+    "m2": {
+     "price": 250,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s29",
+   "category": "Нанесення захисного покриття на кузов автомобіля",
+   "part": "body",
+   "name": "Полімерний віск",
+   "description": "",
+   "duration": 45,
+   "prices": {
+    "abc": {
+     "price": 600,
+     "from": false
+    },
+    "de": {
+     "price": 600,
+     "from": false
+    },
+    "sf": {
+     "price": 600,
+     "from": false
+    },
+    "k1": {
+     "price": 600,
+     "from": false
+    },
+    "k2": {
+     "price": 600,
+     "from": false
+    },
+    "k3": {
+     "price": 700,
+     "from": false
+    },
+    "m1": {
+     "price": 700,
+     "from": false
+    },
+    "m2": {
+     "price": 700,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s30",
+   "category": "Нанесення захисного покриття на кузов автомобіля",
+   "part": "body",
+   "name": "Базовий твердий віск",
+   "description": "",
+   "duration": 90,
+   "prices": {
+    "abc": {
+     "price": 1200,
+     "from": false
+    },
+    "de": {
+     "price": 1300,
+     "from": false
+    },
+    "sf": {
+     "price": 1500,
+     "from": false
+    },
+    "k1": {
+     "price": 1300,
+     "from": false
+    },
+    "k2": {
+     "price": 1500,
+     "from": false
+    },
+    "k3": {
+     "price": 1700,
+     "from": false
+    },
+    "m1": {
+     "price": 2000,
+     "from": false
+    },
+    "m2": {
+     "price": 2200,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s31",
+   "category": "Нанесення захисного покриття на кузов автомобіля",
+   "part": "body",
+   "name": "Преміум твердий віск",
+   "description": "",
+   "duration": 120,
+   "prices": {
+    "abc": {
+     "price": 1800,
+     "from": false
+    },
+    "de": {
+     "price": 1900,
+     "from": false
+    },
+    "sf": {
+     "price": 2000,
+     "from": false
+    },
+    "k1": {
+     "price": 1900,
+     "from": false
+    },
+    "k2": {
+     "price": 2000,
+     "from": false
+    },
+    "k3": {
+     "price": 2200,
+     "from": false
+    },
+    "m1": {
+     "price": 2500,
+     "from": false
+    },
+    "m2": {
+     "price": 2700,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s32",
+   "category": "Нанесення захисного покриття на кузов автомобіля",
+   "part": "wheels",
+   "name": "Зволоження гуми базове",
+   "description": "",
+   "duration": 10,
+   "prices": {
+    "abc": {
+     "price": 150,
+     "from": false
+    },
+    "de": {
+     "price": 170,
+     "from": false
+    },
+    "sf": {
+     "price": 200,
+     "from": false
+    },
+    "k1": {
+     "price": 170,
+     "from": false
+    },
+    "k2": {
+     "price": 200,
+     "from": false
+    },
+    "k3": {
+     "price": 220,
+     "from": false
+    },
+    "m1": {
+     "price": 200,
+     "from": false
+    },
+    "m2": {
+     "price": 200,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s33",
+   "category": "Нанесення захисного покриття на кузов автомобіля",
+   "part": "wheels",
+   "name": "Зволоження гуми преміум",
+   "description": "",
+   "duration": 15,
+   "prices": {
+    "abc": {
+     "price": 250,
+     "from": false
+    },
+    "de": {
+     "price": 270,
+     "from": false
+    },
+    "sf": {
+     "price": 300,
+     "from": false
+    },
+    "k1": {
+     "price": 270,
+     "from": false
+    },
+    "k2": {
+     "price": 300,
+     "from": false
+    },
+    "k3": {
+     "price": 320,
+     "from": false
+    },
+    "m1": {
+     "price": 300,
+     "from": false
+    },
+    "m2": {
+     "price": 300,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s34",
+   "category": "Окремі послуги чистки",
+   "part": "interior",
+   "name": "Передня панель",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 800,
+     "from": false
+    },
+    "de": {
+     "price": 900,
+     "from": false
+    },
+    "sf": {
+     "price": 1000,
+     "from": false
+    },
+    "k1": {
+     "price": 1000,
+     "from": false
+    },
+    "k2": {
+     "price": 1100,
+     "from": false
+    },
+    "k3": {
+     "price": 1200,
+     "from": false
+    },
+    "m1": {
+     "price": 1200,
+     "from": false
+    },
+    "m2": {
+     "price": 1200,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s35",
+   "category": "Окремі послуги чистки",
+   "part": "interior",
+   "name": "Стійка (1 шт.)",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 200,
+     "from": false
+    },
+    "de": {
+     "price": 200,
+     "from": false
+    },
+    "sf": {
+     "price": 200,
+     "from": false
+    },
+    "k1": {
+     "price": 250,
+     "from": false
+    },
+    "k2": {
+     "price": 250,
+     "from": false
+    },
+    "k3": {
+     "price": 250,
+     "from": false
+    },
+    "m1": {
+     "price": 250,
+     "from": false
+    },
+    "m2": {
+     "price": 250,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": true
+  },
+  {
+   "id": "s36",
+   "category": "Окремі послуги чистки",
+   "part": "interior",
+   "name": "Сидіння переднє (1 шт.)",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 400,
+     "from": false
+    },
+    "de": {
+     "price": 400,
+     "from": false
+    },
+    "sf": {
+     "price": 500,
+     "from": false
+    },
+    "k1": {
+     "price": 500,
+     "from": false
+    },
+    "k2": {
+     "price": 550,
+     "from": false
+    },
+    "k3": {
+     "price": 600,
+     "from": false
+    },
+    "m1": {
+     "price": 500,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": true
+  },
+  {
+   "id": "s37",
+   "category": "Окремі послуги чистки",
+   "part": "interior",
+   "name": "Заднє сидіння",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 800,
+     "from": false
+    },
+    "de": {
+     "price": 800,
+     "from": false
+    },
+    "sf": {
+     "price": 1000,
+     "from": false
+    },
+    "k1": {
+     "price": 1000,
+     "from": false
+    },
+    "k2": {
+     "price": 1100,
+     "from": false
+    },
+    "k3": {
+     "price": 1200,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s38",
+   "category": "Окремі послуги чистки",
+   "part": "interior",
+   "name": "Стеля",
+   "description": "",
+   "duration": 45,
+   "prices": {
+    "abc": {
+     "price": 800,
+     "from": false
+    },
+    "de": {
+     "price": 900,
+     "from": false
+    },
+    "sf": {
+     "price": 1000,
+     "from": false
+    },
+    "k1": {
+     "price": 1000,
+     "from": false
+    },
+    "k2": {
+     "price": 1100,
+     "from": false
+    },
+    "k3": {
+     "price": 1300,
+     "from": false
+    },
+    "m1": {
+     "price": 700,
+     "from": true,
+     "note": "700 (вант) · 1600 (пас)"
+    },
+    "m2": {
+     "price": 700,
+     "from": true,
+     "note": "700 (вант) · 1600 (пас)"
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s39",
+   "category": "Окремі послуги чистки",
+   "part": "interior",
+   "name": "Карта дверна (1 шт.)",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 250,
+     "from": false
+    },
+    "de": {
+     "price": 300,
+     "from": false
+    },
+    "sf": {
+     "price": 350,
+     "from": false
+    },
+    "k1": {
+     "price": 350,
+     "from": false
+    },
+    "k2": {
+     "price": 400,
+     "from": false
+    },
+    "k3": {
+     "price": 450,
+     "from": false
+    },
+    "m1": {
+     "price": 400,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": true
+  },
+  {
+   "id": "s40",
+   "category": "Окремі послуги чистки",
+   "part": "interior",
+   "name": "Підлога",
+   "description": "",
+   "duration": 45,
+   "prices": {
+    "abc": {
+     "price": 800,
+     "from": false
+    },
+    "de": {
+     "price": 900,
+     "from": false
+    },
+    "sf": {
+     "price": 900,
+     "from": false
+    },
+    "k1": {
+     "price": 1000,
+     "from": false
+    },
+    "k2": {
+     "price": 1000,
+     "from": false
+    },
+    "k3": {
+     "price": 1100,
+     "from": false
+    },
+    "m1": {
+     "price": 500,
+     "from": true,
+     "note": "500 (вант) · 1600 (пас)"
+    },
+    "m2": {
+     "price": 500,
+     "from": true,
+     "note": "500 (вант) · 1600 (пас)"
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s41",
+   "category": "Окремі послуги чистки",
+   "part": "trunk",
+   "name": "Багажник (чистка)",
+   "description": "",
+   "duration": 30,
+   "prices": {
+    "abc": {
+     "price": 500,
+     "from": false
+    },
+    "de": {
+     "price": 500,
+     "from": false
+    },
+    "sf": {
+     "price": 550,
+     "from": false
+    },
+    "k1": {
+     "price": 650,
+     "from": false
+    },
+    "k2": {
+     "price": 650,
+     "from": false
+    },
+    "k3": {
+     "price": 650,
+     "from": false
+    },
+    "m1": {
+     "price": 650,
+     "from": false
+    },
+    "m2": {
+     "price": 650,
+     "from": false
+    }
+   },
+   "active": true,
+   "unit": false
+  },
+  {
+   "id": "s42",
+   "category": "Чистка килимів",
+   "part": "interior",
+   "name": "Чистка килимів",
+   "description": "за 1 кв.м",
+   "duration": 40,
+   "prices": {
+    "abc": {
+     "price": 150,
+     "from": true,
+     "note": "150/200"
+    },
+    "de": {
+     "price": 150,
+     "from": true,
+     "note": "150/200"
+    },
+    "sf": {
+     "price": 150,
+     "from": true,
+     "note": "150/200"
+    },
+    "k1": {
+     "price": 150,
+     "from": true,
+     "note": "150/200"
+    },
+    "k2": {
+     "price": 150,
+     "from": true,
+     "note": "150/200"
+    },
+    "k3": {
+     "price": 150,
+     "from": true,
+     "note": "150/200"
+    },
+    "m1": {
+     "price": 150,
+     "from": true,
+     "note": "150/200"
+    },
+    "m2": {
+     "price": 150,
+     "from": true,
+     "note": "150/200"
+    }
+   },
+   "active": true,
+   "unit": true
+  }
+ ],
+ "legend": {
+  "Експрес": "безконтактна мийка, протирання тільки скла",
+  "Економ": "безконтактна мийка, очищення килимків, просушування елементів кузову стисненим повітрям",
+  "Стандарт": "безконтактна мийка, очищення килимків, прибирання салону, просушування елементів кузову стисненим повітрям",
+  "Преміум": "безконтактна мийка, очищення килимків, прибирання салону, прибирання багажнику, нанесення холодного воску, натирання пластикових деталей приборної панелі, очищення скла зсередини, чорніння гуми"
+ }
+}
