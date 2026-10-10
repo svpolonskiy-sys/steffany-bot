@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0f1217">
+<title>CRM · VMU Wash&amp;Wheel</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMwYjBkMTEiLz48cGF0aCBkPSJNMTAgMThoMTBsMTIgMjYgMTItMjZoMTBMMzcgNTBIMjd6IiBmaWxsPSIjZTgyNjJlIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSIxNCIgcj0iNCIgZmlsbD0iI2ZmYjgxYyIvPjwvc3ZnPgo=">
+<style>:root{
+  --bg:#f3f5f8; --card:#fff; --text:#161b24; --muted:#6b7585; --line:#e3e7ee; --side:#0f1217; --side-text:#c9d0dc;
+  --red:#e8262e; --red-d:#c81d25; --amber:#f5a300; --ok:#16a870; --blue:#2f7df6; --grey:#8a93a3;
+  --new:#e8262e; --confirmed:#2f7df6; --in_progress:#f5a300; --done:#16a870; --cancelled:#8a93a3; --no_show:#8a5cf6;
+  --shadow:0 1px 2px rgba(15,18,23,.06),0 8px 24px -12px rgba(15,18,23,.16); --r:14px;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0d11;--card:#14181f;--text:#eef1f6;--muted:#9099a8;--line:#242a35;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6)}}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font:15px/1.5 Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.muted{color:var(--muted)}
+
+.logo{display:flex;align-items:center;gap:10px}
+.logo span{background:var(--red);color:#fff;font-weight:900;padding:.2em .55em;border-radius:7px;transform:skewX(-8deg);letter-spacing:.04em}
+.logo b{letter-spacing:.14em;font-size:.85rem;color:inherit}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;padding:.6em 1.1em;border-radius:10px;font-weight:600;border:1px solid var(--line);background:var(--card);transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--grey)}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.primary:hover{background:var(--red-d)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:#201600}
+.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+.btn.sm{padding:.4em .8em;font-size:.88rem;border-radius:8px}
+.btn.ghost{background:transparent}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.link{color:var(--side-text);text-decoration:underline;font-size:.9rem}
+
+/* вхід */
+.login{min-height:100vh;display:grid;place-items:center;padding:20px;background:var(--side)}
+.login-card{width:min(380px,100%);background:#171c24;border:1px solid #2a313d;border-radius:20px;padding:32px;display:grid;gap:14px;color:#eef1f6;text-align:center}
+.login-card .logo{justify-content:center;font-size:1.3rem}
+.login-card p{color:#9aa3b2}
+.login-card input{padding:14px 16px;border-radius:12px;border:1.5px solid #2f3744;background:#0f1217;outline:0;color:#fff}
+.login-card input:focus{border-color:var(--amber)}
+.login-err{color:#ff8a90;min-height:1.4em;font-size:.9rem}
+
+/* каркас */
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+.side{background:var(--side);color:var(--side-text);padding:22px 14px;display:flex;flex-direction:column;gap:26px;position:sticky;top:0;height:100vh}
+.side .logo{padding:0 8px;color:#fff;font-size:1.15rem}
+.side nav{display:grid;gap:4px}
+.side nav button{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:inherit;font-weight:600;text-align:left;position:relative;transition:.15s}
+.side nav button i{font-style:normal;width:22px;text-align:center}
+.side nav button:hover{background:#1b212b}
+.side nav button.on{background:var(--red);color:#fff}
+.side nav em{margin-left:auto;background:#fff;color:var(--red);font-style:normal;font-weight:800;font-size:.78rem;border-radius:999px;min-width:22px;height:22px;display:grid;place-items:center;padding:0 6px;animation:ping 1.6s infinite}
+.side nav .on em{background:#fff}
+@keyframes ping{50%{transform:scale(1.15)}}
+.side-foot{margin-top:auto;display:grid;gap:10px;font-size:.88rem;padding:0 8px}
+.side-foot a{color:var(--side-text)}
+.sound{display:flex;gap:8px;align-items:center;cursor:pointer}
+.main{padding:24px clamp(14px,3vw,36px) 40px;min-width:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.top h1{font-size:1.6rem;letter-spacing:-.01em}
+.top-actions{display:flex;align-items:center;gap:14px}
+.live-dot{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(22,168,112,.6);animation:pulse 2s infinite}
+.live-dot.off{background:var(--red);animation:none}
+@keyframes pulse{70%{box-shadow:0 0 0 10px rgba(22,168,112,0)}100%{box-shadow:0 0 0 0 rgba(22,168,112,0)}}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.stat small{color:var(--muted);display:block;font-size:.8rem}
+.stat b{font-size:1.6rem;letter-spacing:-.02em}
+.stat.alert{border-color:var(--red);background:color-mix(in srgb,var(--red) 8%,var(--card))}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center}
+.toolbar input,.toolbar select,.card input,.card select,dialog input,dialog select,dialog textarea{padding:.6em .85em;border-radius:10px;border:1px solid var(--line);background:var(--card);outline:0;min-width:0}
+.toolbar input:focus,.toolbar select:focus,dialog input:focus,dialog select:focus,dialog textarea:focus,.card input:focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 20%,transparent)}
+.toolbar input[type=search]{flex:1;min-width:200px}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px;overflow-x:auto;max-width:100%}
+.seg button{padding:.45em .85em;border-radius:7px;font-weight:600;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--text);color:var(--bg)}
+
+/* список записів */
+.list{display:grid;gap:10px}
+.day-h{margin:14px 2px 2px;font-weight:700;color:var(--muted);text-transform:capitalize;display:flex;gap:10px;align-items:center}
+.day-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.bk{display:grid;grid-template-columns:96px 1fr auto;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--st,var(--grey));border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;transition:.15s}
+.bk:hover{transform:translateY(-1px);border-color:var(--grey);border-left-color:var(--st)}
+.bk.fresh{animation:flash 2.4s}
+@keyframes flash{0%,40%{background:color-mix(in srgb,var(--amber) 28%,var(--card))}}
+.bk .tm{font-weight:800;font-size:1.25rem;letter-spacing:-.01em;line-height:1.1}
+.bk .tm small{display:block;font-weight:500;color:var(--muted);font-size:.8rem;margin-top:3px}
+.bk h3{font-size:1.05rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bk .car{color:var(--muted);font-weight:500}
+.bk .svc{color:var(--muted);font-size:.9rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bk .phone{display:inline-flex;align-items:center;gap:6px;font-weight:700;margin-top:6px;color:var(--blue)}
+.bk .side-r{text-align:right;display:grid;gap:8px;justify-items:end}
+.bk .sum{font-weight:800;font-size:1.1rem}
+.pill{display:inline-block;padding:.15em .65em;border-radius:999px;font-size:.78rem;font-weight:700;background:color-mix(in srgb,var(--st,var(--grey)) 16%,transparent);color:var(--st,var(--grey));white-space:nowrap}
+.src{font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 .4em}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+[data-st=new]{--st:var(--new)}[data-st=confirmed]{--st:var(--confirmed)}[data-st=in_progress]{--st:var(--in_progress)}
+[data-st=done]{--st:var(--done)}[data-st=cancelled]{--st:var(--cancelled)}[data-st=no_show]{--st:var(--no_show)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:var(--r)}
+
+/* дошка постів */
+.board{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;overflow-x:auto;box-shadow:var(--shadow)}
+.tl{position:relative;min-width:760px}
+.tl-head,.tl-row{display:grid;grid-template-columns:70px 1fr}
+.tl-hours{position:relative;height:26px;border-bottom:1px solid var(--line)}
+.tl-hours span{position:absolute;transform:translateX(-50%);font-size:.78rem;color:var(--muted)}
+.tl-row{align-items:stretch;margin-top:10px}
+.tl-label{font-weight:800;display:flex;align-items:center;color:var(--muted)}
+.tl-lane{position:relative;height:74px;background:repeating-linear-gradient(90deg,transparent 0 calc(var(--hw) - 1px),var(--line) calc(var(--hw) - 1px) var(--hw));border-radius:10px;background-color:color-mix(in srgb,var(--bg) 70%,var(--card))}
+.tl-b{position:absolute;top:5px;bottom:5px;border-radius:8px;padding:5px 8px;overflow:hidden;font-size:.82rem;line-height:1.25;background:color-mix(in srgb,var(--st) 20%,var(--card));border:1.5px solid var(--st);cursor:pointer;transition:.15s}
+.tl-b:hover{z-index:2;box-shadow:0 8px 20px -8px rgba(0,0,0,.4)}
+.tl-b b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-b span{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-now{position:absolute;top:26px;bottom:0;width:2px;background:var(--red);z-index:3;pointer-events:none}
+.tl-now::before{content:"зараз";position:absolute;top:-2px;left:50%;transform:translate(-50%,-100%);font-size:.68rem;background:var(--red);color:#fff;padding:0 5px;border-radius:4px}
+.tl-over{margin-top:10px;color:var(--red);font-weight:600}
+
+/* клієнти / прайс */
+.cl{display:grid;grid-template-columns:1fr auto;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;align-items:center}
+.cl h3{font-size:1.02rem}
+.cl .m{color:var(--muted);font-size:.88rem}
+.cl .nums{display:flex;gap:18px;text-align:center}
+.cl .nums b{display:block;font-size:1.15rem}.cl .nums small{color:var(--muted);font-size:.74rem}
+.prices .grp{margin-bottom:22px}
+.prices h3{margin:6px 2px 10px}
+.pr-row{display:grid;grid-template-columns:minmax(160px,1.6fr) 90px repeat(auto-fit,minmax(70px,1fr));gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.pr-row.off{opacity:.55}
+.pr-row input{width:100%;text-align:right;padding:.4em .5em}
+.pr-row label{font-size:.7rem;color:var(--muted);display:block;text-align:right}
+.pr-row .nm{font-weight:600}
+.pr-row .nm small{display:block;color:var(--muted);font-weight:400}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;align-items:end}
+.form-grid h3,.form-grid .full{grid-column:1/-1}
+.form-grid label{display:grid;gap:5px;font-weight:600;font-size:.88rem}
+.form-grid label small{font-weight:400;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips label{display:inline-flex;grid-template-columns:none;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:.35em .7em;font-weight:600;cursor:pointer}
+
+/* модалка */
+dialog{margin:auto;border:0;border-radius:20px;padding:0;width:min(640px,calc(100% - 24px));max-height:calc(100vh - 24px);background:var(--card);color:var(--text);box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}
+dialog::backdrop{background:rgba(5,7,10,.6);backdrop-filter:blur(3px)}
+.m-wrap{display:flex;flex-direction:column;max-height:calc(100vh - 24px)}
+.m-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.m-head h2{font-size:1.25rem;line-height:1.2}
+.m-x{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);font-size:1.2rem;flex:none}
+.m-body{padding:18px 22px;overflow:auto;display:grid;gap:16px}
+.m-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px}
+.kv dt{color:var(--muted)}.kv dd{font-weight:600}
+.big-call{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border-radius:14px;background:var(--ok);color:#fff;font-weight:800;font-size:1.2rem}
+.m-body label{display:grid;gap:5px;font-weight:600;font-size:.88rem}
+.m-body .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.m-body .row3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:12px}
+.m-body textarea{min-height:78px;resize:vertical}
+.svc-pick{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px}
+.svc-pick label{display:flex;grid-template-columns:none;gap:10px;align-items:center;font-weight:500;padding:6px;border-radius:6px;cursor:pointer}
+.svc-pick label:hover{background:var(--bg)}
+.svc-pick label span{flex:1}.svc-pick label em{font-style:normal;color:var(--muted);white-space:nowrap}
+.svc-pick .cat{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:8px 6px 2px;font-weight:700}
+.svc-pick input[type=number]{width:60px;padding:.2em .4em}
+.slotpick{display:flex;flex-wrap:wrap;gap:6px}
+.slotpick button{padding:.35em .7em;border-radius:8px;border:1px solid var(--line);font-weight:600;font-size:.88rem}
+.slotpick button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.slotpick button:disabled{opacity:.35;text-decoration:line-through}
+.warn{background:color-mix(in srgb,var(--amber) 18%,var(--card));border:1px solid var(--amber);border-radius:10px;padding:10px 12px;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:.7em 1.2em;border-radius:999px;font-weight:600;z-index:200;box-shadow:var(--shadow)}
+.toast.err{background:var(--red);color:#fff}
+
+/* телефон / планшет */
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;inset:auto 0 0;height:auto;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:50;gap:0;border-top:1px solid #222a35}
+  .side .logo,.side-foot{display:none}
+  .side nav{display:flex;width:100%;gap:2px}
+  .side nav button{flex:1;flex-direction:column;gap:2px;padding:7px 2px;font-size:.68rem;text-align:center;align-items:center}
+  .side nav button i{font-size:1.2rem}
+  .side nav em{position:absolute;top:2px;right:calc(50% - 26px);margin:0;min-width:18px;height:18px;font-size:.68rem}
+  .main{padding-bottom:96px}
+  .top h1{font-size:1.3rem}
+}
+@media (max-width:640px){
+  .stats{display:flex;overflow-x:auto;gap:8px;margin-inline:-4px;padding:2px 4px 6px;scroll-snap-type:x proximity}
+  .stat{flex:none;min-width:128px;padding:10px 12px;scroll-snap-align:start}
+  .stat b{font-size:1.25rem}
+  .stat small{font-size:.72rem}
+  .toolbar select,.toolbar .btn{flex:none}
+  .bk{grid-template-columns:1fr;gap:10px;padding:14px}
+  .bk .tm{display:flex;align-items:baseline;gap:10px}
+  .bk .tm small{margin:0}
+  .bk .side-r{grid-template-columns:auto 1fr;justify-items:stretch;text-align:left;align-items:center}
+  .bk .side-r .acts{justify-content:flex-end}
+  .bk .phone{font-size:1.1rem;padding:6px 0}
+  .kv{grid-template-columns:96px 1fr}
+  .m-body .row2,.m-body .row3{grid-template-columns:1fr}
+  .cl{grid-template-columns:1fr}
+  .pr-row{grid-template-columns:1fr 1fr}
+  .pr-row .nm{grid-column:1/-1}
+  dialog{width:100%;max-height:100vh;border-radius:20px 20px 0 0;margin:auto 0 0}
+  .m-wrap{max-height:92vh}
+  .top-actions .btn{padding:.55em .9em}
+}
+@media print{.side,.top-actions,.toolbar,.acts{display:none!important}.app{display:block}}
+</style>
+</head>
+<body>
+<div id="login" class="login" hidden>
+  <form id="loginForm" class="login-card">
+    <div class="logo"><span>VMU</span><b>CRM</b></div>
+    <p>Вхід для менеджерів мийки</p><p style="color:#ffb81c;font-size:.85rem">Демо: введіть будь-який пароль</p>
+    <input id="pw" type="password" placeholder="Пароль" autocomplete="current-password" required autofocus>
+    <button class="btn primary" type="submit">Увійти</button>
+    <div class="login-err" id="loginErr" role="alert"></div>
+  </form>
+</div>
+
+<div id="app" class="app" hidden>
+  <aside class="side">
+    <div class="logo"><span>VMU</span><b>CRM</b></div>
+    <nav id="tabs">
+      <button data-tab="today" class="on"><i>📋</i><span>Записи</span><em id="newBadge" hidden>0</em></button>
+      <button data-tab="board"><i>🚗</i><span>Пости</span></button>
+      <button data-tab="clients"><i>👥</i><span>Клієнти</span></button>
+      <button data-tab="prices"><i>💰</i><span>Прайс</span></button>
+      <button data-tab="settings"><i>⚙️</i><span>Налаштування</span></button>
+    </nav>
+    <div class="side-foot">
+      <label class="sound"><input type="checkbox" id="soundOn"> <span>Звук нових записів</span></label>
+      <a href="site.html" target="_blank" rel="noopener">Відкрити сайт ↗</a>
+      <button id="logout" class="link">Вийти</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <h1 id="title">Записи</h1>
+      <div class="top-actions">
+        <span class="live-dot" id="liveDot" title="Оновлюється автоматично"></span>
+        <button class="btn primary" id="addBtn">+ Новий запис</button>
+      </div>
+    </header>
+
+    <!-- Записи -->
+    <section data-view="today">
+      <div class="stats" id="stats"></div>
+      <div class="toolbar">
+        <div class="seg" id="range">
+          <button data-r="today" class="on">Сьогодні</button>
+          <button data-r="tomorrow">Завтра</button>
+          <button data-r="week">7 днів</button>
+          <button data-r="upcoming">Майбутні</button>
+          <button data-r="past">Минулі</button>
+          <button data-r="all">Усі</button>
+        </div>
+        <select id="statusFilter" aria-label="Статус">
+          <option value="">Усі статуси</option><option value="new">Нові</option><option value="confirmed">Підтверджені</option>
+          <option value="in_progress">В роботі</option><option value="done">Виконані</option><option value="cancelled">Скасовані</option><option value="no_show">Не приїхали</option>
+        </select>
+        <input id="search" type="search" placeholder="Пошук: ім'я, телефон, авто, код" aria-label="Пошук">
+        <a class="btn ghost" href="/crm/api/export.csv" download>⬇ CSV</a>
+      </div>
+      <div id="list" class="list"></div>
+    </section>
+
+    <!-- Пости -->
+    <section data-view="board" hidden>
+      <div class="toolbar">
+        <button class="btn ghost" id="dPrev">‹</button>
+        <input type="date" id="boardDate" aria-label="Дата">
+        <button class="btn ghost" id="dNext">›</button>
+        <button class="btn ghost" id="dToday">Сьогодні</button>
+      </div>
+      <div id="board" class="board"></div>
+    </section>
+
+    <!-- Клієнти -->
+    <section data-view="clients" hidden>
+      <div class="toolbar"><input id="clientSearch" type="search" placeholder="Пошук клієнта: ім'я, телефон, авто" aria-label="Пошук клієнта"></div>
+      <div id="clients" class="list"></div>
+    </section>
+
+    <!-- Прайс -->
+    <section data-view="prices" hidden>
+      <p class="muted">Тут можна змінити ціни та орієнтовну тривалість послуг (тривалість визначає, скільки часу займе пост). Нові ціни діють для нових записів.</p>
+      <div class="toolbar"><input id="priceSearch" type="search" placeholder="Пошук послуги" aria-label="Пошук послуги"></div>
+      <div id="prices" class="prices"></div>
+    </section>
+
+    <!-- Налаштування -->
+    <section data-view="settings" hidden>
+      <form id="settingsForm" class="card form-grid"></form>
+      <form id="pwForm" class="card form-grid">
+        <h3>Змінити пароль</h3>
+        <label>Поточний пароль<input type="password" name="current" autocomplete="current-password" required></label>
+        <label>Новий пароль (мінімум 8 символів)<input type="password" name="next" autocomplete="new-password" minlength="8" required></label>
+        <button class="btn primary" type="submit">Змінити пароль</button>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- Модалка запису -->
+<dialog id="modal"></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>window.__CATALOG={"source": "https://info.vmu.ua/", "tiers": [{"id": "abc", "type": "car", "label": "A, B, C", "title": "Малі та компактні", "classes": "A, B, C"}, {"id": "de", "type": "car", "label": "D, E", "title": "Середній та бізнес-клас", "classes": "D, E"}, {"id": "sf", "type": "car", "label": "S, F", "title": "Преміум та представницькі", "classes": "S, F"}, {"id": "k1", "type": "suv", "label": "K1", "title": "Компактні кросовери", "classes": "K1"}, {"id": "k2", "type": "suv", "label": "K2", "title": "Середні позашляховики", "classes": "K2"}, {"id": "k3", "type": "suv", "label": "K3", "title": "Великі позашляховики", "classes": "K3"}, {"id": "m1", "type": "van", "label": "M1", "title": "Мікроавтобуси", "classes": "M1"}, {"id": "m2", "type": "van", "label": "M2", "title": "Великі мікроавтобуси", "classes": "M2"}], "models": {"abc": ["Audi A1", "Audi A3", "BMW 1", "Chery A13", "Chery Amulet", "Chery Kio", "Chery QQ", "Chevrolet Aveo", "Chevrolet Cruze", "Chevrolet Lacetti", "Citroen C-Elysee", "Citroen C1", "Citroen C4", "Daewoo Lanos", "Daewoo Matiz", "Daewoo Nexia", "Fiat 500", "Fiat Linea", "Fiat Panda", "Fiat Punto", "Ford C Max", "Ford Fiesta", "Ford Focus", "Ford Fusion", "Ford Ka", "Geely CK", "Geely MK", "Honda Civic", "Honda Jazz", "Hyundai Accent", "Hyundai Getz", "Hyundai i10", "Kia Ceed", "Kia Cerato", "Kia Picanto", "Kia Rio", "Mazda 3", "Mazda2", "MercedesA", "Mitsubishi Colt", "Mitsubishi Lancer", "Nissan Almera", "Nissan Micra", "Nissan Note", "Nissan Tiida", "Opel Adam", "Opel Astra", "Opel Corsa", "Opel Meriva", "Peugeot 107", "Peugeot 206-08", "Peugeot 301", "Peugeot 308", "Peugeot Bipper", "Ranault Megane", "Renault Captur", "Renault Logan", "Renault Sandero", "Renault Symbol", "Renault Twingo", "Seat Ibiza", "Skoda Fabia", "Skoda Octavia стара", "Skoda Rapid", "Smart", "Subaru Impreza", "Suzuki Splash", "Toyota Auris", "Toyota Corolla", "Toyota Yaris", "VW Golf", "VW Jetta", "VW Polo", "VW Up!", "ВАЗ 2101 - ВАЗ 2115", "ЗАЗ Vida", "ЗАЗ Таврия"], "de": ["Acura RL", "Audi A4", "Audi A5", "Audi A6", "Audi A7", "BMW 3", "BMW 4", "BMW 5", "Chevrolet Epica", "Chrysler 300С", "Citroen C5", "Citroen DS5", "Ford Mondeo", "Ford Scorpio", "Geely EmgrandEC7", "Honda Accord", "Honda Legend", "Hyundai Elantra", "Hyundai Grandeur", "Hyundai Sonata", "Infiniti M", "Infinity G", "Jaguar XF", "Kia Magentis", "Kia Optima", "Lexus ES", "Lexus GS", "Lexus IS", "Mazda 3 new", "Mazda 6", "Mazda 6 new", "Mercedes C", "Mercedes-Benz E", "Mitsubishi Galant", "Nissan Primera", "Nissan Teana", "Opel Insignia", "Opel Omega", "Opel Vectra", "Peugeot 508", "Peugeoy 407", "Reault Fluence", "Renault Laguna", "Renault Latitude", "Renault Talisman", "Skoda Octavia new", "Skoda Superb", "Subaru Legacy", "Toyota Avalon", "Toyota Avensis", "Toyota Camry", "Toyota Solara", "Volkswagen Passat CC", "Volvo S60", "Volvo S70", "Volvo S90", "VW Passat"], "sf": ["Audi A8", "BMW 7", "Jaguar XJ", "Lexus LS", "Mercedes-Benz S", "Volkswagen Phaeton"], "k1": ["Audi Q3", "Audi Q5", "BMW X1", "BMW X3", "Chery Tiggo", "Chevrolet Niva", "Chevrolet Tacuma", "Citroen Berlingo", "Fiat 500X", "Fiat Doblo", "Ford Connect", "Ford Kuga", "Hyundai Tucson", "Kia Carens", "Kia Soul", "Kia Sportage", "LADA Niva", "Land Rover Freelander", "Mazda CX-5", "Mercedes GLK", "Nissan Juke", "Nissan Qashkai", "Opel Combo", "Peugeot Partner", "Porsche Macan", "Range Rover Evoque", "Renault Duster", "Renault Kangoo", "Seat Inca", "Skoda Yeti", "Ssang Yong Korando", "SsangYong Actyon", "Subaru Forester", "Subaru Outback", "Suzuki Grand Vitara", "Suzuki SX4", "Toyota RAV-4", "VW Caddy", "VW Tiguan"], "k2": ["BMW X5", "BMW X6", "Chevrolet Captiva", "Chrysler Voyager", "Citroen Jumpy", "Citroen Picasso", "Fiat Freemont", "Fiat Scudo", "Ford Galaxy", "Honda CR-V", "Hyundai Santa Fe", "Infiniti FX", "KIA Sorento", "Land Cruiser Prado", "Lexus GX", "Lexus RX", "Mazda CX-7", "Mercedes ML", "Mitsubishi Grandis", "Mitsubishi Outlander", "Mitsubishi Pajero", "Nissan Murano", "Nissan Terrano", "Nissan X-Trail", "Opel Zafira", "Porsche Cayenne", "Ssang Yong Kyron", "Subaru Tribeca", "Toyota FJ Cruiser", "Toyota Venza", "Volkswagen Touareg", "Volkswagen Touran", "Volvo XC80", "Volvo XC90", "Уаз Патриот"], "k3": ["Acura MDX", "Audi Q7", "Cadillac Escalade", "Ford Explorer", "Honda Pilot", "Infinity QX56", "Jeep Grand Cherokee", "Lexus LX", "Mazda CX-9", "Mercedes GL", "Nissan Armada", "Nissan Patrol", "Range Rover", "Ssang Yong Rexton", "Terrano", "Toyota Highlander", "Toyota Hilux", "Toyota L200", "Toyota Land Cruiser", "Toyota Sequoia", "Toyota Tundra", "VW Amarok"], "m1": ["Ford Transit", "GMC Express", "Hyundai H-1", "Mercedes Vito", "Nissan Primastar", "Opel Vivaro", "VW Transporter"], "m2": ["Mercedes Sprinter", "Peugeot Boxer", "Renault Master", "VW Crafter", "VW LT"]}, "categories": ["Базові послуги", "Комплексні послуги", "Нанесення захисного покриття в салоні", "Нанесення захисного покриття на кузов автомобіля", "Окремі послуги чистки", "Чистка килимів"], "services": [{"id": "s01", "category": "Базові послуги", "part": "body", "name": "Мийка", "description": "", "duration": 30, "prices": {"abc": {"price": 300, "from": false}, "de": {"price": 350, "from": false}, "sf": {"price": 400, "from": false}, "k1": {"price": 350, "from": false}, "k2": {"price": 400, "from": false}, "k3": {"price": 450, "from": false}, "m1": {"price": 400, "from": false}, "m2": {"price": 450, "from": false}}, "active": true, "unit": false}, {"id": "s02", "category": "Базові послуги", "part": "body", "name": "Експрес-збивка", "description": "", "duration": 15, "prices": {"abc": {"price": 200, "from": false}, "de": {"price": 250, "from": false}, "sf": {"price": 300, "from": false}, "k1": {"price": 250, "from": false}, "k2": {"price": 300, "from": false}, "k3": {"price": 350, "from": false}, "m1": {"price": 300, "from": false}, "m2": {"price": 350, "from": false}}, "active": true, "unit": false}, {"id": "s03", "category": "Базові послуги", "part": "body", "name": "Збивка", "description": "", "duration": 20, "prices": {"abc": {"price": 250, "from": false}, "de": {"price": 300, "from": false}, "sf": {"price": 300, "from": false}, "k1": {"price": 300, "from": false}, "k2": {"price": 350, "from": false}, "k3": {"price": 400, "from": false}, "m1": {"price": 350, "from": false}, "m2": {"price": 400, "from": false}}, "active": true, "unit": false}, {"id": "s04", "category": "Базові послуги", "part": "engine", "name": "Мийка двигуна", "description": "", "duration": 30, "prices": {"abc": {"price": 500, "from": true, "note": "500/1000"}, "de": {"price": 500, "from": true, "note": "500/1000"}, "sf": {"price": 500, "from": true, "note": "500/1000"}, "k1": {"price": 500, "from": true, "note": "500/1000"}, "k2": {"price": 500, "from": true, "note": "500/1000"}, "k3": {"price": 500, "from": true, "note": "500/1000"}, "m1": {"price": 500, "from": true, "note": "500/1000"}, "m2": {"price": 500, "from": true, "note": "500/1000"}}, "active": true, "unit": false}, {"id": "s05", "category": "Базові послуги", "part": "engine", "name": "Мийка та консервація двигуна", "description": "", "duration": 60, "prices": {"abc": {"price": 1500, "from": false}, "de": {"price": 1500, "from": false}, "sf": {"price": 1500, "from": false}, "k1": {"price": 1500, "from": false}, "k2": {"price": 1500, "from": false}, "k3": {"price": 1500, "from": false}, "m1": {"price": 1500, "from": false}, "m2": {"price": 1500, "from": false}}, "active": true, "unit": false}, {"id": "s06", "category": "Базові послуги", "part": "interior", "name": "Прибирання салону", "description": "", "duration": 20, "prices": {"abc": {"price": 200, "from": false}, "de": {"price": 230, "from": false}, "sf": {"price": 250, "from": false}, "k1": {"price": 230, "from": false}, "k2": {"price": 250, "from": false}, "k3": {"price": 300, "from": false}, "m1": {"price": 250, "from": true, "note": "250 (вант) · 300 (вант-пас) · 350 (пас)"}, "m2": {"price": 450, "from": false}}, "active": true, "unit": false}, {"id": "s07", "category": "Базові послуги", "part": "trunk", "name": "Прибирання багажнику", "description": "", "duration": 10, "prices": {"abc": {"price": 100, "from": false}, "de": {"price": 120, "from": false}, "sf": {"price": 150, "from": false}, "k1": {"price": 120, "from": false}, "k2": {"price": 150, "from": false}, "k3": {"price": 170, "from": false}, "m1": {"price": 200, "from": false}, "m2": {"price": 200, "from": false}}, "active": true, "unit": false}, {"id": "s08", "category": "Базові послуги", "part": "wheels", "name": "Чистка дисків", "description": "за 1 диск", "duration": 30, "prices": {"abc": {"price": 500, "from": false}, "de": {"price": 500, "from": false}, "sf": {"price": 500, "from": false}, "k1": {"price": 500, "from": false}, "k2": {"price": 500, "from": false}, "k3": {"price": 500, "from": false}, "m1": {"price": 500, "from": false}, "m2": {"price": 500, "from": false}}, "active": true, "unit": true}, {"id": "s09", "category": "Базові послуги", "part": "body", "name": "Видалення бітуму", "description": "", "duration": 30, "prices": {"abc": {"price": 150, "from": true}, "de": {"price": 150, "from": true}, "sf": {"price": 150, "from": true}, "k1": {"price": 150, "from": true}, "k2": {"price": 150, "from": true}, "k3": {"price": 150, "from": true}, "m1": {"price": 150, "from": true}, "m2": {"price": 150, "from": true}}, "active": true, "unit": false}, {"id": "s10", "category": "Базові послуги", "part": "body", "name": "Глибоке очищення кузову", "description": "", "duration": 120, "prices": {"abc": {"price": 1500, "from": false}, "de": {"price": 1600, "from": false}, "sf": {"price": 1700, "from": false}, "k1": {"price": 1600, "from": false}, "k2": {"price": 1700, "from": false}, "k3": {"price": 1800, "from": false}, "m1": {"price": 2000, "from": false}, "m2": {"price": 2200, "from": false}}, "active": true, "unit": false}, {"id": "s11", "category": "Базові послуги", "part": "doors", "name": "Розморожування дверних замків", "description": "за 1 замок", "duration": 10, "prices": {"abc": {"price": 100, "from": false}, "de": {"price": 100, "from": false}, "sf": {"price": 100, "from": false}, "k1": {"price": 100, "from": false}, "k2": {"price": 100, "from": false}, "k3": {"price": 100, "from": false}, "m1": {"price": 100, "from": false}, "m2": {"price": 100, "from": false}}, "active": true, "unit": true}, {"id": "s12", "category": "Базові послуги", "part": "doors", "name": "Обробка \"Антилід\" (дверні замки)", "description": "за 1 замок", "duration": 10, "prices": {"abc": {"price": 100, "from": false}, "de": {"price": 100, "from": false}, "sf": {"price": 100, "from": false}, "k1": {"price": 100, "from": false}, "k2": {"price": 100, "from": false}, "k3": {"price": 100, "from": false}, "m1": {"price": 100, "from": false}, "m2": {"price": 100, "from": false}}, "active": true, "unit": true}, {"id": "s13", "category": "Базові послуги", "part": "doors", "name": "Обробка дверних завісів", "description": "за 1 завісу", "duration": 10, "prices": {"abc": {"price": 100, "from": false}, "de": {"price": 100, "from": false}, "sf": {"price": 100, "from": false}, "k1": {"price": 100, "from": false}, "k2": {"price": 100, "from": false}, "k3": {"price": 100, "from": false}, "m1": {"price": 100, "from": false}, "m2": {"price": 100, "from": false}}, "active": true, "unit": true}, {"id": "s14", "category": "Базові послуги", "part": "doors", "name": "Обробка дверних отворів силіконом", "description": "за 1 отвір", "duration": 10, "prices": {"abc": {"price": 100, "from": false}, "de": {"price": 100, "from": false}, "sf": {"price": 100, "from": false}, "k1": {"price": 100, "from": false}, "k2": {"price": 100, "from": false}, "k3": {"price": 100, "from": false}, "m1": {"price": 100, "from": false}, "m2": {"price": 100, "from": false}}, "active": true, "unit": true}, {"id": "s15", "category": "Базові послуги", "part": "interior", "name": "Хімчистка салону повна", "description": "", "duration": 240, "prices": {"abc": {"price": 4500, "from": true}, "de": {"price": 5000, "from": true}, "sf": {"price": 5500, "from": true}, "k1": {"price": 6000, "from": true}, "k2": {"price": 6500, "from": true}, "k3": {"price": 7000, "from": true}, "m1": {"price": 5000, "from": true, "note": "5000 (вант) · 8000 (пас)"}, "m2": {"price": 5000, "from": true, "note": "5000 (вант) · 8000 (пас)"}}, "active": true, "unit": false}, {"id": "s16", "category": "Базові послуги", "part": "glass", "name": "Антикальцій", "description": "", "duration": 30, "prices": {"abc": {"price": 500, "from": true, "note": "500/1500"}, "de": {"price": 500, "from": true, "note": "500/1500"}, "sf": {"price": 500, "from": true, "note": "500/1500"}, "k1": {"price": 500, "from": true, "note": "500/1500"}, "k2": {"price": 500, "from": true, "note": "500/1500"}, "k3": {"price": 500, "from": true, "note": "500/1500"}, "m1": {"price": 500, "from": true, "note": "500/1500"}, "m2": {"price": 500, "from": true, "note": "500/1500"}}, "active": true, "unit": false}, {"id": "s17", "category": "Базові послуги", "part": "glass", "name": "Антидощ", "description": "", "duration": 30, "prices": {"abc": {"price": 500, "from": true, "note": "500/1500"}, "de": {"price": 500, "from": true, "note": "500/1500"}, "sf": {"price": 500, "from": true, "note": "500/1500"}, "k1": {"price": 500, "from": true, "note": "500/1500"}, "k2": {"price": 500, "from": true, "note": "500/1500"}, "k3": {"price": 500, "from": true, "note": "500/1500"}, "m1": {"price": 500, "from": true, "note": "500/1500"}, "m2": {"price": 500, "from": true, "note": "500/1500"}}, "active": true, "unit": false}, {"id": "s18", "category": "Комплексні послуги", "part": "combo", "name": "Стандарт", "description": "мийка + прибирання салону + багажник", "duration": 60, "prices": {"abc": {"price": 600, "from": false}, "de": {"price": 700, "from": false}, "sf": {"price": 800, "from": false}, "k1": {"price": 700, "from": false}, "k2": {"price": 800, "from": false}, "k3": {"price": 920, "from": false}, "m1": {"price": 850, "from": true, "note": "850, 900, 950"}, "m2": {"price": 1100, "from": false}}, "active": true, "unit": false}, {"id": "s19", "category": "Комплексні послуги", "part": "combo", "name": "Комплекс СТАНДАРТ", "description": "", "duration": 150, "prices": {"abc": {"price": 1350, "from": false}, "de": {"price": 1500, "from": false}, "sf": {"price": 1670, "from": false}, "k1": {"price": 1500, "from": false}, "k2": {"price": 1670, "from": false}, "k3": {"price": 1840, "from": false}, "m1": {"price": 1910, "from": true, "note": "1910, 1960, 2010"}, "m2": {"price": 2400, "from": false}}, "active": true, "unit": false}, {"id": "s20", "category": "Комплексні послуги", "part": "combo", "name": "Комплекс ПРЕМІУМ", "description": "Koch-Chemie", "duration": 180, "prices": {"abc": {"price": 1680, "from": false}, "de": {"price": 1830, "from": false}, "sf": {"price": 2000, "from": false}, "k1": {"price": 1830, "from": false}, "k2": {"price": 2000, "from": false}, "k3": {"price": 2180, "from": false}, "m1": {"price": 2290, "from": true, "note": "2290, 2340, 2390"}, "m2": {"price": 2850, "from": false}}, "active": true, "unit": false}, {"id": "s21", "category": "Нанесення захисного покриття в салоні", "part": "glass", "name": "Натирання скла всередині салону", "description": "", "duration": 20, "prices": {"abc": {"price": 300, "from": false}, "de": {"price": 320, "from": false}, "sf": {"price": 350, "from": false}, "k1": {"price": 320, "from": false}, "k2": {"price": 350, "from": false}, "k3": {"price": 370, "from": false}, "m1": {"price": 500, "from": false}, "m2": {"price": 700, "from": false}}, "active": true, "unit": false}, {"id": "s22", "category": "Нанесення захисного покриття в салоні", "part": "glass", "name": "Натирання лобового скла", "description": "", "duration": 10, "prices": {"abc": {"price": 150, "from": false}, "de": {"price": 160, "from": false}, "sf": {"price": 180, "from": false}, "k1": {"price": 160, "from": false}, "k2": {"price": 180, "from": false}, "k3": {"price": 190, "from": false}, "m1": {"price": 200, "from": false}, "m2": {"price": 200, "from": false}}, "active": true, "unit": false}, {"id": "s23", "category": "Нанесення захисного покриття в салоні", "part": "interior", "name": "Пластик салону базовий", "description": "", "duration": 15, "prices": {"abc": {"price": 200, "from": false}, "de": {"price": 200, "from": false}, "sf": {"price": 200, "from": false}, "k1": {"price": 200, "from": false}, "k2": {"price": 200, "from": false}, "k3": {"price": 200, "from": false}, "m1": {"price": 220, "from": false}, "m2": {"price": 250, "from": false}}, "active": true, "unit": false}, {"id": "s24", "category": "Нанесення захисного покриття в салоні", "part": "interior", "name": "Пластик салону преміум", "description": "", "duration": 25, "prices": {"abc": {"price": 350, "from": false}, "de": {"price": 350, "from": false}, "sf": {"price": 350, "from": false}, "k1": {"price": 350, "from": false}, "k2": {"price": 350, "from": false}, "k3": {"price": 350, "from": false}, "m1": {"price": 400, "from": false}, "m2": {"price": 500, "from": false}}, "active": true, "unit": false}, {"id": "s25", "category": "Нанесення захисного покриття в салоні", "part": "interior", "name": "Кондиціонер шкіри базовий", "description": "", "duration": 30, "prices": {"abc": {"price": 400, "from": false}, "de": {"price": 500, "from": false}, "sf": {"price": 600, "from": false}, "k1": {"price": 500, "from": false}, "k2": {"price": 600, "from": false}, "k3": {"price": 800, "from": false}, "m1": {"price": 900, "from": false}, "m2": {"price": 1800, "from": false}}, "active": true, "unit": false}, {"id": "s26", "category": "Нанесення захисного покриття в салоні", "part": "interior", "name": "Кондиціонер шкіри преміум", "description": "", "duration": 40, "prices": {"abc": {"price": 800, "from": false}, "de": {"price": 900, "from": false}, "sf": {"price": 1000, "from": false}, "k1": {"price": 900, "from": false}, "k2": {"price": 1000, "from": false}, "k3": {"price": 1100, "from": false}, "m1": {"price": 1300, "from": false}, "m2": {"price": 2600, "from": false}}, "active": true, "unit": false}, {"id": "s27", "category": "Нанесення захисного покриття на кузов автомобіля", "part": "body", "name": "Холодний віск базовий", "description": "", "duration": 15, "prices": {"abc": {"price": 100, "from": false}, "de": {"price": 110, "from": false}, "sf": {"price": 120, "from": false}, "k1": {"price": 110, "from": false}, "k2": {"price": 120, "from": false}, "k3": {"price": 130, "from": false}, "m1": {"price": 140, "from": false}, "m2": {"price": 150, "from": false}}, "active": true, "unit": false}, {"id": "s28", "category": "Нанесення захисного покриття на кузов автомобіля", "part": "body", "name": "Холодний віск преміум", "description": "", "duration": 20, "prices": {"abc": {"price": 180, "from": false}, "de": {"price": 190, "from": false}, "sf": {"price": 200, "from": false}, "k1": {"price": 190, "from": false}, "k2": {"price": 200, "from": false}, "k3": {"price": 220, "from": false}, "m1": {"price": 240, "from": false}, "m2": {"price": 250, "from": false}}, "active": true, "unit": false}, {"id": "s29", "category": "Нанесення захисного покриття на кузов автомобіля", "part": "body", "name": "Полімерний віск", "description": "", "duration": 45, "prices": {"abc": {"price": 600, "from": false}, "de": {"price": 600, "from": false}, "sf": {"price": 600, "from": false}, "k1": {"price": 600, "from": false}, "k2": {"price": 600, "from": false}, "k3": {"price": 700, "from": false}, "m1": {"price": 700, "from": false}, "m2": {"price": 700, "from": false}}, "active": true, "unit": false}, {"id": "s30", "category": "Нанесення захисного покриття на кузов автомобіля", "part": "body", "name": "Базовий твердий віск", "description": "", "duration": 90, "prices": {"abc": {"price": 1200, "from": false}, "de": {"price": 1300, "from": false}, "sf": {"price": 1500, "from": false}, "k1": {"price": 1300, "from": false}, "k2": {"price": 1500, "from": false}, "k3": {"price": 1700, "from": false}, "m1": {"price": 2000, "from": false}, "m2": {"price": 2200, "from": false}}, "active": true, "unit": false}, {"id": "s31", "category": "Нанесення захисного покриття на кузов автомобіля", "part": "body", "name": "Преміум твердий віск", "description": "", "duration": 120, "prices": {"abc": {"price": 1800, "from": false}, "de": {"price": 1900, "from": false}, "sf": {"price": 2000, "from": false}, "k1": {"price": 1900, "from": false}, "k2": {"price": 2000, "from": false}, "k3": {"price": 2200, "from": false}, "m1": {"price": 2500, "from": false}, "m2": {"price": 2700, "from": false}}, "active": true, "unit": false}, {"id": "s32", "category": "Нанесення захисного покриття на кузов автомобіля", "part": "wheels", "name": "Зволоження гуми базове", "description": "", "duration": 10, "prices": {"abc": {"price": 150, "from": false}, "de": {"price": 170, "from": false}, "sf": {"price": 200, "from": false}, "k1": {"price": 170, "from": false}, "k2": {"price": 200, "from": false}, "k3": {"price": 220, "from": false}, "m1": {"price": 200, "from": false}, "m2": {"price": 200, "from": false}}, "active": true, "unit": false}, {"id": "s33", "category": "Нанесення захисного покриття на кузов автомобіля", "part": "wheels", "name": "Зволоження гуми преміум", "description": "", "duration": 15, "prices": {"abc": {"price": 250, "from": false}, "de": {"price": 270, "from": false}, "sf": {"price": 300, "from": false}, "k1": {"price": 270, "from": false}, "k2": {"price": 300, "from": false}, "k3": {"price": 320, "from": false}, "m1": {"price": 300, "from": false}, "m2": {"price": 300, "from": false}}, "active": true, "unit": false}, {"id": "s34", "category": "Окремі послуги чистки", "part": "interior", "name": "Передня панель", "description": "", "duration": 30, "prices": {"abc": {"price": 800, "from": false}, "de": {"price": 900, "from": false}, "sf": {"price": 1000, "from": false}, "k1": {"price": 1000, "from": false}, "k2": {"price": 1100, "from": false}, "k3": {"price": 1200, "from": false}, "m1": {"price": 1200, "from": false}, "m2": {"price": 1200, "from": false}}, "active": true, "unit": false}, {"id": "s35", "category": "Окремі послуги чистки", "part": "interior", "name": "Стійка (1 шт.)", "description": "", "duration": 30, "prices": {"abc": {"price": 200, "from": false}, "de": {"price": 200, "from": false}, "sf": {"price": 200, "from": false}, "k1": {"price": 250, "from": false}, "k2": {"price": 250, "from": false}, "k3": {"price": 250, "from": false}, "m1": {"price": 250, "from": false}, "m2": {"price": 250, "from": false}}, "active": true, "unit": true}, {"id": "s36", "category": "Окремі послуги чистки", "part": "interior", "name": "Сидіння переднє (1 шт.)", "description": "", "duration": 30, "prices": {"abc": {"price": 400, "from": false}, "de": {"price": 400, "from": false}, "sf": {"price": 500, "from": false}, "k1": {"price": 500, "from": false}, "k2": {"price": 550, "from": false}, "k3": {"price": 600, "from": false}, "m1": {"price": 500, "from": false}}, "active": true, "unit": true}, {"id": "s37", "category": "Окремі послуги чистки", "part": "interior", "name": "Заднє сидіння", "description": "", "duration": 30, "prices": {"abc": {"price": 800, "from": false}, "de": {"price": 800, "from": false}, "sf": {"price": 1000, "from": false}, "k1": {"price": 1000, "from": false}, "k2": {"price": 1100, "from": false}, "k3": {"price": 1200, "from": false}}, "active": true, "unit": false}, {"id": "s38", "category": "Окремі послуги чистки", "part": "interior", "name": "Стеля", "description": "", "duration": 45, "prices": {"abc": {"price": 800, "from": false}, "de": {"price": 900, "from": false}, "sf": {"price": 1000, "from": false}, "k1": {"price": 1000, "from": false}, "k2": {"price": 1100, "from": false}, "k3": {"price": 1300, "from": false}, "m1": {"price": 700, "from": true, "note": "700 (вант) · 1600 (пас)"}, "m2": {"price": 700, "from": true, "note": "700 (вант) · 1600 (пас)"}}, "active": true, "unit": false}, {"id": "s39", "category": "Окремі послуги чистки", "part": "interior", "name": "Карта дверна (1 шт.)", "description": "", "duration": 30, "prices": {"abc": {"price": 250, "from": false}, "de": {"price": 300, "from": false}, "sf": {"price": 350, "from": false}, "k1": {"price": 350, "from": false}, "k2": {"price": 400, "from": false}, "k3": {"price": 450, "from": false}, "m1": {"price": 400, "from": false}}, "active": true, "unit": true}, {"id": "s40", "category": "Окремі послуги чистки", "part": "interior", "name": "Підлога", "description": "", "duration": 45, "prices": {"abc": {"price": 800, "from": false}, "de": {"price": 900, "from": false}, "sf": {"price": 900, "from": false}, "k1": {"price": 1000, "from": false}, "k2": {"price": 1000, "from": false}, "k3": {"price": 1100, "from": false}, "m1": {"price": 500, "from": true, "note": "500 (вант) · 1600 (пас)"}, "m2": {"price": 500, "from": true, "note": "500 (вант) · 1600 (пас)"}}, "active": true, "unit": false}, {"id": "s41", "category": "Окремі послуги чистки", "part": "trunk", "name": "Багажник (чистка)", "description": "", "duration": 30, "prices": {"abc": {"price": 500, "from": false}, "de": {"price": 500, "from": false}, "sf": {"price": 550, "from": false}, "k1": {"price": 650, "from": false}, "k2": {"price": 650, "from": false}, "k3": {"price": 650, "from": false}, "m1": {"price": 650, "from": false}, "m2": {"price": 650, "from": false}}, "active": true, "unit": false}, {"id": "s42", "category": "Чистка килимів", "part": "interior", "name": "Чистка килимів", "description": "за 1 кв.м", "duration": 40, "prices": {"abc": {"price": 150, "from": true, "note": "150/200"}, "de": {"price": 150, "from": true, "note": "150/200"}, "sf": {"price": 150, "from": true, "note": "150/200"}, "k1": {"price": 150, "from": true, "note": "150/200"}, "k2": {"price": 150, "from": true, "note": "150/200"}, "k3": {"price": 150, "from": true, "note": "150/200"}, "m1": {"price": 150, "from": true, "note": "150/200"}, "m2": {"price": 150, "from": true, "note": "150/200"}}, "active": true, "unit": true}], "legend": {"Експрес": "безконтактна мийка, протирання тільки скла", "Економ": "безконтактна мийка, очищення килимків, просушування елементів кузову стисненим повітрям", "Стандарт": "безконтактна мийка, очищення килимків, прибирання салону, просушування елементів кузову стисненим повітрям", "Преміум": "безконтактна мийка, очищення килимків, прибирання салону, прибирання багажнику, нанесення холодного воску, натирання пластикових деталей приборної панелі, очищення скла зсередини, чорніння гуми"}};/* Демо-бекенд для автономних HTML (показ замовнику без сервера).
+   Підміняє fetch для /api/* та /crm/api/*; дані зберігаються в localStorage браузера,
+   тому запис із сайту одразу видно в CRM (якщо обидва файли відкриті в одному браузері). */
+(() => {
+  'use strict';
+  const CAT = window.__CATALOG;
+  const KEY = 'vmu_demo_v1';
+  const OCC = ['new', 'confirmed', 'in_progress', 'done'];
+  const STATUSES = ['new', 'confirmed', 'in_progress', 'done', 'cancelled', 'no_show'];
+  let mem = null;
+  const load = () => { try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch { /* пам'ять */ } return mem; };
+  const save = () => { mem = D; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch { /* пам'ять */ } };
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmt = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
+  const hm = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+  const nowL = () => { const d = new Date(); return { date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, min: d.getHours() * 60 + d.getMinutes() }; };
+  const addDays = (iso, n) => { const [y, m, d] = iso.split('-').map(Number); const t = new Date(y, m - 1, d + n); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
+  const wd = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d).getDay(); };
+  class Err extends Error { constructor(s, m, x) { super(m); this.status = s; this.extra = x; } }
+
+  let D = load();
+  if (!D) {
+    D = {
+      next: 1, auth: false,
+      settings: { posts: 4, open: '08:00', close: '20:00', step: 30, lead_minutes: 30, horizon_days: 14, days_off: [], blocked_dates: [], phone: '(063) 200-77-66' },
+      services: CAT.services.map((s) => ({ ...s, active: true })), bookings: [],
+    };
+    const t = nowL().date;
+    const seed = [
+      [0, '09:00', 'Андрій', '+380501110001', 'Toyota Camry', 'de', ['s18'], 'done'],
+      [0, '10:30', 'Марія', '+380501110002', 'Skoda Octavia', 'de', ['s01', 's06'], 'in_progress'],
+      [0, '14:00', 'Олег', '+380501110003', 'BMW X5', 'k2', ['s20'], 'confirmed'],
+      [0, '16:30', 'Ірина', '+380501110004', 'Renault Logan', 'abc', ['s01'], 'new'],
+      [1, '09:30', 'Василь', '+380501110005', 'Toyota Land Cruiser', 'k3', ['s19'], 'new'],
+      [1, '12:00', 'Наталя', '+380501110006', 'Kia Sportage', 'k1', ['s01', 's07', 's22'], 'confirmed'],
+      [2, '11:00', 'Сергій', '+380501110007', 'Mercedes Sprinter', 'm2', ['s18'], 'new'],
+    ];
+    seed.forEach(([off, time, name, phone, car, tier, ids, status]) => {
+      const items = resolve(ids, tier); const tt = totals(items);
+      D.bookings.push({ id: D.next, code: 'DEMO' + D.next + 'X', name, phone, car, tier, services: items, total: tt.total, total_from: tt.from, duration: tt.duration,
+        date: addDays(t, off), start_min: hm(time), status, source: off === 0 && time === '14:00' ? 'crm' : 'site', manager_note: '', created_at: new Date().toISOString().slice(0, 16).replace('T', ' '), updated_at: '' });
+      D.next++;
+    });
+    save();
+  }
+
+  // ---- логіка (дзеркалить сервер) ----
+  function resolve(input, tier) {
+    if (!CAT.tiers.find((t) => t.id === tier)) throw new Err(400, 'Невідомий клас автомобіля');
+    if (!Array.isArray(input) || !input.length) throw new Err(400, 'Оберіть хоча б одну послугу');
+    const seen = new Set(); const out = [];
+    for (const e of input) {
+      const id = typeof e === 'object' && e ? e.id : e; const s = (D ? D.services : CAT.services).find((x) => x.id === id);
+      if (!s || s.active === false) throw new Err(400, 'Послуга недоступна');
+      if (seen.has(id)) continue; seen.add(id);
+      const p = s.prices[tier]; if (!p) throw new Err(400, `Послуга «${s.name}» недоступна для цього класу авто`);
+      const qty = s.unit ? Math.max(1, Math.min(20, Math.floor(+(e && e.qty) || 1))) : 1;
+      out.push({ id, name: s.name, description: s.description, unit: s.unit, qty, unit_price: p.price, price: p.price * qty, from: !!p.from, note: p.note || '', duration: s.duration * qty });
+    }
+    return out;
+  }
+  function totals(items) {
+    const st = D ? D.settings.step : 30; const raw = items.reduce((a, i) => a + i.duration, 0);
+    return { total: items.reduce((a, i) => a + i.price, 0), from: items.some((i) => i.from) ? 1 : 0, duration: Math.max(st, Math.ceil(raw / st) * st) };
+  }
+  const occ = (date, ignore = 0) => D.bookings.filter((b) => b.date === date && b.id !== ignore && OCC.includes(b.status));
+  function freePosts(rows, start, dur) {
+    let max = 0;
+    for (let t = start; t < start + dur; t += D.settings.step) { const c = rows.filter((b) => b.start_min <= t && t < b.start_min + b.duration).length; if (c > max) max = c; }
+    return D.settings.posts - max;
+  }
+  function dayState(date, now) {
+    const s = D.settings;
+    if (date < now.date) return 'past';
+    if (date > addDays(now.date, s.horizon_days - 1)) return 'too_far';
+    if (s.days_off.includes(wd(date))) return 'day_off';
+    if (s.blocked_dates.includes(date)) return 'blocked';
+    return null;
+  }
+  function slots(date, dur, { ignore = 0, skipLead = false } = {}) {
+    const now = nowL(); const s = D.settings; const reason = dayState(date, now);
+    if (reason && !(skipLead && ['too_far', 'day_off', 'blocked'].includes(reason))) return { date, open: false, reason, slots: [] };
+    const rows = occ(date, ignore); const out = [];
+    for (let m = hm(s.open); m + dur <= hm(s.close); m += s.step) {
+      const past = !skipLead && date === now.date && m < now.min + s.lead_minutes; const free = freePosts(rows, m, dur);
+      out.push({ time: fmt(m), min: m, free: Math.max(0, free), available: !past && free > 0, past });
+    }
+    return { date, open: true, posts: s.posts, slots: out };
+  }
+  function daysList(dur) {
+    const now = nowL();
+    return Array.from({ length: D.settings.horizon_days }, (_, i) => {
+      const date = addDays(now.date, i); const r = slots(date, dur); const free = r.slots.filter((x) => x.available).length;
+      return { date, weekday: wd(date), open: r.open, reason: r.reason || null, free_slots: free, total_slots: r.slots.length,
+        level: !r.open || !free ? 'full' : free / Math.max(1, r.slots.length) < 0.34 ? 'few' : 'many' };
+    });
+  }
+  function assign(rows) {
+    const ends = Array(D.settings.posts).fill(-1); const map = new Map();
+    [...rows].sort((a, b) => a.start_min - b.start_min || a.id - b.id).forEach((b) => {
+      let p = ends.findIndex((e) => e <= b.start_min); if (p < 0) p = ends.indexOf(Math.min(...ends));
+      ends[p] = Math.max(ends[p], b.start_min + b.duration); map.set(b.id, p + 1);
+    });
+    return map;
+  }
+  function phone(raw) {
+    let d = String(raw || '').replace(/\D/g, '');
+    if (d.startsWith('380') && d.length === 12) d = d.slice(2); else if (d.length === 9) d = '0' + d;
+    if (!/^0\d{9}$/.test(d)) throw new Err(400, 'Вкажіть коректний номер телефону');
+    return '+38' + d;
+  }
+  const str = (v, a, b, l) => { v = String(v ?? '').replace(/\s+/g, ' ').trim(); if (v.length < a || v.length > b) throw new Err(400, `${l}: від ${a} до ${b} символів`); return v; };
+  const view = (b) => ({ ...b, time: fmt(b.start_min), end: fmt(b.start_min + b.duration), total_from: !!b.total_from });
+  function create(i, source, force) {
+    const name = str(i.name, 2, 60, "Ім'я"), ph = phone(i.phone), car = str(i.car, 2, 40, 'Марка автомобіля');
+    const items = resolve(i.services, i.tier); const t = totals(items); const start = hm(String(i.time || '')); const now = nowL(); const s = D.settings;
+    if (!force) {
+      if (dayState(i.date, now)) throw new Err(409, 'На цю дату запис недоступний');
+      if (i.date === now.date && start < now.min + s.lead_minutes) throw new Err(409, 'Цей час уже минув або надто близько');
+      if (start + t.duration > hm(s.close) || start < hm(s.open) || freePosts(occ(i.date), start, t.duration) < 1) throw new Err(409, 'Цей час щойно зайняли. Оберіть, будь ласка, інший.', { code: 'slot_taken' });
+    }
+    if (D.bookings.some((b) => b.phone === ph && b.date === i.date && b.start_min === start && OCC.includes(b.status))) throw new Err(409, 'Запис на цей час із цим номером уже існує');
+    const code = Array.from({ length: 6 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 31)]).join('');
+    const b = { id: D.next++, code, name, phone: ph, car, tier: i.tier, services: items, total: t.total, total_from: t.from, duration: t.duration, date: i.date, start_min: start,
+      status: source === 'crm' && i.status === 'confirmed' ? 'confirmed' : 'new', source, manager_note: '', created_at: new Date().toISOString().slice(0, 16).replace('T', ' '), updated_at: '' };
+    D.bookings.push(b); save(); return view(b);
+  }
+  function update(id, p) {
+    const b = D.bookings.find((x) => x.id === id); if (!b) throw new Err(404, 'Запис не знайдено');
+    const n = { ...b };
+    if ('status' in p) { if (!STATUSES.includes(p.status)) throw new Err(400, 'Невідомий статус'); n.status = p.status; }
+    if ('manager_note' in p) n.manager_note = String(p.manager_note || '').slice(0, 1000);
+    if ('name' in p) n.name = str(p.name, 2, 60, "Ім'я"); if ('phone' in p) n.phone = phone(p.phone); if ('car' in p) n.car = str(p.car, 2, 40, 'Марка автомобіля');
+    let recalc = false; if ('tier' in p && p.tier !== b.tier) { n.tier = p.tier; recalc = true; } if ('services' in p) recalc = true;
+    if (recalc) { const it = resolve('services' in p ? p.services : b.services.map((s) => ({ id: s.id, qty: s.qty })), n.tier); const t = totals(it); Object.assign(n, { services: it, total: t.total, total_from: t.from, duration: t.duration }); }
+    const moved = ('date' in p && p.date !== b.date) || ('time' in p && hm(p.time) !== b.start_min);
+    if ('date' in p) n.date = p.date; if ('time' in p) n.start_min = hm(p.time);
+    if ((moved || recalc || (!OCC.includes(b.status) && OCC.includes(n.status))) && OCC.includes(n.status) && !p.force) {
+      if (n.start_min + n.duration > hm(D.settings.close) || n.start_min < hm(D.settings.open)) throw new Err(409, 'Запис виходить за робочі години');
+      if (freePosts(occ(n.date, id), n.start_min, n.duration) < 1) throw new Err(409, 'На цей час усі пости зайняті', { code: 'slot_taken' });
+    }
+    n.updated_at = new Date().toISOString(); Object.assign(b, n); save(); return view(b);
+  }
+
+  function durFor(q) {
+    const ids = String(q.get('services') || '').split(',').filter(Boolean).map((x) => { const [id, qty] = x.split('x'); return { id, qty: +qty || 1 }; });
+    if (!ids.length) return Math.max(D.settings.step, +q.get('duration') || D.settings.step);
+    return totals(resolve(ids, q.get('tier') || 'abc')).duration;
+  }
+  const pub = (r) => ({ code: r.code, name: r.name, phone: r.phone, car: r.car, date: r.date, time: r.time, end: r.end, total: r.total, total_from: r.total_from, duration: r.duration, services: r.services.map((s) => ({ name: s.name, price: s.price, from: s.from })) });
+
+  function route(method, url, body) {
+    const u = new URL(url, 'http://x'); const p = u.pathname; const q = u.searchParams; const s = D.settings; const now = nowL();
+    if (p === '/api/catalog') return { tiers: CAT.tiers, models: CAT.models, legend: CAT.legend, services: D.services.filter((x) => x.active).map(({ id, category, part, name, description, duration, prices, unit }) => ({ id, category, part, name, description, duration, prices, unit })), settings: { posts: s.posts, open: s.open, close: s.close, step: s.step, horizon_days: s.horizon_days, phone: s.phone } };
+    if (p === '/api/days') return { days: daysList(durFor(q)) };
+    if (p === '/api/slots') return slots(q.get('date'), durFor(q));
+    if (p === '/api/bookings' && method === 'POST') { if (body.website) return { ok: true }; return { ok: true, booking: pub(create(body, 'site', false)) }; }
+    if (p === '/crm/api/login') { D.auth = true; save(); return { ok: true }; }
+    if (p === '/crm/api/logout') { D.auth = false; save(); return { ok: true }; }
+    if (!p.startsWith('/crm/api/')) throw new Err(404, 'Не знайдено');
+    if (!D.auth) throw new Err(401, 'Потрібен вхід');
+    const r = p.slice('/crm/api'.length);
+    if (r === '/me') return { ok: true, now, settings: s };
+    if (r === '/summary') {
+      const c = (f) => D.bookings.filter(f).length;
+      return { now, new_count: c((b) => b.status === 'new' && b.date >= now.date), today: c((b) => b.date === now.date && OCC.includes(b.status)), today_done: c((b) => b.date === now.date && b.status === 'done'),
+        today_revenue: D.bookings.filter((b) => b.date === now.date && OCC.includes(b.status)).reduce((a, b) => a + b.total, 0), tomorrow: c((b) => b.date === addDays(now.date, 1) && ['new', 'confirmed', 'in_progress'].includes(b.status)),
+        upcoming: c((b) => b.date >= now.date && ['new', 'confirmed'].includes(b.status)), last_id: D.next - 1 };
+    }
+    if (r === '/bookings' && method === 'GET') {
+      let l = D.bookings.slice(); const from = q.get('from'), to = q.get('to');
+      if (from) l = l.filter((b) => b.date >= from); if (to) l = l.filter((b) => b.date <= to);
+      const st = (q.get('status') || '').split(',').filter(Boolean); if (st.length) l = l.filter((b) => st.includes(b.status));
+      const t = (q.get('q') || '').trim().toLowerCase(), dg = t.replace(/\D/g, '');
+      if (t) l = l.filter((b) => b.name.toLowerCase().includes(t) || b.car.toLowerCase().includes(t) || b.code.toLowerCase().includes(t) || (dg.length >= 3 && b.phone.includes(dg)));
+      const k = q.get('order') === 'desc' ? -1 : 1; l.sort((a, b) => k * (a.date.localeCompare(b.date) || a.start_min - b.start_min));
+      return { bookings: l.slice(0, +q.get('limit') || 300).map(view) };
+    }
+    if (r === '/bookings' && method === 'POST') return { ok: true, booking: create(body, 'crm', !!body.force) };
+    let m;
+    if ((m = r.match(/^\/bookings\/(\d+)$/))) {
+      if (method === 'PATCH') return { ok: true, booking: update(+m[1], body) };
+      if (method === 'DELETE') { D.bookings = D.bookings.filter((b) => b.id !== +m[1]); save(); return { ok: true }; }
+    }
+    if (r === '/board') {
+      const date = q.get('date') || now.date; const rows = D.bookings.filter((b) => b.date === date && b.status !== 'cancelled').sort((a, b) => a.start_min - b.start_min);
+      const pm = assign(rows.filter((b) => OCC.includes(b.status)));
+      return { date, settings: { posts: s.posts, open: s.open, close: s.close, step: s.step }, bookings: rows.map((b) => ({ ...view(b), post: pm.get(b.id) || 0 })) };
+    }
+    if (r === '/slots') { const d = Math.max(s.step, Math.ceil((+q.get('duration') || s.step) / s.step) * s.step); return slots(q.get('date'), d, { ignore: +q.get('ignore') || 0, skipLead: true }); }
+    if (r === '/clients') {
+      const g = new Map(); [...D.bookings].sort((a, b) => a.id - b.id).forEach((b) => { const c = g.get(b.phone) || { phone: b.phone, bookings: 0, visits: 0, no_shows: 0, spent: 0, last_date: '', next_date: null }; c.name = b.name; c.car = b.car; c.bookings++;
+        if (b.status === 'done') { c.visits++; c.spent += b.total; } if (b.status === 'no_show') c.no_shows++; if (b.date > c.last_date) c.last_date = b.date;
+        if (b.date >= now.date && ['new', 'confirmed'].includes(b.status) && (!c.next_date || b.date < c.next_date)) c.next_date = b.date; g.set(b.phone, c); });
+      return { clients: [...g.values()].reverse() };
+    }
+    if (r === '/services') return { services: D.services, tiers: CAT.tiers };
+    if ((m = r.match(/^\/services\/(s\d+)$/)) && method === 'PATCH') {
+      const x = D.services.find((v) => v.id === m[1]); if ('duration' in body) x.duration = body.duration; if ('active' in body) x.active = !!body.active;
+      if (body.prices) for (const [t, v] of Object.entries(body.prices)) x.prices[t].price = v; save(); return { ok: true };
+    }
+    if (r === '/settings' && method === 'GET') return { settings: s };
+    if (r === '/settings' && method === 'PUT') { Object.assign(D.settings, body); save(); return { ok: true, settings: D.settings }; }
+    if (r === '/password') return { ok: true };
+    throw new Err(404, 'Не знайдено');
+  }
+
+  const realFetch = window.fetch ? window.fetch.bind(window) : null;
+  window.fetch = async (url, opts = {}) => {
+    const u = String(url);
+    if (!/^\/(crm\/)?api\//.test(u)) return realFetch(url, opts);
+    D = load() || D; // підхоплюємо зміни з іншої вкладки (сайт ↔ CRM)
+    await new Promise((r) => setTimeout(r, 120));
+    let status = 200; let data;
+    try { data = route((opts.method || 'GET').toUpperCase(), u, opts.body ? JSON.parse(opts.body) : {}); }
+    catch (e) { if (!(e instanceof Err)) throw e; status = e.status; data = { ok: false, error: e.message, ...(e.extra || {}) }; }
+    return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
+  };
+
+  // CSV у демо — генерується в браузері
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href$="export.csv"]'); if (!a) return; e.preventDefault();
+    const rows = [['Код', 'Дата', 'Початок', "Ім'я", 'Телефон', 'Авто', 'Послуги', 'Сума', 'Статус']].concat(D.bookings.map((b) => [b.code, b.date, fmt(b.start_min), b.name, b.phone, b.car, b.services.map((s) => s.name).join(', '), b.total, b.status]));
+    const csv = '﻿' + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    const l = document.createElement('a'); l.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); l.download = 'bookings.csv'; l.click();
+  });
+  if (location.protocol === 'file:' || true) {
+    const bar = document.createElement('div');
+    bar.textContent = 'ДЕМО-РЕЖИМ · дані зберігаються лише у вашому браузері';
+    bar.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:9999;background:#ffb81c;color:#201600;font:700 11px/1 system-ui,sans-serif;letter-spacing:.06em;padding:4px 14px;border-radius:0 0 10px 10px;pointer-events:none';
+    document.addEventListener('DOMContentLoaded', () => document.body.appendChild(bar));
+  }
+})();
+</script><script>'use strict';
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const money = (n) => new Intl.NumberFormat('uk-UA').format(n).replace(/ /g, ' ') + ' грн';
+  const WD = ['неділя', 'понеділок', 'вівторок', 'середа', 'четвер', "п'ятниця", 'субота'];
+  const WD_S = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+  const MON = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+  const STATUS = { new: 'Нова', confirmed: 'Підтверджено', in_progress: 'В роботі', done: 'Виконано', cancelled: 'Скасовано', no_show: 'Не приїхав' };
+  const NEXT = { new: ['confirmed', 'Підтвердити', 'blue'], confirmed: ['in_progress', 'В роботу', 'amber'], in_progress: ['done', 'Виконано', 'ok'] };
+  const dp = (iso) => { const [y, m, d] = iso.split('-').map(Number); return { y, m, d, wd: new Date(Date.UTC(y, m - 1, d)).getUTCDay() }; };
+  const addDays = (iso, n) => new Date(Date.parse(iso + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+  const dlong = (iso) => { const p = dp(iso); return `${WD[p.wd]}, ${p.d} ${MON[p.m - 1]}`; };
+  const dur = (min) => { const h = Math.floor(min / 60), m = min % 60; return (h ? `${h} год` : '') + (h && m ? ' ' : '') + (m ? `${m} хв` : ''); };
+  const hmToMin = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+  const minToHm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* ігноруємо */ } } };
+
+  let toastT;
+  function toast(msg, err) { const t = $('#toast'); t.textContent = msg; t.className = 'toast' + (err ? ' err' : ''); t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3000); }
+  async function api(url, opts = {}) {
+    const r = await fetch('/crm/api' + url, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) }, body: opts.body && typeof opts.body !== 'string' ? JSON.stringify(opts.body) : opts.body });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 401) { showLogin(); throw new Error('Потрібен вхід'); }
+    if (!r.ok) { const e = new Error(j.error || 'Помилка'); e.data = j; throw e; }
+    return j;
+  }
+
+  const S = { tab: 'today', range: 'today', now: null, settings: null, lastId: null, bookings: [], fresh: new Set(), services: null, tiers: null, boardDate: null, newCount: 0, timer: null };
+
+  // ---------- вхід ----------
+  function showLogin() { $('#app').hidden = true; $('#login').hidden = false; clearInterval(S.timer); setTimeout(() => $('#pw').focus(), 50); }
+  $('#loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('#loginErr').textContent = '';
+    try { await fetch('/crm/api/login', { method: 'POST', body: JSON.stringify({ password: $('#pw').value }) }).then(async (r) => { if (!r.ok) throw new Error((await r.json()).error); }); $('#pw').value = ''; boot(); } catch (err) { $('#loginErr').textContent = err.message; }
+  });
+  $('#logout').addEventListener('click', async () => { await fetch('/crm/api/logout', { method: 'POST' }); showLogin(); });
+
+  async function boot() {
+    try {
+      const me = await api('/me');
+      S.now = me.now; S.settings = me.settings;
+    } catch { return; }
+    $('#login').hidden = true; $('#app').hidden = false;
+    $('#soundOn').checked = store.get('crm_sound') === '1';
+    S.boardDate = S.now.date;
+    await switchTab(S.tab);
+    clearInterval(S.timer); S.timer = setInterval(poll, 12000);
+  }
+
+  // ---------- вкладки ----------
+  const TITLES = { today: 'Записи', board: 'Завантаження постів', clients: 'Клієнти', prices: 'Прайс і тривалість', settings: 'Налаштування' };
+  async function switchTab(tab) {
+    S.tab = tab;
+    $$('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+    $$('[data-view]').forEach((v) => { v.hidden = v.dataset.view !== tab; });
+    $('#title').textContent = TITLES[tab];
+    if (tab === 'today') await loadList();
+    if (tab === 'board') await loadBoard();
+    if (tab === 'clients') await loadClients();
+    if (tab === 'prices') await loadPrices();
+    if (tab === 'settings') renderSettings();
+    scrollTo(0, 0);
+  }
+  $('#tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) switchTab(b.dataset.tab); });
+
+  // ---------- опитування: нові записи ----------
+  let audioCtx;
+  function beep() {
+    if (store.get('crm_sound') !== '1') return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      [660, 880].forEach((f, i) => { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.frequency.value = f; o.connect(g); g.connect(audioCtx.destination); g.gain.setValueAtTime(.15, audioCtx.currentTime + i * .18); g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + i * .18 + .16); o.start(audioCtx.currentTime + i * .18); o.stop(audioCtx.currentTime + i * .18 + .17); });
+    } catch { /* без звуку */ }
+  }
+  $('#soundOn').addEventListener('change', (e) => { store.set('crm_sound', e.target.checked ? '1' : '0'); if (e.target.checked) beep(); });
+  async function poll() {
+    if (document.hidden && S.lastId !== null) { /* у фоні теж перевіряємо, але рідше навантажуємо */ }
+    try {
+      const s = await api('/summary'); S.now = s.now; $('#liveDot').classList.remove('off');
+      setBadge(s.new_count);
+      if (S.lastId !== null && s.last_id > S.lastId) {
+        const fresh = await api('/bookings?from=' + s.now.date + '&status=new&order=desc&limit=20');
+        fresh.bookings.filter((b) => b.id > S.lastId).forEach((b) => S.fresh.add(b.id));
+        toast(`Новий запис! ${fresh.bookings[0] ? fresh.bookings[0].name + ' · ' + fresh.bookings[0].car : ''}`); beep();
+      }
+      const changed = S.lastId !== null && s.last_id !== S.lastId; S.lastId = s.last_id;
+      if (S.tab === 'today') { renderStats(s); if (changed || !document.querySelector('dialog[open]')) loadList(true); }
+      if (S.tab === 'board' && !document.querySelector('dialog[open]')) loadBoard(true);
+    } catch { $('#liveDot').classList.add('off'); }
+  }
+  function setBadge(n) {
+    S.newCount = n; const b = $('#newBadge'); b.hidden = !n; b.textContent = n;
+    document.title = (n ? `(${n}) ` : '') + 'CRM · VMU Wash&Wheel';
+  }
+
+  // ---------- список записів ----------
+  function rangeParams() {
+    const t = S.now.date;
+    switch (S.range) {
+      case 'today': return `from=${t}&to=${t}`;
+      case 'tomorrow': return `from=${addDays(t, 1)}&to=${addDays(t, 1)}`;
+      case 'week': return `from=${t}&to=${addDays(t, 6)}`;
+      case 'upcoming': return `from=${t}&status=new,confirmed,in_progress`;
+      case 'past': return `to=${addDays(t, -1)}&order=desc`;
+      default: return 'order=desc';
+    }
+  }
+  function renderStats(s) {
+    $('#stats').innerHTML = `
+      <div class="stat ${s.new_count ? 'alert' : ''}"><small>Нові (чекають підтвердження)</small><b>${s.new_count}</b></div>
+      <div class="stat"><small>Сьогодні записів</small><b>${s.today}</b></div>
+      <div class="stat"><small>Виконано сьогодні</small><b>${s.today_done}</b></div>
+      <div class="stat"><small>Сума на сьогодні</small><b>${money(s.today_revenue)}</b></div>
+      <div class="stat"><small>Завтра</small><b>${s.tomorrow}</b></div>`;
+  }
+  async function loadList(quiet) {
+    const q = $('#search').value.trim(); const st = $('#statusFilter').value;
+    let params = rangeParams();
+    if (st) params = params.replace(/&?status=[^&]*/, '') + '&status=' + st;
+    if (q) params += '&q=' + encodeURIComponent(q);
+    try {
+      const [r, s] = await Promise.all([api('/bookings?' + params + '&limit=400'), api('/summary')]);
+      S.bookings = r.bookings; S.now = s.now; if (S.lastId === null) S.lastId = s.last_id;
+      renderStats(s); setBadge(s.new_count); renderList();
+    } catch (e) { if (!quiet) toast(e.message, true); }
+  }
+  function bookingCard(b) {
+    const next = NEXT[b.status];
+    const svc = b.services.map((s) => esc(s.name) + (s.qty > 1 ? ` ×${s.qty}` : '')).join(', ');
+    return `<article class="bk ${S.fresh.has(b.id) ? 'fresh' : ''}" data-id="${b.id}" data-st="${b.status}" tabindex="0">
+      <div class="tm">${b.time}<small>до ${b.end} · ${dur(b.duration)}</small></div>
+      <div>
+        <h3>${esc(b.name)} <span class="car">· ${esc(b.car)}</span> <span class="src">${b.source === 'site' ? 'сайт' : 'менеджер'}</span></h3>
+        <div class="svc">${svc}</div>
+        <a class="phone" href="tel:${esc(b.phone)}" data-stop>📞 ${esc(b.phone)}</a>
+      </div>
+      <div class="side-r"><div><div class="sum">${b.total_from ? 'від ' : ''}${money(b.total)}</div><span class="pill">${STATUS[b.status]}</span></div>
+        <div class="acts">${next ? `<button class="btn sm ${next[2]}" data-act="${next[0]}" data-stop>${next[1]}</button>` : ''}</div></div>
+    </article>`;
+  }
+  function renderList() {
+    const box = $('#list');
+    if (!S.bookings.length) { box.innerHTML = '<div class="empty">Записів немає</div>'; return; }
+    let html = ''; let cur = '';
+    const showDays = !['today', 'tomorrow'].includes(S.range) || $('#search').value;
+    for (const b of S.bookings) {
+      if (showDays && b.date !== cur) { cur = b.date; html += `<div class="day-h">${b.date === S.now.date ? 'Сьогодні · ' : ''}${dlong(b.date)}</div>`; }
+      html += bookingCard(b);
+    }
+    box.innerHTML = html;
+    setTimeout(() => S.fresh.clear(), 2500);
+  }
+  $('#list').addEventListener('click', async (e) => {
+    const card = e.target.closest('.bk'); if (!card) return;
+    const id = +card.dataset.id;
+    const act = e.target.closest('[data-act]');
+    if (act) { e.stopPropagation(); try { await api('/bookings/' + id, { method: 'PATCH', body: { status: act.dataset.act } }); toast('Статус оновлено'); loadList(true); } catch (err) { toast(err.message, true); } return; }
+    if (e.target.closest('[data-stop]')) return;
+    openBooking(S.bookings.find((b) => b.id === id));
+  });
+  $('#list').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList.contains('bk')) openBooking(S.bookings.find((b) => b.id === +e.target.dataset.id)); });
+  $('#range').addEventListener('click', (e) => { const b = e.target.closest('[data-r]'); if (!b) return; S.range = b.dataset.r; $$('#range button').forEach((x) => x.classList.toggle('on', x === b)); loadList(); });
+  $('#statusFilter').addEventListener('change', () => loadList());
+  let st; $('#search').addEventListener('input', () => { clearTimeout(st); st = setTimeout(() => loadList(), 250); });
+  $('#addBtn').addEventListener('click', () => openForm(null));
+
+  // ---------- модалка запису: перегляд ----------
+  const modal = $('#modal');
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });
+  function openBooking(b) {
+    if (!b) return;
+    modal.innerHTML = `<div class="m-wrap" data-st="${b.status}">
+      <div class="m-head"><div><h2>${esc(b.name)}</h2><span class="pill">${STATUS[b.status]}</span> <span class="src">${esc(b.code)}</span></div><button class="m-x" data-close aria-label="Закрити">×</button></div>
+      <div class="m-body">
+        <a class="big-call" href="tel:${esc(b.phone)}">📞 ${esc(b.phone)}</a>
+        <dl class="kv">
+          <dt>Коли</dt><dd>${dlong(b.date)}, ${b.time}–${b.end} (${dur(b.duration)})</dd>
+          <dt>Авто</dt><dd>${esc(b.car)} · клас ${esc(b.tier.toUpperCase())}</dd>
+          <dt>Послуги</dt><dd>${b.services.map((s) => `${esc(s.name)}${s.qty > 1 ? ` ×${s.qty}` : ''} — ${s.from ? 'від ' : ''}${money(s.price)}${s.note ? ` <small class="muted">(${esc(s.note)})</small>` : ''}`).join('<br>')}</dd>
+          <dt>Разом</dt><dd>${b.total_from ? 'від ' : ''}${money(b.total)}</dd>
+          <dt>Створено</dt><dd>${esc(b.created_at)} UTC · ${b.source === 'site' ? 'із сайту' : 'менеджером'}</dd>
+        </dl>
+        <label>Нотатка менеджера<textarea id="mNote" placeholder="Коментар, домовленості з клієнтом…">${esc(b.manager_note)}</textarea></label>
+        <label>Статус<select id="mStatus">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === b.status ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      </div>
+      <div class="m-foot"><div class="acts"><button class="btn danger sm" data-del>Видалити</button><button class="btn sm" data-edit>Змінити запис</button></div><button class="btn primary" data-save>Зберегти</button></div></div>`;
+    modal.showModal();
+    modal.onclick = async (e) => {
+      if (e.target === modal || e.target.closest('[data-close]')) return modal.close();
+      if (e.target.closest('[data-edit]')) return openForm(b);
+      if (e.target.closest('[data-del]')) { if (!confirm('Видалити запис остаточно? Краще змінити статус на «Скасовано».')) return; try { await api('/bookings/' + b.id, { method: 'DELETE' }); modal.close(); toast('Видалено'); refresh(); } catch (err) { toast(err.message, true); } return; }
+      if (e.target.closest('[data-save]')) {
+        try { await api('/bookings/' + b.id, { method: 'PATCH', body: { status: $('#mStatus').value, manager_note: $('#mNote').value } }); modal.close(); toast('Збережено'); refresh(); } catch (err) { toast(err.message, true); }
+      }
+    };
+  }
+  const refresh = () => { if (S.tab === 'today') loadList(true); else if (S.tab === 'board') loadBoard(true); else if (S.tab === 'clients') loadClients(); };
+
+  // ---------- модалка запису: створення / редагування ----------
+  async function ensureServices() {
+    if (!S.services) { const r = await api('/services'); S.services = r.services; S.tiers = r.tiers; }
+  }
+  async function openForm(b) {
+    await ensureServices();
+    const st = S.settings;
+    const f = { name: b?.name || '', phone: b?.phone || '', car: b?.car || '', tier: b?.tier || 'abc', date: b?.date || S.now.date, time: b?.time || '', status: b?.status || 'confirmed' };
+    const cart = new Map((b?.services || []).map((s) => [s.id, s.qty || 1]));
+    const catGroups = [...new Set(S.services.map((s) => s.category))];
+    modal.innerHTML = `<form class="m-wrap" id="bf" novalidate>
+      <div class="m-head"><h2>${b ? 'Змінити запис' : 'Новий запис'}</h2><button type="button" class="m-x" data-close aria-label="Закрити">×</button></div>
+      <div class="m-body">
+        <div class="row3"><label>Ім'я<input name="name" value="${esc(f.name)}" required maxlength="60"></label>
+          <label>Телефон<input name="phone" value="${esc(f.phone)}" inputmode="tel" placeholder="+380…" required></label>
+          <label>Марка авто<input name="car" value="${esc(f.car)}" required maxlength="40"></label></div>
+        <label>Клас авто<select name="tier">${S.tiers.map((t) => `<option value="${t.id}" ${t.id === f.tier ? 'selected' : ''}>${esc(t.label)} — ${esc(t.title)}</option>`).join('')}</select></label>
+        <div><b>Послуги</b><div class="svc-pick" id="svcPick"></div></div>
+        <div class="row2"><label>Дата<input type="date" name="date" value="${f.date}" required></label>
+          <label>Статус<select name="status">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === f.status ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
+        <div><b>Час</b> <span class="muted" id="durInfo"></span><div class="slotpick" id="slotPick"></div></div>
+        <label class="force" hidden style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" name="force"> Поставити всупереч зайнятості постів / поза робочим часом</label>
+        <div class="warn" id="formWarn" hidden></div>
+      </div>
+      <div class="m-foot"><button type="button" class="btn" data-close>Скасувати</button><button type="submit" class="btn primary">${b ? 'Зберегти' : 'Створити запис'}</button></div></form>`;
+    const form = $('#bf'); let time = f.time;
+    const tier = () => form.tier.value;
+    const renderPick = () => {
+      let html = '';
+      for (const c of catGroups) {
+        const list = S.services.filter((s) => s.category === c && s.active && s.prices[tier()]);
+        if (!list.length) continue;
+        html += `<div class="cat">${esc(c)}</div>` + list.map((s) => `<label><input type="checkbox" data-id="${s.id}" ${cart.has(s.id) ? 'checked' : ''}><span>${esc(s.name)}${s.description ? ` <small class="muted">${esc(s.description)}</small>` : ''}</span>${s.unit ? `<input type="number" min="1" max="20" value="${cart.get(s.id) || 1}" data-qty="${s.id}" ${cart.has(s.id) ? '' : 'disabled'}>` : ''}<em>${s.prices[tier()].from ? 'від ' : ''}${money(s.prices[tier()].price)}</em></label>`).join('');
+      }
+      $('#svcPick').innerHTML = html;
+    };
+    const duration = () => {
+      let raw = 0; for (const [id, q] of cart) { const s = S.services.find((x) => x.id === id); if (s) raw += s.duration * (s.unit ? q : 1); }
+      return raw ? Math.max(st.step, Math.ceil(raw / st.step) * st.step) : 0;
+    };
+    const loadSlots = async () => {
+      const d = duration(); $('#durInfo').textContent = d ? `· ~${dur(d)}` : '· оберіть послуги';
+      if (!d || !form.date.value) { $('#slotPick').innerHTML = ''; return; }
+      try {
+        const r = await api(`/slots?date=${form.date.value}&duration=${d}&ignore=${b?.id || 0}`);
+        $('#slotPick').innerHTML = r.slots.map((s) => `<button type="button" data-t="${s.time}" class="${s.time === time ? 'on' : ''}" ${s.free ? '' : 'disabled'} title="вільно ${s.free} з ${r.posts}">${s.time}${s.free && s.free < r.posts ? ` <small>(${s.free})</small>` : ''}</button>`).join('') || '<span class="muted">День недоступний</span>';
+        $('.force', form).hidden = false;
+      } catch (e) { $('#slotPick').innerHTML = `<span class="muted">${esc(e.message)}</span>`; }
+    };
+    renderPick(); loadSlots();
+    form.tier.addEventListener('change', () => { for (const id of [...cart.keys()]) if (!S.services.find((s) => s.id === id)?.prices[tier()]) cart.delete(id); renderPick(); loadSlots(); });
+    form.date.addEventListener('change', () => { time = ''; loadSlots(); });
+    $('#svcPick').addEventListener('change', (e) => {
+      const id = e.target.dataset.id; const q = e.target.dataset.qty;
+      if (id) { if (e.target.checked) cart.set(id, +($(`[data-qty="${id}"]`)?.value) || 1); else cart.delete(id); const n = $(`[data-qty="${id}"]`); if (n) n.disabled = !e.target.checked; }
+      if (q) cart.set(q, Math.max(1, Math.min(20, +e.target.value || 1)));
+      time = ''; loadSlots();
+    });
+    $('#slotPick').addEventListener('click', (e) => { const t = e.target.closest('[data-t]'); if (!t) return; time = t.dataset.t; $$('#slotPick button').forEach((x) => x.classList.toggle('on', x === t)); });
+    form.onclick = (e) => { if (e.target.closest('[data-close]')) modal.close(); };
+    form.onsubmit = async (e) => {
+      e.preventDefault(); const warn = $('#formWarn'); warn.hidden = true;
+      const body = { name: form.name.value, phone: form.phone.value, car: form.car.value, tier: tier(), date: form.date.value, time, status: form.status.value, services: [...cart].map(([id, qty]) => ({ id, qty })), force: form.force.checked };
+      if (!time) { warn.textContent = 'Оберіть час'; warn.hidden = false; return; }
+      try {
+        if (b) {
+          const { status, ...rest } = body;
+          await api('/bookings/' + b.id, { method: 'PATCH', body: { ...rest, status } });
+        } else await api('/bookings', { method: 'POST', body });
+        modal.close(); toast(b ? 'Запис змінено' : 'Запис створено'); refresh();
+      } catch (err) { warn.textContent = err.message; warn.hidden = false; }
+    };
+    modal.showModal();
+  }
+
+  // ---------- дошка постів ----------
+  async function loadBoard() {
+    $('#boardDate').value = S.boardDate;
+    const r = await api('/board?date=' + S.boardDate);
+    const s = r.settings; const open = hmToMin(s.open); const close = hmToMin(s.close); const span = close - open;
+    const pct = (m) => ((m - open) / span) * 100;
+    const hours = []; for (let m = Math.ceil(open / 60) * 60; m <= close; m += 60) hours.push(m);
+    const occ = r.bookings.filter((b) => b.post > 0);
+    const lanes = Array.from({ length: s.posts }, (_, i) => i + 1);
+    const hw = (60 / span) * 100;
+    let html = `<div class="tl" style="--hw:${hw}%"><div class="tl-head"><div></div><div class="tl-hours">${hours.map((m) => `<span style="left:${pct(m)}%">${minToHm(m)}</span>`).join('')}</div></div>`;
+    for (const p of lanes) {
+      html += `<div class="tl-row"><div class="tl-label">Пост ${p}</div><div class="tl-lane" style="--hw:calc(${hw}% )">` +
+        occ.filter((b) => b.post === p).map((b) => `<div class="tl-b" data-id="${b.id}" data-st="${b.status}" style="left:${pct(b.start_min)}%;width:${(b.duration / span) * 100}%" title="${esc(b.name)} · ${esc(b.car)}"><b>${b.time} ${esc(b.name)}</b><span>${esc(b.car)} · ${b.services.map((x) => esc(x.name)).join(', ')}</span></div>`).join('') + '</div></div>';
+    }
+    if (r.date === S.now.date && S.now.min >= open && S.now.min <= close) html += `<div class="tl-now" style="left:calc(70px + (100% - 70px) * ${pct(S.now.min) / 100})"></div>`;
+    html += '</div>';
+    const noPost = r.bookings.filter((b) => b.post === 0);
+    if (noPost.length) html += `<h3 style="margin:18px 0 8px">Не займають пост (${noPost.length})</h3><div class="list">${noPost.map(bookingCard).join('')}</div>`;
+    if (!r.bookings.length) html += '<div class="empty" style="margin-top:14px">На цей день записів немає</div>';
+    $('#board').innerHTML = html;
+    S.boardBookings = r.bookings;
+  }
+  $('#board').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-id]'); if (!t) return;
+    if (e.target.closest('[data-act]')) return;
+    openBooking(S.boardBookings.find((b) => b.id === +t.dataset.id));
+  });
+  const setBoardDate = (d) => { S.boardDate = d; loadBoard(); };
+  $('#dPrev').addEventListener('click', () => setBoardDate(addDays(S.boardDate, -1)));
+  $('#dNext').addEventListener('click', () => setBoardDate(addDays(S.boardDate, 1)));
+  $('#dToday').addEventListener('click', () => setBoardDate(S.now.date));
+  $('#boardDate').addEventListener('change', (e) => e.target.value && setBoardDate(e.target.value));
+
+  // ---------- клієнти ----------
+  let clients = [];
+  async function loadClients() { clients = (await api('/clients')).clients; renderClients(); }
+  function renderClients() {
+    const q = $('#clientSearch').value.trim().toLowerCase(); const qd = q.replace(/\D/g, '');
+    const list = clients.filter((c) => !q || c.name.toLowerCase().includes(q) || c.car.toLowerCase().includes(q) || (qd.length >= 3 && c.phone.includes(qd)));
+    $('#clients').innerHTML = list.map((c) => `<div class="cl"><div><h3>${esc(c.name)} <span class="muted">· ${esc(c.car)}</span></h3>
+      <div class="m"><a class="phone" href="tel:${esc(c.phone)}" style="color:var(--blue);font-weight:700">📞 ${esc(c.phone)}</a> · останній візит/запис: ${c.last_date ? dlong(c.last_date) : '—'}${c.next_date ? ` · <b>наступний: ${dlong(c.next_date)}</b>` : ''}</div></div>
+      <div class="nums"><div><b>${c.bookings}</b><small>записів</small></div><div><b>${c.visits || 0}</b><small>візитів</small></div><div><b>${money(c.spent)}</b><small>оплачено</small></div>${c.no_shows ? `<div><b>${c.no_shows}</b><small>не з'явився</small></div>` : ''}</div>
+      <div class="acts" style="grid-column:1/-1"><button class="btn sm" data-hist="${esc(c.phone)}">Історія записів</button><button class="btn sm primary" data-new="${esc(c.phone)}">Записати знову</button></div></div>`).join('') || '<div class="empty">Клієнтів не знайдено</div>';
+  }
+  $('#clientSearch').addEventListener('input', renderClients);
+  $('#clients').addEventListener('click', async (e) => {
+    const h = e.target.closest('[data-hist]'); const n = e.target.closest('[data-new]');
+    if (h) { S.range = 'all'; $$('#range button').forEach((x) => x.classList.toggle('on', x.dataset.r === 'all')); $('#search').value = h.dataset.hist.replace('+380', '0'); await switchTab('today'); }
+    if (n) { const c = clients.find((x) => x.phone === n.dataset.new); await openForm(null); const f = $('#bf'); f.name.value = c.name; f.phone.value = c.phone; f.car.value = c.car; }
+  });
+
+  // ---------- прайс ----------
+  async function loadPrices() { const r = await api('/services'); S.services = r.services; S.tiers = r.tiers; renderPrices(); }
+  function renderPrices() {
+    const q = $('#priceSearch').value.trim().toLowerCase();
+    const cats = [...new Set(S.services.map((s) => s.category))];
+    $('#prices').innerHTML = cats.map((c) => {
+      const list = S.services.filter((s) => s.category === c && (!q || s.name.toLowerCase().includes(q)));
+      if (!list.length) return '';
+      return `<div class="grp"><h3>${esc(c)}</h3>${list.map((s) => `<div class="pr-row ${s.active ? '' : 'off'}" data-sid="${s.id}">
+        <div class="nm">${esc(s.name)}${s.description ? `<small>${esc(s.description)}</small>` : ''}<label style="text-align:left;display:flex;gap:6px;align-items:center;margin-top:4px"><input type="checkbox" data-f="active" ${s.active ? 'checked' : ''} style="width:auto"> показувати на сайті</label></div>
+        <div><label>тривалість, хв</label><input type="number" min="5" max="600" step="5" value="${s.duration}" data-f="duration"></div>
+        ${S.tiers.filter((t) => s.prices[t.id]).map((t) => `<div><label>${esc(t.label)}${s.prices[t.id].from ? ' (від)' : ''}</label><input type="number" min="0" step="10" value="${s.prices[t.id].price}" data-f="price" data-tier="${t.id}"></div>`).join('')}
+      </div>`).join('')}</div>`;
+    }).join('');
+  }
+  $('#priceSearch').addEventListener('input', renderPrices);
+  $('#prices').addEventListener('change', async (e) => {
+    const row = e.target.closest('[data-sid]'); if (!row) return;
+    const body = {}; const f = e.target.dataset.f;
+    if (f === 'active') body.active = e.target.checked;
+    if (f === 'duration') body.duration = +e.target.value;
+    if (f === 'price') body.prices = { [e.target.dataset.tier]: +e.target.value };
+    try { await api('/services/' + row.dataset.sid, { method: 'PATCH', body }); toast('Збережено'); const s = S.services.find((x) => x.id === row.dataset.sid); if (f === 'active') { s.active = body.active; row.classList.toggle('off', !s.active); } if (f === 'duration') s.duration = body.duration; if (f === 'price') s.prices[e.target.dataset.tier].price = body.prices[e.target.dataset.tier]; } catch (err) { toast(err.message, true); loadPrices(); }
+  });
+
+  // ---------- налаштування ----------
+  function renderSettings() {
+    const s = S.settings;
+    $('#settingsForm').innerHTML = `<h3>Робота мийки та онлайн-запис</h3>
+      <label>Кількість постів<input type="number" name="posts" min="1" max="20" value="${s.posts}"></label>
+      <label>Початок роботи<input type="time" name="open" value="${s.open}"></label>
+      <label>Кінець роботи<input type="time" name="close" value="${s.close}"></label>
+      <label>Крок запису<select name="step">${[15, 20, 30, 60].map((v) => `<option ${v === s.step ? 'selected' : ''} value="${v}">${v} хв</option>`).join('')}</select></label>
+      <label>Мінімум до початку, хв<input type="number" name="lead_minutes" min="0" max="1440" value="${s.lead_minutes}"><small>клієнт не зможе записатись ближче ніж за цей час</small></label>
+      <label>Запис відкритий на, днів<input type="number" name="horizon_days" min="1" max="60" value="${s.horizon_days}"></label>
+      <label>Телефон на сайті<input name="phone" value="${esc(s.phone)}" maxlength="30"></label>
+      <div class="full"><b>Вихідні дні тижня</b><div class="chips" style="margin-top:6px">${[1, 2, 3, 4, 5, 6, 0].map((d) => `<label><input type="checkbox" name="off" value="${d}" ${s.days_off.includes(d) ? 'checked' : ''}> ${WD_S[d]}</label>`).join('')}</div></div>
+      <label class="full">Закриті дати (YYYY-MM-DD, через кому) — свята, технічні роботи<input name="blocked" value="${esc(s.blocked_dates.join(', '))}" placeholder="2026-12-25, 2027-01-01"></label>
+      <div class="full"><button class="btn primary" type="submit">Зберегти налаштування</button></div>`;
+  }
+  $('#settingsForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); const f = e.target;
+    const body = { posts: +f.posts.value, open: f.open.value, close: f.close.value, step: +f.step.value, lead_minutes: +f.lead_minutes.value, horizon_days: +f.horizon_days.value, phone: f.phone.value,
+      days_off: $$('[name=off]:checked', f).map((x) => +x.value), blocked_dates: f.blocked.value.split(/[,\s]+/).filter(Boolean) };
+    try { const r = await api('/settings', { method: 'PUT', body }); S.settings = r.settings; toast('Налаштування збережено'); } catch (err) { toast(err.message, true); }
+  });
+  $('#pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); const f = e.target;
+    try { await api('/password', { method: 'POST', body: { current: f.current.value, next: f.next.value } }); f.reset(); toast('Пароль змінено'); } catch (err) { toast(err.message, true); }
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
