@@ -503,7 +503,7 @@ def test_payroll_import_and_pl_uses_it(client, tmp_path):
     main.con.commit()
     o = pl.compute(main.con, d(2026, 10, 1), d(2026, 10, 31))
     assert o["est_months"] == ["2026-10"] and o["pay"]["Перукарі"] == 400000 and o["pay"]["Інші працівники"] == 800000
-    assert o["paid_payroll"] == 3000000 and o["esv"] == 0
+    assert o["paid_payroll"] == 3000000 and o["esv"] == 51064   # ЄСВ accrued at last month rate (2000 / 47000)
 
 
 def test_rent_is_accrued_for_running_month(client):
@@ -519,3 +519,27 @@ def test_rent_is_accrued_for_running_month(client):
     assert "rent" not in b["exp"]                     # no estimate when costs are shown by payment date
     c = pl.compute(main.con, d(2026, 9, 1), d(2026, 9, 30), accrual=True)
     assert sum(c["exp"]["rent"].values()) == 3100000  # real payment, no estimate on top
+
+
+def test_admin_and_manager_rules_estimate(client):
+    from app import payroll
+    d = __import__("datetime").date
+    ins = lambda sec, name, **kw: main.con.execute(
+        "INSERT INTO payroll(month,section,name,gross,hours,shifts,rate,retail,sales) VALUES('2026-09',?,?,?,?,?,?,?,?)",
+        (sec, name, kw.get("gross", 0), kw.get("hours", 0), kw.get("shifts", 0), kw.get("rate", 0), kw.get("retail", 0), kw.get("sales", 0)))
+    ins("Перукарі", "М1", gross=40000000, sales=100000000)              # needed so the month counts as filled
+    ins("Адміністратори", "А1", gross=1, hours=300, shifts=30, rate=7000, retail=1000000)
+    ins("Адміністратори", "А2", gross=1, hours=300, shifts=30, rate=7000)
+    ins("Інші працівники", "Банцер Мирослава", gross=1500000)
+    ins("Інші працівники", "Стельмах Юлія", gross=3300000)
+    main.con.execute("INSERT INTO alteg_pay(external_id,occurred_at,amount,method,staff_id,staff_name,staff_role,category_title,item_type) "
+                     "VALUES('x1','2026-10-05T10:00:00',100000000,'cash',1,'М1','Перукар','Перукарські послуги','service')")
+    main.con.commit()
+    e = payroll.estimate(main.con, d(2026, 10, 1), d(2026, 10, 31), "2026-09")
+    assert e["Перукарі"] == 40000000                                      # 40% of the master's till
+    assert e["Інші працівники"] == 1500000 + 3300000 * 31 // 31 or abs(e["Інші працівники"] - (1500000 + 3300000)) < 3   # 1.5% of services + fixed
+    # admins: 7000 коп/год x (600h/30d) x 31d + 4% of services + 10% of retail ratio
+    hourly = 7000 * (600 / 30) * 31
+    pool = 0.04 * 100000000
+    retail = (1000000 * 0.10 / 100000000) * 100000000
+    assert abs(e["Адміністратори"] - (hourly + pool + retail)) < 5

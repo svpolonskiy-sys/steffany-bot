@@ -69,7 +69,11 @@ CREATE TABLE IF NOT EXISTS payroll(
   id INTEGER PRIMARY KEY, month TEXT NOT NULL, section TEXT NOT NULL, name TEXT NOT NULL,
   gross INTEGER NOT NULL DEFAULT 0, vacation INTEGER NOT NULL DEFAULT 0, sick INTEGER NOT NULL DEFAULT 0,
   fines INTEGER NOT NULL DEFAULT 0, taxes INTEGER NOT NULL DEFAULT 0, sales INTEGER NOT NULL DEFAULT 0,
+  hours REAL NOT NULL DEFAULT 0, shifts REAL NOT NULL DEFAULT 0, rate INTEGER NOT NULL DEFAULT 0, retail INTEGER NOT NULL DEFAULT 0,
   UNIQUE(month, section, name));
+CREATE TABLE IF NOT EXISTS pl_closed(
+  month TEXT PRIMARY KEY, closed_at TEXT NOT NULL, revenue INTEGER, cogs INTEGER, gross INTEGER, labour INTEGER,
+  opex INTEGER, ebitda INTEGER, interest INTEGER, tax INTEGER, net INTEGER);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS sync_log(
   id INTEGER PRIMARY KEY, at TEXT NOT NULL, account_id INTEGER, ok INTEGER NOT NULL,
@@ -97,6 +101,10 @@ def connect(path: str | None = None) -> sqlite3.Connection:
     cols = {r[1] for r in con.execute("PRAGMA table_info(categories)")}
     if "exclude" not in cols:  # DBs created before the flag existed
         con.execute("ALTER TABLE categories ADD COLUMN exclude INTEGER NOT NULL DEFAULT 0")
+    pcols = {r[1] for r in con.execute("PRAGMA table_info(payroll)")}
+    for c_, t_ in (("hours", "REAL"), ("shifts", "REAL"), ("rate", "INTEGER"), ("retail", "INTEGER")):
+        if c_ not in pcols:
+            con.execute(f"ALTER TABLE payroll ADD COLUMN {c_} {t_} NOT NULL DEFAULT 0")
     if "pl_group" not in cols:
         con.execute("ALTER TABLE categories ADD COLUMN pl_group TEXT NOT NULL DEFAULT ''")
     return con

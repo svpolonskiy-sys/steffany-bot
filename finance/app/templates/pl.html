@@ -9,7 +9,7 @@
 
 {% if rep.empty %}<div class="card" style="margin-top:12px"><b>За цей період немає даних.</b><div class="mut">Облік у системі ведеться з 01.09.2026.</div></div>{% else %}
 <div class="stats" style="margin-top:12px">
-<div class="card stat hero"><div class="k">Чистий прибуток · {{ d_from }} — {{ d_to }}</div><div class="v {{ 'in' if rep.cur.net>=0 else 'out' }}">{{ rep.cur.net|money(true) }}</div><div class="s">маржа {{ k.net_margin if k.net_margin is not none else '—' }}%{% if rep.prev_ok %} · було {{ rep.prev_net|money }}{% endif %}</div></div>
+<div class="card stat hero"><div class="k">Чистий прибуток · {{ d_from }} — {{ d_to }} · <span class="tag {{ '' if rep.status=='final' else 'auto' }}">{{ 'фінальний' if rep.status=='final' else 'попередній' }}</span></div><div class="v {{ 'in' if rep.cur.net>=0 else 'out' }}">{{ rep.cur.net|money(true) }}</div><div class="s">маржа {{ k.net_margin if k.net_margin is not none else '—' }}%{% if rep.prev_ok %} · було {{ rep.prev_net|money }}{% endif %}</div></div>
 <div class="card stat"><div class="k">Виручка</div><div class="v">{{ rep.cur.revenue|money }}</div><div class="s">{{ k.rev_per_day|money }} на день · сер. чек {{ k.avg_check|money }}</div></div>
 <div class="card stat"><div class="k">Валова маржа</div><div class="v">{{ k.gross_margin if k.gross_margin is not none else '—' }}%</div><div class="s">матеріали й товари {{ k.cogs_pct if k.cogs_pct is not none else '—' }}% виручки</div></div>
 <div class="card stat"><div class="k">Оплата праці / оренда</div><div class="kv"><span>оплата праці</span><b>{{ k.labour_pct if k.labour_pct is not none else '—' }}%</b></div><div class="kv"><span>оренда</span><b>{{ k.rent_pct if k.rent_pct is not none else '—' }}%</b></div><div class="kv"><span>EBITDA</span><b>{{ k.ebitda_margin if k.ebitda_margin is not none else '—' }}%</b></div></div></div>
@@ -23,6 +23,7 @@
 {% else %}береться з банківських і касових виплат (таблицю зарплати не підключено).{% endif %}
 <span class="mut">{% if payroll_at %}Таблицю оновлено {{ payroll_at|dt }}.{% endif %}{% if payroll_err %} <span class="out">Помилка: {{ payroll_err }}</span>{% endif %}</span>
 {% if can_payroll %}<form method="post" action="/payroll/sync" style="display:inline;margin-left:8px"><button class="sm sec">↻ Оновити з таблиці</button></form>{% endif %}</div>
+{% if rep.status_note %}<div class="flash">Звіт попередній: {{ rep.status_note }}.</div>{% endif %}
 <h2>Звіт</h2>
 <table class="pl"><tr><th>Стаття</th><th class="r">Сума</th><th class="r">% виручки</th>{% if rep.prev_ok %}<th class="r hm">Попередній період</th><th class="r hm">Зміна</th>{% endif %}</tr>
 {% for l in rep.lines %}<tr class="pl-{{ l.kind }}"><td style="padding-left:{{ 12 + l.indent*18 }}px">{{ l.label }}</td><td class="r num">{{ l.amount|money if l.amount is not none else '' }}</td><td class="r mut">{{ (l.pct ~ '%') if l.pct is not none else '' }}</td>
@@ -33,6 +34,9 @@
 <table><tr><th>Місяць</th><th class="r">Виручка</th><th class="r hm">Матеріали</th><th class="r hm">Оплата праці</th><th class="r hm">Опер. витрати</th><th class="r">EBITDA</th><th class="r">Чистий прибуток</th></tr>
 {% for m in rep.months %}<tr><td>{{ m.label }}</td><td class="r num">{{ m.revenue|money }}</td><td class="r num hm">{{ m.cogs|money }}</td><td class="r num hm">{{ m.labour|money }}</td><td class="r num hm">{{ m.opex|money }}</td><td class="r num">{{ m.ebitda|money }}</td><td class="r num"><b class="{{ 'in' if m.net>=0 else 'out' }}">{{ m.net|money(true) }}</b></td></tr>{% endfor %}</table>{% endif %}
 
+{% if closed %}<h2>Закриті місяці <span class="mut" style="font-size:12px;font-weight:400">(звіт фіксується 8 числа, після виплати зарплати 7-го)</span></h2>
+<table><tr><th>Місяць</th><th class="r">Виручка</th><th class="r hm">Оплата праці</th><th class="r">EBITDA</th><th class="r">Чистий прибуток</th><th class="r hm">Маржа</th><th class="hm">Закрито</th></tr>
+{% for c in closed %}<tr><td><a href="/pl?date_from={{ c.month }}-01&date_to={{ c.month }}-28&preset=">{{ c.month }}</a></td><td class="r num">{{ c.revenue|money }}</td><td class="r num hm">{{ c.labour|money }}</td><td class="r num">{{ c.ebitda|money }}</td><td class="r num"><b class="{{ 'in' if c.net>=0 else 'out' }}">{{ c.net|money(true) }}</b></td><td class="r hm mut">{{ ((c.net*100/c.revenue)|round(1)) if c.revenue else '—' }}%</td><td class="hm mut">{{ c.closed_at }}</td></tr>{% endfor %}</table>{% endif %}
 {% if rep.memo %}<h2>Поза P&amp;L (довідково)</h2><table><tr><th>Стаття</th><th class="r">Сума</th></tr>{% for label,v in rep.memo %}<tr><td>{{ label }}</td><td class="r num">{{ v|money }}</td></tr>{% endfor %}</table>{% endif %}
 {% if k.bep %}<div class="card" style="margin-top:14px"><div class="k mut" style="font-size:12px">Точка беззбитковості</div><div class="v num" style="font-size:22px;font-weight:700">{{ k.bep|money }}</div><div class="mut" style="font-size:12.5px">{{ k.bep_note }}.</div></div>{% endif %}
 <div id="tip" class="tip"></div>

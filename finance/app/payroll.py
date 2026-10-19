@@ -85,8 +85,10 @@ def parse(content: bytes, default_year: int | None = None) -> dict[str, list[dic
             gross = get("зарплата", "зп")
             vac, sick = get("відпускні"), get("лікарняні")
             if gross or vac or sick:
+                num = lambda k: float(row[hdr[k]] or 0) if k in hdr and hdr[k] < len(row) and isinstance(row[hdr[k]], (int, float)) else 0.0
                 rows.append(dict(section=section, name=name, gross=gross, vacation=vac, sick=sick, fines=abs(fines),
-                                 taxes=get("податки"), sales=get("каса за місяць")))
+                                 taxes=get("податки"), sales=get("каса за місяць"), hours=num("відпрац. годин"),
+                                 shifts=num("відпрац. змін"), rate=get("ставка за годину"), retail=get("сума продажів")))
         if rows:
             out[ym] = rows
     return out
@@ -100,8 +102,10 @@ def sync(con, session=requests) -> list[str]:
     for ym, rows in data.items():
         con.execute("DELETE FROM payroll WHERE month=?", (ym,))
         for r in rows:
-            con.execute("INSERT INTO payroll(month,section,name,gross,vacation,sick,fines,taxes,sales) VALUES(?,?,?,?,?,?,?,?,?)",
-                        (ym, r["section"], r["name"], r["gross"], r["vacation"], r["sick"], r["fines"], r["taxes"], r["sales"]))
+            con.execute("INSERT INTO payroll(month,section,name,gross,vacation,sick,fines,taxes,sales,hours,shifts,rate,retail) "
+                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        (ym, r["section"], r["name"], r["gross"], r["vacation"], r["sick"], r["fines"], r["taxes"], r["sales"],
+                         r["hours"], r["shifts"], r["rate"], r["retail"]))
     set_setting(con, "payroll_synced_at", now_local())
     set_setting(con, "payroll_error", "")
     con.commit()
@@ -141,7 +145,7 @@ def covered_months(con) -> list[str]:
 
 def _section_of_role(role: str) -> str:
     n = norm(role)
-    if "brow" in n:
+    if "brow" in role.lower() or "бров" in n:
         return "Бровісти"
     if "косметолог" in n:
         return "Косметолог"
@@ -160,40 +164,54 @@ COSM_RATE = {"Лазерна епіляція": 0.20, "Косметологія"
 
 
 def estimate(con, lo: date, hi: date, ref_month: str | None) -> dict[str, int]:
-    """Accrued payroll for a period not yet in the sheet: commissions from Alteg takings by master + fixed part
-    (administrators, other staff) carried over from the latest filled month, pro-rated by days."""
+    """Accrued payroll for a period not yet in the sheet, using the sheet's own rules:
+      masters: 40% of their till (brow 60%, cosmetologist 20/35/50%), +10% of personal retail sales;
+      administrators: hourly rate x hours + 4% of the salon's services pool (split by shifts) + 10% of personal retail;
+      Мирослава (manager): 1.5% of the salon's services; other staff: fixed amounts of the latest filled month."""
     a, b = lo.isoformat() + "T00:00:00", hi.isoformat() + "T23:59:59"
+    days = (hi - lo).days + 1
+    dim = ((lo.replace(day=28) + timedelta(days=4)).replace(day=1) - lo.replace(day=1)).days
     res: dict[str, float] = {}
+    services = 0
     for r in con.execute("SELECT staff_role role, category_title cat, SUM(amount) s FROM alteg_pay "
                          "WHERE occurred_at BETWEEN ? AND ? AND staff_id IS NOT NULL AND category_title!='Сертифікати' "
                          "GROUP BY 1,2", (a, b)):
         sec = _section_of_role(r["role"])
-        if norm(r["role"]).startswith("корпоративна"):
+        n = norm(r["role"])
+        if n.startswith("корпоративна") or "адміністратор" in n:
             continue
         if r["cat"] == "Товари":
             rate = 0.10
-        elif sec == "Косметолог":
-            rate = COSM_RATE.get(r["cat"], 0.30)
-        elif sec == "Бровісти":
-            rate = 0.60
         else:
-            rate = 0.40
+            services += r["s"]
+            rate = COSM_RATE.get(r["cat"], 0.30) if sec == "Косметолог" else 0.60 if sec == "Бровісти" else 0.40
         res[sec] = res.get(sec, 0) + r["s"] * rate
     if ref_month:
-        fixed = month_costs(con, ref_month) or {}
-        dim = ((lo.replace(day=28) + timedelta(days=4)).replace(day=1) - lo.replace(day=1)).days  # days in the target month
-        days = (hi - lo).days + 1
-        for sec in ("Адміністратори", "Інші працівники"):
-            if sec in fixed:
-                res[sec] = res.get(sec, 0) + fixed[sec] * days / dim
+        ref = con.execute("SELECT * FROM payroll WHERE month=?", (ref_month,)).fetchall()
+        y, m = map(int, ref_month.split("-"))
+        ref_dim = (date(y + (m == 12), m % 12 + 1, 1) - date(y, m, 1)).days
+        adm = [r for r in ref if r["section"] == "Адміністратори"]
+        if adm:
+            rate_h = max((r["rate"] for r in adm), default=7000)
+            hours_per_day = sum(r["hours"] for r in adm) / ref_dim
+            ref_services = sum(r["sales"] for r in ref if r["section"] in ("Перукарі", "Майстри манікюру", "Подолог", "Бровісти")) \
+                + sum(r["sales"] for r in ref if r["section"] == "Косметолог")
+            retail_ratio = (sum(r["retail"] for r in adm) * 0.10 / ref_services) if ref_services else 0
+            res["Адміністратори"] = rate_h * hours_per_day * days + 0.04 * services + retail_ratio * services
+        for r in ref:
+            if r["section"] != "Інші працівники":
+                continue
+            amt = (0.015 * services) if "банцер" in norm(r["name"]) else r["gross"] * days / dim
+            res["Інші працівники"] = res.get("Інші працівники", 0) + amt
     return {k: int(round(v)) for k, v in res.items() if v}
 
 
-def for_period(con, lo: date, hi: date) -> tuple[dict[str, int], list[str]]:
+def for_period(con, lo: date, hi: date) -> tuple[dict[str, int], list[str], dict[str, dict[str, int]]]:
     """Payroll accrued in [lo, hi] by section and the months that are estimates."""
     hist = date.fromisoformat(config.HISTORY_START)
     total: dict[str, int] = {}
     est: list[str] = []
+    per_month: dict[str, dict[str, int]] = {}
     covered = covered_months(con)
     m = lo.replace(day=1)
     while m <= hi:
@@ -208,11 +226,29 @@ def for_period(con, lo: date, hi: date) -> tuple[dict[str, int], list[str]]:
                 f = ((b_ - a_).days + 1) / dim
                 for sec, v in costs.items():
                     total[sec] = total.get(sec, 0) + int(round(v * f))
+                    per_month.setdefault(ym, {})[sec] = int(round(v * f))
             else:
                 ref = max((c for c in covered if c < ym), default=None)
-                for sec, v in estimate(con, a_, b_, ref).items():
+                e = estimate(con, a_, b_, ref)
+                for sec, v in e.items():
                     total[sec] = total.get(sec, 0) + v
-                if any(estimate(con, a_, b_, ref).values()):
+                    per_month.setdefault(ym, {})[sec] = v
+                if any(e.values()):
                     est.append(ym)
         m = nxt
-    return total, est
+    return total, est, per_month
+
+
+def compensation(con, lo: date, hi: date) -> int:
+    """Taxes (ПДФО + ВЗ) that masters compensate to the company: the 'Податки' column of the sheet, pro-rated."""
+    total = 0.0
+    for ym in covered_months(con):
+        y, m = map(int, ym.split("-"))
+        ms = date(y, m, 1)
+        nxt = (ms.replace(day=28) + timedelta(days=4)).replace(day=1)
+        a_, b_ = max(ms, lo), min(nxt - timedelta(days=1), hi)
+        if b_ < a_:
+            continue
+        t = con.execute("SELECT COALESCE(SUM(taxes),0) s FROM payroll WHERE month=?", (ym,)).fetchone()["s"]
+        total += t * ((b_ - a_).days + 1) / (nxt - ms).days
+    return int(round(total))

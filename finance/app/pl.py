@@ -13,7 +13,7 @@ owner withdrawals.
 Expenses can be taken by payment date or by the month named in the payment text ("за вересень 2026").
 """
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from . import config, payroll
 from .categorize import norm
@@ -87,6 +87,20 @@ def _group_sum(con, group: str, lo: date, hi: date) -> int:
     return tot
 
 
+def _esv_sum(con, lo: date, hi: date) -> int:
+    """Employer social contribution (ЄСВ) accrued inside [lo, hi] by the month named in the payment text."""
+    q = ("SELECT amount, occurred_at, description, counterparty FROM transactions WHERE deleted_at IS NULL AND kind='expense' "
+         "AND occurred_at BETWEEN ? AND ?")
+    wide_lo, wide_hi = (lo - timedelta(days=75)).isoformat() + "T00:00:00", (hi + timedelta(days=75)).isoformat() + "T23:59:59"
+    tot = 0
+    for t in con.execute(q, (wide_lo, wide_hi)):
+        if not ESV.search(norm(t["description"] + " " + t["counterparty"])):
+            continue
+        if lo <= accrual_date(t["description"], date.fromisoformat(t["occurred_at"][:10])) <= hi:
+            tot += t["amount"]
+    return tot
+
+
 def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     a, b = lo.isoformat() + "T00:00:00", hi.isoformat() + "T23:59:59"
     # ---- revenue from Alteg sales
@@ -110,7 +124,7 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     wide_lo, wide_hi = (lo - timedelta(days=75)).isoformat() + "T00:00:00", (hi + timedelta(days=75)).isoformat() + "T23:59:59"
     other_income, exp, nonpl = {}, {}, {}
     payroll_tax = 0
-    pay, est_months = payroll.for_period(con, lo, hi)
+    pay, est_months, pay_by_month = payroll.for_period(con, lo, hi)
     pay_mode = sum(pay.values()) > 0   # payroll accrual replaces ledger salary payments (avoids double counting)
     esv = pit = paid_payroll = 0
     q = ("SELECT t.kind, t.amount, t.occurred_at, t.description, t.counterparty, c.name cname, COALESCE(c.exclude,0) ex, "
@@ -163,6 +177,26 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
             m = nxt
         if rent_est:
             exp.setdefault("rent", {})["Оренда (оцінка за минулим місяцем)"] = rent_est
+    if pay_mode and est_months:
+        # months not in the sheet yet: ЄСВ is paid in two parts (advance, settlement) -> accrue it at last month's rate
+        covered = payroll.covered_months(con)
+        for ym in est_months:
+            y_, m_ = map(int, ym.split("-"))
+            ms = date(y_, m_, 1)
+            me = (ms.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+            a_, b_ = max(ms, lo), min(me, hi)
+            ref = max((c for c in covered if c < ym), default=None)
+            if not ref:
+                continue
+            ry, rm = map(int, ref.split("-"))
+            rs = date(ry, rm, 1)
+            re_ = (rs.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+            ref_pay = sum((payroll.month_costs(con, ref) or {}).values())
+            ratio = _esv_sum(con, rs, re_) / ref_pay if ref_pay else 0
+            est = int(round(ratio * sum(pay_by_month.get(ym, {}).values())))
+            have = _esv_sum(con, a_, b_)
+            if est > have:
+                esv += est - have
     interest = 0
     for r in con.execute("SELECT amount, description FROM credit_ops WHERE direction='D' AND occurred_at BETWEEN ? AND ?", (a, b)):
         t = norm(r["description"])
@@ -183,9 +217,37 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     days = (hi - lo).days + 1
     return dict(services=services, goods=goods, gift=gift, other_income=other_income, sales=sales, oi=oi, revenue=revenue,
                 exp=exp, payroll_tax=payroll_tax, pay=pay, pay_mode=pay_mode, est_months=est_months, esv=esv, pit=pit,
-                paid_payroll=paid_payroll, cogs=cogs, labour=labour, opex=opex, gross=gross,
+                paid_payroll=paid_payroll, compensated=payroll.compensation(con, lo, hi), cogs=cogs, labour=labour, opex=opex, gross=gross,
                 contribution=contribution, ebitda=ebitda, interest=interest, tax=tax, net=net, nonpl=nonpl,
                 n_pay=n_pay, cash_rev=cash_rev, card_rev=card_rev, days=days, capex=tot("capex"))
+
+
+def _months(lo: date, hi: date):
+    m = lo.replace(day=1)
+    while m <= hi:
+        yield m.strftime("%Y-%m")
+        m = (m.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+
+def close_months(con) -> list[str]:
+    """Freeze the P&L of a month on the 8th of the next one (salary is paid on the 7th) once its payroll sheet is filled."""
+    today = datetime.now(config.KYIV).date()
+    hist = date.fromisoformat(config.HISTORY_START).replace(day=1)
+    m, done = hist, []
+    while True:
+        nxt = (m.replace(day=28) + timedelta(days=4)).replace(day=1)
+        if today < nxt + timedelta(days=7):
+            break
+        ym = m.strftime("%Y-%m")
+        if not con.execute("SELECT 1 FROM pl_closed WHERE month=?", (ym,)).fetchone() and payroll.month_costs(con, ym):
+            c = compute(con, m, nxt - timedelta(days=1), accrual=True)
+            con.execute("INSERT INTO pl_closed(month,closed_at,revenue,cogs,gross,labour,opex,ebitda,interest,tax,net) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                        (ym, today.isoformat(), c["revenue"], c["cogs"], c["gross"], c["labour"], c["opex"], c["ebitda"],
+                         c["interest"], c["tax"], c["net"]))
+            done.append(ym)
+        m = nxt
+    con.commit()
+    return done
 
 
 def _pct(x, base):
@@ -263,7 +325,8 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
         memo.append(("Продано подарункових сертифікатів (зобов'язання, не виручка)", cur["gift"]))
     if cur["pay_mode"]:
         memo.append(("Виплачено зарплати й авансів у обліку (банк + каса), для звірки з нарахованою", cur["paid_payroll"]))
-        memo.append(("ПДФО та військовий збір, сплачені до бюджету (утримуються із зарплати, вже в нарахованій)", cur["pit"]))
+        memo.append(("ПДФО та військовий збір, сплачені компанією до бюджету", cur["pit"]))
+        memo.append(("…з них компенсовано майстрами (колонка «Податки» зарплатної таблиці)", cur["compensated"]))
     if cur["capex"]:
         memo.append(("Обладнання (капітальні витрати, не в P&L)", cur["capex"]))
     for (kind, name), v in sorted(cur["nonpl"].items(), key=lambda x: -x[1]):
@@ -294,6 +357,15 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
         c = compute(con, a_, b_, accrual)
         months.append(dict(label=m.strftime("%Y-%m"), **{k: c[k] for k in ("revenue", "cogs", "gross", "labour", "opex", "ebitda", "interest", "tax", "net")}))
         m = nxt
-    return dict(from_=d_from, to=d_to, prev_from=plo.isoformat(), prev_to=phi.isoformat(), lines=lines, memo=memo, kpis=kpis,
+    today = datetime.now(config.KYIV).date()
+    nxt = (hi.replace(day=28) + timedelta(days=4)).replace(day=1)
+    month_end = hi == nxt - timedelta(days=1)
+    months_cov = all(payroll.month_costs(con, m_) for m_ in _months(lo, hi))
+    pay_day = nxt + timedelta(days=7)  # salary for the month is paid on the 7th of the next one -> report is final on the 8th
+    status = "final" if (month_end and months_cov and today >= pay_day) else "preliminary"
+    why = ("" if status == "final" else
+           (f"зарплата за {hi.strftime('%m.%Y')} виплачується 7 числа, звіт стане остаточним {pay_day.strftime('%d.%m.%Y')}" if month_end and today < pay_day
+            else "період не закінчився або зарплатну таблицю за місяць ще не заповнено: зарплата оцінена за ставками"))
+    return dict(status=status, status_note=why, from_=d_from, to=d_to, prev_from=plo.isoformat(), prev_to=phi.isoformat(), lines=lines, memo=memo, kpis=kpis,
                 split=split, months=months if len(months) > 1 else [], cur=cur, prev_net=prev["net"], prev_revenue=prev["revenue"],
                 accrual=accrual, prev_ok=prev_ok, pay_mode=cur["pay_mode"], est_months=cur["est_months"], empty=(rev == 0 and cur["cogs"] == 0 and cur["labour"] == 0 and cur["opex"] == 0))

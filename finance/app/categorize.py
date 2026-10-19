@@ -34,7 +34,9 @@ def get_or_create_category(con, name: str, kind: str, auto: bool = False) -> int
                        (name, kind, 1 if auto else 0)).lastrowid
 
 
-_LAT = str.maketrans({"i": "і", "I": "І"})
+# banks / users mix Latin look-alike letters into Ukrainian words ("Комiсiя", "cерпень")
+_LAT = str.maketrans({"i": "і", "I": "І", "c": "с", "C": "С", "a": "а", "A": "А", "e": "е", "E": "Е", "o": "о", "O": "О",
+                      "p": "р", "P": "Р", "x": "х", "X": "Х", "y": "у", "H": "Н", "K": "К", "M": "М", "T": "Т", "B": "В"})
 
 
 def _clean(s: str) -> str:

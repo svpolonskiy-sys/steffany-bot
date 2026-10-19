@@ -523,7 +523,7 @@ def _pl_period(request):
     qs = date(today.year, 3 * ((today.month - 1) // 3) + 1, 1)
     presets = {"month": (first, today), "prev_month": (prev_last.replace(day=1), prev_last), "quarter": (qs, today),
                "all": (date.fromisoformat(config.HISTORY_START), today)}
-    pr = q.get("preset") or ("month" if not q.get("date_from") and not q.get("date_to") else "")
+    pr = q.get("preset") or ("prev_month" if not q.get("date_from") and not q.get("date_to") else "")
     if pr in presets:
         a, b = presets[pr]
         return a.isoformat(), b.isoformat(), pr
@@ -544,7 +544,7 @@ def pl_page(request: Request, u=Depends(current_user)):
     acc = request.query_params.get("accrual", "1") == "1"
     return render(request, "pl.html", u, rep=pl.build(get_con(), a, b, acc), d_from=a, d_to=b, preset=pr, accrual=acc,
                   pay_error=get_setting(get_con(), "pay_sync_error", ""),
-                  payroll_months=payroll.covered_months(get_con()), payroll_at=get_setting(get_con(), "payroll_synced_at"),
+                  closed=get_con().execute("SELECT * FROM pl_closed ORDER BY month DESC").fetchall(), payroll_months=payroll.covered_months(get_con()), payroll_at=get_setting(get_con(), "payroll_synced_at"),
                   payroll_err=get_setting(get_con(), "payroll_error", ""), can_payroll=u["role"] in ("owner", "accountant"))
 
 
