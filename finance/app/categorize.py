@@ -66,7 +66,7 @@ def suggest_name(description: str, counterparty: str) -> str:
     return ""
 
 
-def categorize(con, kind: str, description: str, counterparty: str = "", create: bool = True):
+def categorize(con, kind: str, description: str, counterparty: str = "", create: bool = True, own_name: str = ""):
     """Returns category_id (or None for transfers/unknown)."""
     if kind == "transfer":
         return None
@@ -83,7 +83,7 @@ def categorize(con, kind: str, description: str, counterparty: str = "", create:
     if not create:
         return None
     if kind == "expense":
-        name = suggest_name(description, counterparty)
+        name = "" if own_name and norm(own_name) == norm(counterparty) else suggest_name(description, counterparty)
         if name:
             return get_or_create_category(con, name, kind, auto=True)
     return get_or_create_category(con, FALLBACK[kind], kind)
@@ -170,7 +170,7 @@ SEED_RULES = [  # (kind, substring, category, priority)
     ("expense", "заробітн", "Зарплата", 4), ("expense", "з/п", "Зарплата", 4),
     ("expense", "єсв", "Податки", 5), ("expense", "пдфо", "Податки", 5), ("expense", "вз/", "Податки", 5),
     ("expense", "податок", "Податки", 3), ("expense", "єдиний", "Податки", 3),
-    ("expense", "кредитн", "Кредит", 4), ("expense", "компенсація комунал", "Комунальні", 4),
+    ("expense", "кредитн", "Кредит", 4), ("expense", "компенсація ком", "Комунальні", 4),
     ("expense", "комунально", "Комунальні", 3), ("expense", "абразив", "Матеріал в роботу", 2),
     ("expense", "ковпачк", "Матеріал в роботу", 2), ("expense", "гель", "Матеріал в роботу", 2),
     ("expense", "оплата за товар", "Матеріал в роботу", 2),
@@ -179,6 +179,9 @@ SEED_RULES = [  # (kind, substring, category, priority)
     ("expense", "зв'язку", "Мобільний звязок", 3), ("expense", "звязку", "Мобільний звязок", 3),
     ("expense", "живлення", "Обладнання", 3), ("expense", "переказ власних коштів", "Виведення грошей з бізнесу", 3),
     ("expense", "абонен", "Інтернет", 3),
+    ("expense", "комісія за зняття", "Комісія банку", 6), ("expense", "зняття готівки", "Виведення грошей з бізнесу", 4),
+    ("expense", "військовий збір", "Податки", 5), ("expense", "казначейств", "Податки", 4),
+    ("expense", "рко", "Комісія за обслуговування рахунку", 3),
     ("income", "кредитним договором", "Кредит", 4),
 ]
 

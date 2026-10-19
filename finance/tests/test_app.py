@@ -227,3 +227,28 @@ def test_credit_lines_separate_from_cash(client):
     assert cs["credits"][0]["repaid"] == 70000
     assert reports.balances(main.con)["total"] == 100000  # credit not in cash total
     assert client.get("/credits").status_code == 200 and "5 000,00" in client.get("/").text
+
+
+def test_transfer_between_own_fops_counted_once(client):
+    ids = {}
+    for name, iban in (("ФОП 1", "UAA"), ("ФОП 2", "UAB")):
+        main.con.execute("UPDATE accounts SET iban=?, token_enc=? WHERE name=?", (iban, encrypt("t"), name))
+    main.con.commit()
+
+    class Bank:
+        def get(self, url, **kw):
+            acc = kw["params"].get("acc")
+            if url.endswith("/balance"):
+                return FakeResp({"status": "SUCCESS", "balances": [{"acc": acc, "balanceOut": "0.00"}] if acc else []})
+            base = {"CCY": "UAH", "SUM": "100.00", "OSND": "Оплата за товар", "AUT_MY_NAM": "X",
+                    "DATE_TIME_DAT_OD_TIM_P": "10.10.2026 10:00:00"}
+            if acc == "UAA":
+                return FakeResp({"status": "SUCCESS", "transactions": [dict(base, ID="1", TRANTYPE="D", AUT_CNTR_ACC="UAB")]})
+            return FakeResp({"status": "SUCCESS", "transactions": [dict(base, ID="2", TRANTYPE="C", AUT_CNTR_ACC="UAA")]})
+
+    for name in ("ФОП 1", "ФОП 2"):
+        a = main.con.execute("SELECT * FROM accounts WHERE name=?", (name,)).fetchone()
+        sync.sync_account(main.con, a, session=Bank())
+    rows = main.con.execute("SELECT kind FROM transactions").fetchall()
+    assert [r["kind"] for r in rows] == ["transfer"]
+    assert reports.build(main.con, "2026-10-01", "2026-10-31")["income"] == 0

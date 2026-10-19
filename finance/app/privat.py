@@ -123,4 +123,5 @@ def map_tx(t: dict, acc: str):
         amount=amount, occurred_at=parse_dt(t),
         description=(t.get("OSND") or "").strip(),
         counterparty=(t.get("AUT_CNTR_NAM") or "").strip(),
-        external_id=f"privat:{acc}:{uid}")
+        external_id=f"privat:{acc}:{uid}",
+        cntr_acc=(t.get("AUT_CNTR_ACC") or "").strip(), my_name=(t.get("AUT_MY_NAM") or "").strip())

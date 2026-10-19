@@ -43,14 +43,25 @@ def sync_privat(con, acc, session=None) -> tuple[int, int]:
     session = session or requests
     start = date.fromisoformat(_window_start(acc))
     raw = privat.fetch_transactions(token, acc["iban"], start, date.today(), session=session)
+    own = {r["iban"]: r["id"] for r in con.execute(
+        "SELECT id, iban FROM accounts WHERE active=1 AND kind IN ('fop','card','cash') AND iban!='' AND id!=?",
+        (acc["id"],))}
     added = 0
     for t in raw:
         m = privat.map_tx(t, acc["iban"])
         if not m:
             continue
+        cntr, my_name = m.pop("cntr_acc"), m.pop("my_name")
         if con.execute("SELECT 1 FROM transactions WHERE external_id=?", (m["external_id"],)).fetchone():
             continue
-        cat = categorize(con, m["kind"], m["description"], m["counterparty"])
+        if cntr in own:  # money moved between own accounts: one transfer, booked from the sending side
+            if m["kind"] == "income":
+                continue
+            m["kind"], m["to_account_id"] = "transfer", own[cntr]
+            insert_tx(con, account_id=acc["id"], category_id=None, source="privat", **m)
+            added += 1
+            continue
+        cat = categorize(con, m["kind"], m["description"], m["counterparty"], own_name=my_name)
         insert_tx(con, account_id=acc["id"], category_id=cat, source="privat", **m)
         added += 1
     bal = privat.fetch_balance(token, acc["iban"], session=session)
