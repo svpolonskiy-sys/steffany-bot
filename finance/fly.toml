@@ -1,5 +1,5 @@
 app = "steffany-finance"          # змініть на унікальну назву
-primary_region = "waw"            # Варшава - найближче до України
+primary_region = "fra"            # Франкфурт
 
 [build]
 
