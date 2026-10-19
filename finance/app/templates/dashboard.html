@@ -8,7 +8,7 @@
 {% if a.bank_balance is not none and a.bank_balance!=a.balance %}<br><span class="warn">банк: {{ a.bank_balance|money }}</span>{% endif %}</div></div>{% endfor %}</div>
 <form method="post" action="/sync" style="margin:10px 0"><button class="sec sm">↻ Оновити зараз</button></form>
 {% if review %}<div class="flash">Автоматично розподілено {{ review }} операцій — <a href="/transactions?kind=expense">перевірте категорії</a> та за потреби створіть правила в розділі «Категорії».</div>{% endif %}
-<div class="stats"><div class="card stat"><div class="k">Каса за сьогодні · <a href="/cash">по днях →</a></div><div class="v in">{{ takings.total|money }}</div>
+<div class="stats"><div class="card stat"><div class="k">Каса за сьогодні · <a href="/cash">по днях →</a> · <a href="/cash/detail">детально →</a></div><div class="v in">{{ takings.total|money }}</div>
 <div class="kv"><span>готівка</span><b>{{ takings.cash|money }}</b></div><div class="kv"><span>безготівка</span><b>{{ takings.cashless|money }}</b></div><div class="kv"><span>витрати з каси</span><b class="out">{{ takings.expense|money }}</b></div></div>
 <div class="card stat"><div class="k">Цей місяць (рух грошей на рахунках)</div><div class="v">{{ month.net|money(true) }}</div>
 <div class="kv"><span>надходження</span><b class="in">{{ month.income|money }}</b></div><div class="kv"><span>витрати</span><b class="out">{{ month.expense|money }}</b></div></div></div>

@@ -135,6 +135,51 @@ def daily_cash(con, d_from: str, d_to: str) -> dict:
             "avg_total": (sum(d["total"] for d in out) // len(out)) if out else 0}
 
 
+def takings_detail(con, d_from: str, d_to: str) -> dict:
+    """Takings by master, direction (service category) and service, from Alteg payments."""
+    rows = con.execute("SELECT * FROM alteg_pay WHERE occurred_at BETWEEN ? AND ?",
+                       (d_from + "T00:00:00", d_to + "T23:59:59")).fetchall()
+    total = sum(r["amount"] for r in rows)
+    masters: dict = {}
+    cats: dict = {}
+    for r in rows:
+        key = r["staff_id"] or 0
+        m = masters.setdefault(key, dict(id=key, name=r["staff_name"] or "Без майстра (товари, сертифікати)",
+                                         role=r["staff_role"], total=0, cash=0, cashless=0, n=0, services={}))
+        m["total"] += r["amount"]
+        m[r["method"]] += r["amount"]
+        m["n"] += 1
+        sv = m["services"].setdefault((r["category_title"], r["service_title"]), dict(category=r["category_title"],
+                                                                                       title=r["service_title"], n=0, total=0))
+        sv["n"] += 1
+        sv["total"] += r["amount"]
+        c = cats.setdefault(r["category_title"], dict(title=r["category_title"], n=0, total=0, cash=0, cashless=0))
+        c["n"] += 1
+        c["total"] += r["amount"]
+        c[r["method"]] += r["amount"]
+    ml = sorted(masters.values(), key=lambda m: -m["total"])
+    for m in ml:
+        m["avg"] = m["total"] // m["n"] if m["n"] else 0
+        m["share"] = round(m["total"] * 100 / total, 1) if total else 0
+        m["services"] = sorted(m["services"].values(), key=lambda x: -x["total"])
+    cl = sorted(cats.values(), key=lambda c: -c["total"])
+    for c in cl:
+        c["share"] = round(c["total"] * 100 / total, 1) if total else 0
+    svc: dict = {}
+    for m in ml:
+        for x in m["services"]:
+            e = svc.setdefault((x["category"], x["title"]), dict(category=x["category"], title=x["title"], n=0, total=0))
+            e["n"] += x["n"]
+            e["total"] += x["total"]
+    sl = sorted(svc.values(), key=lambda x: -x["total"])
+    for x in sl:
+        x["avg"] = x["total"] // x["n"] if x["n"] else 0
+    return {"from": d_from, "to": d_to, "total": total, "n": len(rows),
+            "cash": sum(r["amount"] for r in rows if r["method"] == "cash"),
+            "cashless": sum(r["amount"] for r in rows if r["method"] == "cashless"),
+            "avg": total // len(rows) if rows else 0, "masters": ml, "categories": cl, "services": sl}
+
+
 def balances(con) -> dict:
     bal = account_balances(con)
     out = []

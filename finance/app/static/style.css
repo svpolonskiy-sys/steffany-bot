@@ -75,3 +75,6 @@ input,select,textarea{transition:border-color .15s,box-shadow .15s}input:focus,s
 .stat .kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .stat .kv>span{color:var(--mut);font-size:12.5px}.stat .kv>b{font-weight:600}
 .stat .kv.last{border-top:1px solid var(--line);padding-top:5px;margin-top:2px}
+.share{height:100%;border-radius:4px;background:linear-gradient(90deg,#8a5a44,#c08a6e);transform-origin:left;animation:growx .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes growx{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+details>summary{list-style:none}details>summary::-webkit-details-marker{display:none}details[open]>summary{margin-bottom:2px}

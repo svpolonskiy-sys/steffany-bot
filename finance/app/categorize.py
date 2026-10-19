@@ -235,6 +235,9 @@ def migrate(con):
         if not con.execute("SELECT 1 FROM rules WHERE category_id=? AND lower(pattern)=?", (cid, pat)).fetchone():
             add_rule(con, cid, pat, kind, priority=prio)
             apply_rule_to_existing(con, cid, pat, kind)
+    if not con.execute("SELECT 1 FROM settings WHERE key='alteg_pay_v1'").fetchone():
+        con.execute("UPDATE accounts SET last_sync_at=NULL, last_sync_status='' WHERE source='alteg'")
+        con.execute("INSERT INTO settings(key,value) VALUES('alteg_pay_v1','1')")
     if not con.execute("SELECT 1 FROM settings WHERE key='alteg_sales_v1'").fetchone():
         con.execute("UPDATE accounts SET last_sync_at=NULL, last_sync_status='' WHERE source='alteg'")
         con.execute("INSERT INTO settings(key,value) VALUES('alteg_sales_v1','1')")

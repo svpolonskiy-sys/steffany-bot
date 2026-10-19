@@ -140,8 +140,22 @@ class FakeAlteg:
 
     def cash_transactions(self, s, e, account_id=None):
         if account_id == config.ALTEG_CASHLESS_ACCOUNT:
-            return [{"id": 900, "date": "2026-10-19T12:00:00+0400", "amount": 16250, "expense": {"title": "Services rendered"}}]
+            return [{"id": 900, "date": "2026-10-19T12:00:00+0400", "amount": 16250, "record_id": 70,
+                     "sold_item_type": "service", "sold_item_id": 5, "expense": {"title": "Services rendered"}}]
         return self.rows
+
+    def records(self, s, e):
+        return [{"id": 70, "staff": {"id": 9, "name": "Майстер Тест", "specialization": "Перукар"},
+                 "services": [{"id": 5, "title": "Стрижка"}]}]
+
+    def record(self, rid):
+        return None
+
+    def services(self):
+        return [{"id": 5, "title": "Стрижка", "category_id": 1}]
+
+    def service_categories(self):
+        return [{"id": 1, "title": "Перукарня"}]
 
 
 def test_alteg_sync_mapping_and_removal(client):
@@ -169,6 +183,12 @@ def test_alteg_cashless_sales_feed_daily_takings(client):
     d = {x["date"]: x for x in reports.daily_cash(main.con, "2026-10-19", "2026-10-19")["days"]}["2026-10-19"]
     assert d["cashless"] == 1625000 and d["cash"] == 88400 and d["total"] == 1713400
     assert main.con.execute("SELECT COUNT(*) FROM transactions WHERE amount=1625000").fetchone()[0] == 0  # not in ledger
+    det = reports.takings_detail(main.con, "2026-10-19", "2026-10-19")
+    m = {x["name"]: x for x in det["masters"]}
+    assert m["Майстер Тест"]["total"] == 1625000 and det["categories"][0]["title"] in ("Перукарня", "Оплата послуг", "Без напрямку", "Інше")
+    assert det["total"] == det["cash"] + det["cashless"] == 1713400
+    assert client.get("/cash/detail").status_code == 200 and "Майстер Тест" in client.get("/cash/detail?date_from=2026-10-19&date_to=2026-10-19").text
+    assert client.get("/cash/detail?preset=30").status_code == 200
 
 
 def test_window_and_reports(client):

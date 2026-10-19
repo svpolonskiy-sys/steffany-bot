@@ -422,10 +422,12 @@ def credits_page(request: Request, u=Depends(current_user)):
 
 
 # ---------- cash by day ----------
-def _cash_period(request):
+def _cash_period(request, default_preset: str | None = None):
     today = datetime.now(config.KYIV).date()
     q = request.query_params
     pr = q.get("preset")
+    if not pr and default_preset and not q.get("date_from") and not q.get("date_to"):
+        pr = default_preset
     first = today.replace(day=1)
     prev_last = first - timedelta(days=1)
     presets = {"today": (today, today), "yesterday": (today - timedelta(days=1),) * 2,
@@ -449,6 +451,28 @@ def _cash_period(request):
 def cash_page(request: Request, u=Depends(current_user)):
     a, b, pr = _cash_period(request)
     return render(request, "cash.html", u, cash=reports.daily_cash(get_con(), a, b), d_from=a, d_to=b, preset=pr)
+
+
+@app.get("/cash/detail", response_class=HTMLResponse)
+def cash_detail(request: Request, u=Depends(current_user)):
+    a, b, pr = _cash_period(request, "today")
+    return render(request, "cash_detail.html", u, det=reports.takings_detail(get_con(), a, b), d_from=a, d_to=b, preset=pr)
+
+
+@app.get("/api/cash/detail")
+def api_cash_detail(request: Request, _=Depends(api_user)):
+    a, b, _p = _cash_period(request, "today")
+    d = reports.takings_detail(get_con(), a, b)
+    k = lambda v: v / 100
+    return JSONResponse({"from": a, "to": b, "total": k(d["total"]), "cash": k(d["cash"]), "cashless": k(d["cashless"]),
+                         "payments": d["n"],
+                         "masters": [{"name": m["name"], "role": m["role"], "total": k(m["total"]), "cash": k(m["cash"]),
+                                      "cashless": k(m["cashless"]), "payments": m["n"],
+                                      "services": [{"direction": x["category"], "service": x["title"], "count": x["n"],
+                                                    "total": k(x["total"])} for x in m["services"]]} for m in d["masters"]],
+                         "directions": [{"direction": c["title"], "total": k(c["total"]), "payments": c["n"]} for c in d["categories"]],
+                         "services": [{"direction": x["category"], "service": x["title"], "count": x["n"], "total": k(x["total"])}
+                                      for x in d["services"]]})
 
 
 @app.get("/cash/export.xlsx")

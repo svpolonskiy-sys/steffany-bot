@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% block body %}<h1>Каса: майстри, напрямки, послуги</h1>
+<div class="pills">{% for k,t in [('today','Сьогодні'),('yesterday','Вчора'),('7','7 днів'),('30','30 днів'),('month','Цей місяць'),('prev_month','Минулий місяць')] %}<a class="{{ 'on' if preset==k }}" href="?preset={{ k }}">{{ t }}</a>{% endfor %}</div>
+<form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
+<div style="flex:0 0 auto"><button>Показати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/cash?date_from={{ d_from }}&date_to={{ d_to }}">← Каса по днях</a></div></div></form>
+<div class="stats" style="margin-top:12px">
+<div class="card stat"><div class="k">Каса {{ d_from if d_from==d_to else d_from ~ ' — ' ~ d_to }}</div><div class="v in">{{ det.total|money }}</div><div class="s">{{ det.n }} оплат · середній чек {{ det.avg|money }}</div></div>
+<div class="card stat"><div class="k">Структура</div><div class="kv"><span>готівка</span><b>{{ det.cash|money }}</b></div><div class="kv"><span>безготівка</span><b>{{ det.cashless|money }}</b></div></div>
+<div class="card stat"><div class="k">{{ 'Лідер дня' if d_from==d_to else 'Лідер періоду' }}</div>{% if det.masters %}<div class="v" style="font-size:18px;white-space:normal">{{ det.masters[0].name }}</div><div class="s">{{ det.masters[0].total|money }} · {{ det.masters[0].share }}% каси</div>{% else %}<div class="s">немає даних</div>{% endif %}</div></div>
+
+<h2>Каса по майстрах</h2>
+<table><tr><th>Майстер</th><th class="r">Каса</th><th class="r hm">Готівка</th><th class="r hm">Безготівка</th><th class="r">Оплат</th><th class="r hm">Сер. чек</th><th style="width:22%">Частка</th></tr>
+{% for m in det.masters %}<tr><td><b>{{ m.name }}</b>{% if m.role %}<br><span class="mut">{{ m.role }}</span>{% endif %}</td><td class="r num"><b>{{ m.total|money }}</b></td><td class="r num hm">{{ m.cash|money }}</td><td class="r num hm">{{ m.cashless|money }}</td>
+<td class="r">{{ m.n }}</td><td class="r num hm">{{ m.avg|money }}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:7px;border-radius:4px;background:var(--bg)"><div class="share" style="width:{{ m.share }}%"></div></div><span class="mut" style="font-size:12px;min-width:38px">{{ m.share }}%</span></div></td></tr>
+{% else %}<tr><td colspan="7" class="mut">За цей період немає оплат (дані з Alteg оновлюються щогодини з 08:00 до 21:00).</td></tr>{% endfor %}</table>
+
+<h2>Напрямки</h2>
+<table><tr><th>Напрямок</th><th class="r">Каса</th><th class="r hm">Готівка</th><th class="r hm">Безготівка</th><th class="r">Оплат</th><th style="width:22%">Частка</th></tr>
+{% for c in det.categories %}<tr><td>{{ c.title }}</td><td class="r num"><b>{{ c.total|money }}</b></td><td class="r num hm">{{ c.cash|money }}</td><td class="r num hm">{{ c.cashless|money }}</td><td class="r">{{ c.n }}</td>
+<td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:7px;border-radius:4px;background:var(--bg)"><div class="share" style="width:{{ c.share }}%"></div></div><span class="mut" style="font-size:12px;min-width:38px">{{ c.share }}%</span></div></td></tr>{% endfor %}</table>
+
+<h2>Послуги</h2>
+<table><tr><th>Послуга</th><th>Напрямок</th><th class="r">К-сть</th><th class="r hm">Сер. ціна</th><th class="r">Каса</th></tr>
+{% for x in det.services %}<tr><td>{{ x.title }}</td><td class="mut">{{ x.category }}</td><td class="r">{{ x.n }}</td><td class="r num hm">{{ x.avg|money }}</td><td class="r num"><b>{{ x.total|money }}</b></td></tr>{% endfor %}</table>
+
+<h2>Кожен майстер: що саме зробив</h2>
+{% for m in det.masters %}<details class="card" style="margin-bottom:8px"><summary style="cursor:pointer;display:flex;justify-content:space-between;gap:10px"><b>{{ m.name }}</b><span class="num">{{ m.total|money }} · {{ m.n }} оплат</span></summary>
+<table style="margin-top:10px"><tr><th>Послуга</th><th>Напрямок</th><th class="r">К-сть</th><th class="r">Сума</th></tr>{% for x in m.services %}<tr><td>{{ x.title }}</td><td class="mut">{{ x.category }}</td><td class="r">{{ x.n }}</td><td class="r num">{{ x.total|money }}</td></tr>{% endfor %}</table></details>{% endfor %}
+<p class="mut">Дані з Alteg: оплати готівкою (каса) й карткою (безготівка) за днем продажу, з розбивкою за майстром і послугою візиту. «Без майстра» — продаж товарів і сертифікатів, які не прив'язані до візиту.</p>{% endblock %}

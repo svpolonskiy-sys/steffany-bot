@@ -234,16 +234,51 @@ def sync_alteg(con, acc, client=None) -> tuple[int, int]:
 
 
 def sync_cashless_sales(con, client, start: str, end: str):
-    """Card sales registered in Alteg on the sale day. Used ONLY for the daily takings tab: the money itself
-    reaches the FOP account days later and is booked from the bank statement (no double counting)."""
-    rows = client.cash_transactions(start, end, account_id=config.ALTEG_CASHLESS_ACCOUNT)
+    """Alteg payments (cash desk + card) by sale day, with master / service / direction.
+    Cash feeds the ledger separately; card payments here are ONLY for the daily takings and analytics: the
+    money reaches the FOP account days later and is booked from the bank statement (no double counting)."""
+    recs = {r["id"]: r for r in client.records(start, end)}
+    catalog = {x["id"]: x for x in client.services()}
+    cats = {x["id"]: x["title"] for x in client.service_categories()}
+    fetched: dict[int, dict | None] = {}
+    rows = []
+    for method, acc in (("cash", config.ALTEG_CASH_ACCOUNT), ("cashless", config.ALTEG_CASHLESS_ACCOUNT)):
+        for t in client.cash_transactions(start, end, account_id=acc):
+            kop = int(round(float(t.get("amount") or 0) * 100))
+            if kop <= 0:
+                continue
+            rid = t.get("record_id") or 0
+            rec = recs.get(rid)
+            if rid and rec is None:
+                if rid not in fetched:
+                    fetched[rid] = client.record(rid)
+                rec = fetched[rid]
+            title = (t.get("expense") or {}).get("title") or ""
+            itype = t.get("sold_item_type") or ""
+            staff = (rec or {}).get("staff") or {}
+            svc_title, cat_title = "", ""
+            if itype == "service":
+                sid = t.get("sold_item_id")
+                svc = next((x for x in (rec or {}).get("services", []) if x.get("id") == sid), None)
+                cat = catalog.get(sid) or {}
+                svc_title = (svc or {}).get("title") or cat.get("title") or "Послуга"
+                cat_title = cats.get(cat.get("category_id"), "Без напрямку")
+            elif itype == "goods_transaction" or title.lower() == "product sales":
+                svc_title, cat_title = "Продаж товарів", "Товари"
+            elif title.lower() == "gift card sales":
+                svc_title, cat_title = "Подарункові сертифікати", "Сертифікати"
+            else:
+                svc_title, cat_title = title or "Інше", "Інше"
+            rows.append((f"alteg:{t['id']}", alteg.local_dt(t["date"]), kop, method, rid or None, staff.get("id"),
+                         staff.get("name") or "", staff.get("specialization") or "", svc_title, cat_title, itype))
+    con.execute("DELETE FROM alteg_pay WHERE occurred_at >= ?", (start + "T00:00:00",))
     con.execute("DELETE FROM alteg_sales WHERE occurred_at >= ?", (start + "T00:00:00",))
-    for t in rows:
-        kop = int(round(float(t.get("amount") or 0) * 100))
-        if kop <= 0:
-            continue
-        con.execute("INSERT OR REPLACE INTO alteg_sales(external_id,occurred_at,amount,title) VALUES(?,?,?,?)",
-                    (f"alteg:{t['id']}", alteg.local_dt(t["date"]), kop, (t.get("expense") or {}).get("title") or ""))
+    for r in rows:
+        con.execute("INSERT OR REPLACE INTO alteg_pay(external_id,occurred_at,amount,method,record_id,staff_id,staff_name,"
+                    "staff_role,service_title,category_title,item_type) VALUES(?,?,?,?,?,?,?,?,?,?,?)", r)
+        if r[3] == "cashless":
+            con.execute("INSERT OR REPLACE INTO alteg_sales(external_id,occurred_at,amount,title) VALUES(?,?,?,?)",
+                        (r[0], r[1], r[2], r[8]))
 
 
 def sync_account(con, acc, **kw):

@@ -59,6 +59,12 @@ CREATE TABLE IF NOT EXISTS alteg_sales(
   id INTEGER PRIMARY KEY, external_id TEXT UNIQUE NOT NULL, occurred_at TEXT NOT NULL,
   amount INTEGER NOT NULL, title TEXT NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS ix_sales_date ON alteg_sales(occurred_at);
+CREATE TABLE IF NOT EXISTS alteg_pay(
+  id INTEGER PRIMARY KEY, external_id TEXT UNIQUE NOT NULL, occurred_at TEXT NOT NULL,
+  amount INTEGER NOT NULL, method TEXT NOT NULL CHECK(method IN ('cash','cashless')),
+  record_id INTEGER, staff_id INTEGER, staff_name TEXT NOT NULL DEFAULT '', staff_role TEXT NOT NULL DEFAULT '',
+  service_title TEXT NOT NULL DEFAULT '', category_title TEXT NOT NULL DEFAULT '', item_type TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS ix_pay_date ON alteg_pay(occurred_at);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS sync_log(
   id INTEGER PRIMARY KEY, at TEXT NOT NULL, account_id INTEGER, ok INTEGER NOT NULL,
