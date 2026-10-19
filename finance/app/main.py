@@ -420,6 +420,56 @@ def credits_page(request: Request, u=Depends(current_user)):
     return render(request, "credits.html", u, credit=sync.credit_summary(c), ops=ops, repay=repay)
 
 
+# ---------- cash by day ----------
+def _cash_period(request):
+    today = datetime.now(config.KYIV).date()
+    q = request.query_params
+    pr = q.get("preset")
+    first = today.replace(day=1)
+    prev_last = first - timedelta(days=1)
+    presets = {"7": (today - timedelta(days=6), today), "30": (today - timedelta(days=29), today),
+               "month": (first, today), "prev_month": (prev_last.replace(day=1), prev_last)}
+    if pr in presets:
+        a, b = presets[pr]
+        return a.isoformat(), b.isoformat(), pr
+    a = q.get("date_from") or (today - timedelta(days=29)).isoformat()
+    b = q.get("date_to") or today.isoformat()
+    try:
+        da, db = date.fromisoformat(a), date.fromisoformat(b)
+    except ValueError:
+        raise HTTPException(400, "Некоректна дата")
+    if db < da or (db - da).days > 400:
+        raise HTTPException(400, "Період має бути від 1 до 400 днів")
+    return a, b, ("30" if not q.get("date_from") and not q.get("date_to") else "")
+
+
+@app.get("/cash", response_class=HTMLResponse)
+def cash_page(request: Request, u=Depends(current_user)):
+    a, b, pr = _cash_period(request)
+    return render(request, "cash.html", u, cash=reports.daily_cash(get_con(), a, b), d_from=a, d_to=b, preset=pr)
+
+
+@app.get("/cash/export.xlsx")
+def cash_xlsx(request: Request, u=Depends(current_user)):
+    from openpyxl import Workbook
+    a, b, _ = _cash_period(request)
+    rep = reports.daily_cash(get_con(), a, b)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Каса по днях"
+    ws.append(["Дата", "Готівка (каса)", "Безготівка (ФОП)", "Інше", "Виручка разом", "Витрати з каси", "Інкасація", "Внесено в касу", "Залишок каси на кінець дня"])
+    for d in rep["days"][::-1]:
+        ws.append([d["date"]] + [reports.uah(d[k]) for k in ("cash", "cashless", "other", "total", "expense", "incasso", "deposit", "closing")])
+    t = rep["totals"]
+    ws.append(["Разом"] + [reports.uah(t[k]) for k in ("cash", "cashless", "other", "total", "expense", "incasso", "deposit")])
+    for col in "ABCDEFGHI":
+        ws.column_dimensions[col].width = 20
+    buf = io.BytesIO()
+    wb.save(buf)
+    return Response(buf.getvalue(), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f"attachment; filename=cash_{a}_{b}.xlsx"})
+
+
 # ---------- reports ----------
 def _period(request):
     today = datetime.now(config.KYIV).date()
@@ -642,6 +692,14 @@ def change_password(request: Request, old: str = Form(...), new: str = Form(...)
 @app.get("/api/balances")
 def api_balances(_=Depends(api_user)):
     return {**reports.balances(get_con()), **sync.credit_summary(get_con())}
+
+
+@app.get("/api/cash")
+def api_cash(request: Request, _=Depends(api_user)):
+    a, b, _p = _cash_period(request)
+    r = reports.daily_cash(get_con(), a, b)
+    return JSONResponse({**r, "days": [{k: (v / 100 if k != "date" else v) for k, v in d.items()} for d in r["days"]],
+                         "totals": {k: v / 100 for k, v in r["totals"].items()}})
 
 
 @app.get("/api/report")

@@ -332,3 +332,22 @@ def test_transfer_button_and_presets(client):
     cash, safe = accid("Каса салон"), accid("Сейф")
     page = client.get(f"/transactions/new?kind=transfer&from_acc={cash}&to_acc={safe}&desc=Інкасація").text
     assert f'<option value="{cash}" selected>' in page and f'<option value="{safe}" selected>' in page
+
+
+def test_cash_by_day(client):
+    cash, safe, fop = accid("Каса салон"), accid("Сейф"), accid("ФОП 1")
+    client.post("/accounts", data={"id": cash, "name": "Каса салон", "kind": "cash", "source": "alteg", "current": "1000", "active": "1"})
+    post = lambda **kw: client.post("/transactions/new", data=kw)
+    post(kind="income", account_id=cash, amount="500", occurred_at="2026-10-18T10:00", description="a")
+    post(kind="income", account_id=fop, amount="700", occurred_at="2026-10-18T12:00", description="b")
+    post(kind="expense", account_id=cash, amount="100", occurred_at="2026-10-19T10:00", description="молоко")
+    post(kind="transfer", account_id=cash, to_account_id=safe, amount="300", occurred_at="2026-10-19T19:00", description="Інкасація")
+    r = reports.daily_cash(main.con, "2026-10-17", "2026-10-19")
+    d = {x["date"]: x for x in r["days"]}
+    assert d["2026-10-18"]["cash"] == 50000 and d["2026-10-18"]["cashless"] == 70000 and d["2026-10-18"]["total"] == 120000
+    assert d["2026-10-19"]["expense"] == 10000 and d["2026-10-19"]["incasso"] == 30000
+    assert r["closing"] == 110000 and d["2026-10-18"]["closing"] == 110000 + 10000 + 30000
+    assert d["2026-10-17"]["closing"] == d["2026-10-18"]["closing"] - 50000
+    assert client.get("/cash").status_code == 200 and client.get("/cash?preset=7").status_code == 200
+    assert client.get("/cash/export.xlsx?date_from=2026-10-01&date_to=2026-10-19").content[:2] == b"PK"
+    assert client.get("/cash?date_from=2026-10-19&date_to=2026-10-01").status_code == 400

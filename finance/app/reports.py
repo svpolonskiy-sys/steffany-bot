@@ -74,6 +74,64 @@ def build(con, d_from: str, d_to: str, account_id: int | None = None) -> dict:
     }
 
 
+def daily_cash(con, d_from: str, d_to: str) -> dict:
+    """Day-by-day takings. Cash desk = the Alteg cash account(s); cashless = income on FOP bank accounts.
+    Revenue excludes categories flagged 'not profit' (credits, deposits). Closing balance of the desk is
+    rebuilt backwards from today's balance so it always matches the dashboard."""
+    from datetime import date as _d, timedelta as _td
+    desk = [r["id"] for r in con.execute("SELECT id FROM accounts WHERE kind='cash' AND source='alteg' AND active=1")]
+    fops = [r["id"] for r in con.execute("SELECT id FROM accounts WHERE kind='fop' AND active=1")]
+    marks = lambda ids: ",".join("?" * len(ids)) or "NULL"
+    start, end = _d.fromisoformat(d_from), _d.fromisoformat(d_to)
+    days = {(start + _td(days=i)).isoformat(): dict(date=(start + _td(days=i)).isoformat(), cash=0, cashless=0,
+                                                       other=0, expense=0, incasso=0, deposit=0, net=0)
+            for i in range((end - start).days + 1)}
+    q = ("SELECT t.*, COALESCE(c.exclude,0) excl FROM transactions t LEFT JOIN categories c ON c.id=t.category_id "
+         "WHERE t.deleted_at IS NULL AND t.occurred_at >= ?")
+    after_net = 0
+    bal_now = account_balances(con)
+    desk_now = sum(bal_now.get(i, 0) for i in desk)
+    for t in con.execute(q, (d_from + "T00:00:00",)):
+        a = t["amount"]
+        net = 0
+        if t["account_id"] in desk:
+            net -= a if t["kind"] in ("expense", "transfer") else -a
+        if t["kind"] == "transfer" and t["to_account_id"] in desk:
+            net += a
+        day = t["occurred_at"][:10]
+        if day > d_to:
+            after_net += net
+            continue
+        d = days[day]
+        d["net"] += net
+        if t["kind"] == "income" and not t["excl"]:
+            if t["account_id"] in desk:
+                d["cash"] += a
+            elif t["account_id"] in fops:
+                d["cashless"] += a
+            else:
+                d["other"] += a
+        elif t["kind"] == "expense" and t["account_id"] in desk:
+            d["expense"] += a
+        elif t["kind"] == "transfer":
+            if t["account_id"] in desk and t["to_account_id"] not in desk:
+                d["incasso"] += a
+            elif t["to_account_id"] in desk and t["account_id"] not in desk:
+                d["deposit"] += a
+    close = desk_now - after_net
+    out = []
+    for key in sorted(days, reverse=True):
+        d = days[key]
+        d["total"] = d["cash"] + d["cashless"] + d["other"]
+        d["closing"] = close
+        close -= d["net"]
+        out.append(d)
+    keys = ("cash", "cashless", "other", "total", "expense", "incasso", "deposit")
+    return {"from": d_from, "to": d_to, "days": out, "totals": {k: sum(d[k] for d in out) for k in keys},
+            "opening": close, "closing": out[0]["closing"] if out else desk_now,
+            "avg_total": (sum(d["total"] for d in out) // len(out)) if out else 0}
+
+
 def balances(con) -> dict:
     bal = account_balances(con)
     out = []

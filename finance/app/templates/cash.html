@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block body %}<h1>Каса по днях</h1>
+<div class="pills">{% for k,t in [('7','7 днів'),('30','30 днів'),('month','Цей місяць'),('prev_month','Минулий місяць')] %}<a class="{{ 'on' if preset==k }}" href="?preset={{ k }}">{{ t }}</a>{% endfor %}</div>
+<form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
+<div style="flex:0 0 auto"><button>Показати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/cash/export.xlsx?date_from={{ d_from }}&date_to={{ d_to }}">Excel ↓</a></div></div></form>
+<div class="grid" style="margin-top:12px">
+<div class="card"><div class="lbl">Виручка за період</div><div class="big num">{{ cash.totals.total|money }}</div><div class="lbl">у середньому {{ cash.avg_total|money }} на день</div></div>
+<div class="card"><div class="lbl">Готівка / безготівка</div><div class="num"><b>{{ cash.totals.cash|money }}</b></div><div class="num">{{ cash.totals.cashless|money }}</div></div>
+<div class="card"><div class="lbl">Витрати з каси · інкасація</div><div class="num out"><b>{{ cash.totals.expense|money }}</b></div><div class="num">{{ cash.totals.incasso|money }}</div></div>
+<div class="card"><div class="lbl">Залишок каси: початок → кінець</div><div class="num">{{ cash.opening|money }} →</div><div class="num"><b>{{ cash.closing|money }}</b></div></div></div>
+{% set mx = (cash.days|map(attribute='total')|max) if cash.days else 0 %}
+<h2>Виручка по днях</h2><div class="card" style="padding:12px 12px 4px"><div style="display:flex;align-items:flex-end;gap:3px;height:140px">
+{% for d in cash.days|reverse %}<div title="{{ d.date }}: готівка {{ d.cash|money }}, безготівка {{ d.cashless|money }}" style="flex:1;min-width:3px;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+{% if mx %}<div style="height:{{ (d.cashless*100/mx)|round(1) }}%;background:#8a5a44;border-radius:2px 2px 0 0;min-height:{{ 1 if d.cashless else 0 }}px"></div><div style="height:{{ (d.cash*100/mx)|round(1) }}%;background:var(--in);min-height:{{ 1 if d.cash else 0 }}px"></div>{% endif %}</div>{% endfor %}</div>
+<p class="lbl" style="margin:8px 0"><span style="color:var(--in)">■</span> готівка (каса) &nbsp; <span style="color:#8a5a44">■</span> безготівка (ФОП) &nbsp; · {{ cash.days|last|attr('date') if cash.days }} — {{ cash.days|first|attr('date') if cash.days }}</p></div>
+<h2>По днях</h2>
+<table><tr><th>Дата</th><th class="r">Готівка</th><th class="r">Безготівка</th><th class="r">Разом</th><th class="r">Витрати з каси</th><th class="r">Інкасація</th><th class="r">Залишок каси</th></tr>
+{% for d in cash.days %}<tr class="{{ '' if d.total or d.expense or d.incasso else 'mut' }}"><td class="num">{{ d.date }}</td><td class="r num">{{ d.cash|money if d.cash else '—' }}</td><td class="r num">{{ d.cashless|money if d.cashless else '—' }}</td>
+<td class="r num"><b>{{ d.total|money if d.total else '—' }}</b></td><td class="r num out">{{ d.expense|money if d.expense else '—' }}</td><td class="r num">{{ d.incasso|money if d.incasso else '—' }}</td><td class="r num">{{ d.closing|money }}</td></tr>{% endfor %}
+<tr><td><b>Разом</b></td><td class="r num"><b>{{ cash.totals.cash|money }}</b></td><td class="r num"><b>{{ cash.totals.cashless|money }}</b></td><td class="r num"><b>{{ cash.totals.total|money }}</b></td><td class="r num out"><b>{{ cash.totals.expense|money }}</b></td><td class="r num"><b>{{ cash.totals.incasso|money }}</b></td><td></td></tr></table>
+<p class="mut">Готівка — надходження в «Каса салон» з Alteg. Безготівка — надходження на рахунки ФОП (банк зараховує з терміналів із затримкою в 1–2 дні). Кредити й застава у виручку не входять. Залишок каси — на кінець дня, після витрат та інкасацій.</p>{% endblock %}
