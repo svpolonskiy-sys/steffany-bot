@@ -1,7 +1,7 @@
 <!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{% block title %}Фінанси{% endblock %} · Steffany</title><link rel="stylesheet" href="/static/style.css"></head><body>
 {% if user %}<nav><div class="nv"><a class="b" href="/">Steffany · Фінанси</a>
-{% for href,t in [('/','Огляд'),('/cash','Каса'),('/transactions','Операції'),('/reports','Звіти'),('/pl','P&L'),('/credits','Кредити'),('/categories','Категорії'),('/accounts','Рахунки')] %}
+{% for href,t in [('/','Огляд'),('/cash','Каса'),('/transactions','Операції'),('/reports','Звіти'),('/pl','P&L'),('/payroll','Зарплата'),('/credits','Кредити'),('/categories','Категорії'),('/accounts','Рахунки')] %}
 <a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}</a>{% endfor %}
 {% if user.role=='owner' %}<a class="l {{ 'on' if request.url.path=='/users' }}" href="/users">Користувачі</a>{% endif %}
 <span class="sp"></span><span class="who">{{ user.name }} · {{ ROLES[user.role] }}</span>

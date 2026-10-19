@@ -548,6 +548,64 @@ def pl_page(request: Request, u=Depends(current_user)):
                   payroll_err=get_setting(get_con(), "payroll_error", ""), can_payroll=u["role"] in ("owner", "accountant"))
 
 
+def _payroll_month(request):
+    q = request.query_params.get("month")
+    today = datetime.now(config.KYIV).date()
+    if q and len(q) == 7:
+        return q
+    return (today.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+
+
+@app.get("/payroll", response_class=HTMLResponse)
+def payroll_page(request: Request, u=Depends(current_user)):
+    c = get_con()
+    ym = _payroll_month(request)
+    y, m = map(int, ym.split("-"))
+    ms = date(y, m, 1)
+    nxt = (ms.replace(day=28) + timedelta(days=4)).replace(day=1)
+    plan, rec = payroll.payment_plan(c, ym), payroll.payments_recorded(c, ym)
+    costs = payroll.month_costs(c, ym)
+    acc = c.execute("SELECT id,name FROM accounts WHERE kind='cash' AND active=1 ORDER BY sort,id").fetchall()
+    lo, hi = ms, nxt - timedelta(days=1)
+    esv = pl._esv_sum(c, lo, hi)
+    unrecorded = max(plan["cash"] - rec["cash"], 0)
+    months = sorted(payroll.covered_months(c), reverse=True)
+    return render(request, "payroll.html", u, ym=ym, plan=plan, rec=rec, costs=costs, esv=esv, unrecorded=unrecorded, months=months,
+                  accounts=acc, pay_date=(nxt + timedelta(days=6)).isoformat(), can_record=u["role"] in ("owner", "accountant"),
+                  order=payroll.SECTION_ORDER, month_name=ms.strftime("%m.%Y"))
+
+
+@app.post("/payroll/record-cash")
+async def payroll_record_cash(request: Request, u=Depends(staff_cat)):
+    """Books the cash part of a month's payroll (paid on the 7th from the safe / cash desk). Today's real balances already
+    include this payout, so the opening balance is raised by the same amount: balances stay as they are, history gets right."""
+    form = await request.form()
+    month, pay_date = form.get("month", ""), form.get("pay_date", "")
+    c = get_con()
+    cat_id = cat.get_or_create_category(c, "Зарплата", "expense")
+    marker = f"Виплата ЗП за {month} готівкою (за зарплатною таблицею)"
+    done, skipped = 0, 0
+    with lock():
+        for key, val in form.multi_items():
+            if not key.startswith("amt_") or not str(val).strip():
+                continue
+            aid = int(key[4:])
+            acc = c.execute("SELECT * FROM accounts WHERE id=? AND kind='cash'", (aid,)).fetchone()
+            if not acc:
+                continue
+            if c.execute("SELECT 1 FROM transactions WHERE account_id=? AND description=? AND deleted_at IS NULL", (aid, marker)).fetchone():
+                skipped += 1
+                continue
+            amt = parse_amount(str(val))
+            insert_tx(c, account_id=aid, kind="expense", amount=amt, occurred_at=parse_dt(pay_date + "T10:00"), description=marker,
+                      category_id=cat_id, source="manual", user_id=u["id"])
+            c.execute("UPDATE accounts SET opening_balance=opening_balance+? WHERE id=?", (amt, aid))
+            done += 1
+        c.commit()
+    flash(request, f"Записано виплат: {done}" + (f"; пропущено (вже записано): {skipped}" if skipped else "") + ". Поточні залишки не змінились.")
+    return RedirectResponse(f"/payroll?month={month}", status_code=303)
+
+
 @app.post("/payroll/sync")
 def payroll_sync(request: Request, u=Depends(staff_cat)):
     try:

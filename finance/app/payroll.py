@@ -88,7 +88,10 @@ def parse(content: bytes, default_year: int | None = None) -> dict[str, list[dic
                 num = lambda k: float(row[hdr[k]] or 0) if k in hdr and hdr[k] < len(row) and isinstance(row[hdr[k]], (int, float)) else 0.0
                 rows.append(dict(section=section, name=name, gross=gross, vacation=vac, sick=sick, fines=abs(fines),
                                  taxes=get("податки"), sales=get("каса за місяць"), hours=num("відпрац. годин"),
-                                 shifts=num("відпрац. змін"), rate=get("ставка за годину"), retail=get("сума продажів")))
+                                 shifts=num("відпрац. змін"), rate=get("ставка за годину"), retail=get("сума продажів"),
+                                 adv_card=get("аванс ф-1"), sal_card=get("зп 1-форма"),
+                                 adv_cash=get("аванс готівка") or (get("аванс") if section == "Інші працівники" else 0),
+                                 to_pay=get("до виплати")))
         if rows:
             out[ym] = rows
     return out
@@ -102,10 +105,10 @@ def sync(con, session=requests) -> list[str]:
     for ym, rows in data.items():
         con.execute("DELETE FROM payroll WHERE month=?", (ym,))
         for r in rows:
-            con.execute("INSERT INTO payroll(month,section,name,gross,vacation,sick,fines,taxes,sales,hours,shifts,rate,retail) "
-                        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            con.execute("INSERT INTO payroll(month,section,name,gross,vacation,sick,fines,taxes,sales,hours,shifts,rate,retail,"
+                        "adv_card,sal_card,adv_cash,to_pay) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (ym, r["section"], r["name"], r["gross"], r["vacation"], r["sick"], r["fines"], r["taxes"], r["sales"],
-                         r["hours"], r["shifts"], r["rate"], r["retail"]))
+                         r["hours"], r["shifts"], r["rate"], r["retail"], r["adv_card"], r["sal_card"], r["adv_cash"], r["to_pay"]))
     set_setting(con, "payroll_synced_at", now_local())
     set_setting(con, "payroll_error", "")
     con.commit()
@@ -252,3 +255,43 @@ def compensation(con, lo: date, hi: date) -> int:
         t = con.execute("SELECT COALESCE(SUM(taxes),0) s FROM payroll WHERE month=?", (ym,)).fetchone()["s"]
         total += t * ((b_ - a_).days + 1) / (nxt - ms).days
     return int(round(total))
+
+
+def payment_plan(con, ym: str) -> dict:
+    """What the sheet says is paid in each wave for the month worked: card advance (~15-19th of the month),
+    card salary 'Ф-1' (~1-3rd of next month), cash part from safe/cash desk (7th of next month)."""
+    r = con.execute("SELECT COALESCE(SUM(adv_card),0) a, COALESCE(SUM(sal_card),0) f, COALESCE(SUM(adv_cash),0) c, "
+                    "COALESCE(SUM(to_pay),0) p, COALESCE(SUM(gross+vacation+sick-fines),0) cost, COALESCE(SUM(taxes),0) tx "
+                    "FROM payroll WHERE month=?", (ym,)).fetchone()
+    return dict(adv_card=r["a"], sal_card=r["f"], cash=r["c"] + r["p"], cost=r["cost"], compensation=r["tx"])
+
+
+def payments_recorded(con, ym: str) -> dict:
+    """Ledger payments tied to the month they pay for (not the month they were made in)."""
+    from .categorize import norm as _n
+    from .pl import accrual_date, group_of
+    y, m = map(int, ym.split("-"))
+    ms = date(y, m, 1)
+    nxt = (ms.replace(day=28) + timedelta(days=4)).replace(day=1)
+    out = {"adv_card": 0, "sal_card": 0, "cash": 0, "items": []}
+    q = ("SELECT t.id, t.amount, t.occurred_at, t.description, a.kind akind, a.name aname, COALESCE(c.name,'') cname, "
+         "COALESCE(c.exclude,0) ex, COALESCE(c.pl_group,'') pg FROM transactions t JOIN accounts a ON a.id=t.account_id "
+         "LEFT JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL AND t.kind='expense' AND t.occurred_at BETWEEN ? AND ?")
+    for t in con.execute(q, (ms.isoformat() + "T00:00:00", (nxt + timedelta(days=12)).isoformat() + "T23:59:59")):
+        if group_of(t["cname"] or "Інші витрати", "expense", t["ex"], t["pg"]) != "labour":
+            continue
+        paid = date.fromisoformat(t["occurred_at"][:10])
+        txt = _n(t["description"])
+        if t["akind"] == "fop":
+            if accrual_date(t["description"], paid).strftime("%Y-%m") != ym:
+                continue
+            kind = "adv_card" if "аванс" in txt else "sal_card"
+        elif t["akind"] == "cash":
+            if not (ms <= paid <= nxt + timedelta(days=12)):
+                continue
+            kind = "cash"
+        else:
+            continue
+        out[kind] += t["amount"]
+        out["items"].append(dict(kind=kind, at=t["occurred_at"][:10], amount=t["amount"], account=t["aname"], text=t["description"][:60]))
+    return out

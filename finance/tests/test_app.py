@@ -543,3 +543,33 @@ def test_admin_and_manager_rules_estimate(client):
     pool = 0.04 * 100000000
     retail = (1000000 * 0.10 / 100000000) * 100000000
     assert abs(e["Адміністратори"] - (hourly + pool + retail)) < 5
+
+
+def test_payroll_waves_tied_to_month_worked(client):
+    from app import payroll
+    ins = lambda sec, name, **kw: main.con.execute(
+        "INSERT INTO payroll(month,section,name,gross,adv_card,sal_card,adv_cash,to_pay) VALUES('2026-09',?,?,?,?,?,?,?)",
+        (sec, name, kw.get("gross", 0), kw.get("adv_card", 0), kw.get("sal_card", 0), kw.get("adv_cash", 0), kw.get("to_pay", 0)))
+    ins("Перукарі", "М1", gross=10000000, adv_card=1000000, sal_card=2000000, adv_cash=500000, to_pay=6500000)
+    main.con.commit()
+    fop, cash, safe = accid("ФОП 1"), accid("Каса салон"), accid("Сейф")
+    zp = cat.get_or_create_category(main.con, "Зарплата", "expense")
+    post = lambda **kw: client.post("/transactions/new", data=dict(category_id=zp, **kw))
+    post(kind="expense", account_id=fop, amount="5000", occurred_at="2026-09-01T10:00", description="Заробітна плата за серпень 2026")   # August: not September's
+    post(kind="expense", account_id=fop, amount="10000", occurred_at="2026-09-16T10:00", description="Аванс заробітної плати за вересень 2026")
+    post(kind="expense", account_id=fop, amount="20000", occurred_at="2026-10-01T10:00", description="Заробітна плата за вересень 2026")
+    post(kind="expense", account_id=cash, amount="1000", occurred_at="2026-10-07T10:00", description="зп")
+    plan, rec = payroll.payment_plan(main.con, "2026-09"), payroll.payments_recorded(main.con, "2026-09")
+    assert (plan["adv_card"], plan["sal_card"], plan["cash"]) == (1000000, 2000000, 7000000)
+    assert (rec["adv_card"], rec["sal_card"], rec["cash"]) == (1000000, 2000000, 100000)   # Sept 1 payment belongs to August
+    assert client.get("/payroll?month=2026-09").status_code == 200
+    # recording the cash payout keeps today's balances unchanged
+    from app.db import account_balances
+    before = account_balances(main.con)
+    r = client.post("/payroll/record-cash", data={"month": "2026-09", "pay_date": "2026-10-07", f"amt_{safe}": "40000", f"amt_{cash}": "29000"}, follow_redirects=False)
+    assert r.status_code == 303
+    after = account_balances(main.con)
+    assert after[safe] == before[safe] and after[cash] == before[cash]
+    assert main.con.execute("SELECT COUNT(*) FROM transactions WHERE description LIKE 'Виплата ЗП за 2026-09%'").fetchone()[0] == 2
+    client.post("/payroll/record-cash", data={"month": "2026-09", "pay_date": "2026-10-07", f"amt_{safe}": "40000"})
+    assert main.con.execute("SELECT COUNT(*) FROM transactions WHERE description LIKE 'Виплата ЗП за 2026-09%'").fetchone()[0] == 2   # no double booking
