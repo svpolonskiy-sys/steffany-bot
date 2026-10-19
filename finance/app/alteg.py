@@ -70,7 +70,7 @@ class AltegClient:
                 raise AltegError("Alteg: забагато сторінок")
 
 
-def _paged(self, path: str, **params):
+def _paged(self, path: str, slim=None, **params):
     if not self.user_token:
         self.login()
     out, page = [], 1
@@ -80,14 +80,21 @@ def _paged(self, path: str, **params):
         if not d.get("success"):
             raise AltegError(f"Alteg {path}: {d.get('meta', {}).get('message', r.status_code)}")
         rows = d.get("data") or []
-        out += rows
+        out += [slim(x) for x in rows] if slim else rows
         if len(rows) < 200 or page > 100:
             return out
         page += 1
 
 
+def _slim_record(r: dict) -> dict:
+    """Keep only what the takings analytics needs (full records carry client data and are large)."""
+    st = r.get("staff") or {}
+    return {"id": r.get("id"), "staff": {"id": st.get("id"), "name": st.get("name"), "specialization": st.get("specialization")},
+            "services": [{"id": x.get("id"), "title": x.get("title")} for x in r.get("services") or []]}
+
+
 def _records(self, start: str, end: str):
-    return _paged(self, f"/records/{config.ALTEG_LOCATION}", start_date=start, end_date=end)
+    return _paged(self, f"/records/{config.ALTEG_LOCATION}", slim=_slim_record, start_date=start, end_date=end)
 
 
 def _record(self, rid: int):
@@ -97,7 +104,7 @@ def _record(self, rid: int):
         d = self._call(self.s.get, f"{API}/record/{config.ALTEG_LOCATION}/{rid}", headers=self._h(), timeout=40).json()
     except AltegError:
         return None
-    return d.get("data") if d.get("success") else None
+    return _slim_record(d["data"]) if d.get("success") and d.get("data") else None
 
 
 AltegClient.records = _records
