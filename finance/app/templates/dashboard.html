@@ -13,7 +13,7 @@
 <div class="sub">погашено: <b class="in">{{ k.repaid|money }}</b>{% if k.last_payment %}<br>останній платіж {{ k.last_payment|dt }}{% endif %}</div></div>{% endfor %}</div>
 <p><a href="/credits">Деталі кредитів →</a></p>{% endif %}
 {% if review %}<div class="flash">Автоматично розподілено {{ review }} операцій — <a href="/transactions?kind=expense">перевірте категорії</a> та за потреби створіть правила в розділі «Категорії».</div>{% endif %}
-<div class="grid"><div class="card"><div class="lbl">Сьогодні</div><div class="num in">+ {{ day.income|money }}</div><div class="num out">− {{ day.expense|money }}</div></div>
+<div class="grid"><div class="card"><div class="lbl">Каса за сьогодні · <a href="/cash">по днях →</a></div><div class="big num in">{{ takings.total|money }}</div><div class="lbl">готівка {{ takings.cash|money }} · безготівка {{ takings.cashless|money }}<br>витрати з каси {{ takings.expense|money }}</div></div>
 <div class="card"><div class="lbl">Цей місяць</div><div class="num in">+ {{ month.income|money }}</div><div class="num out">− {{ month.expense|money }}</div><div class="num"><b>Результат: {{ month.net|money(true) }}</b></div></div></div>
 <h2>Останні операції</h2>{% include "tx_table.html" %}
 <p><a href="/transactions">Усі операції →</a></p>{% endblock %}

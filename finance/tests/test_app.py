@@ -138,7 +138,9 @@ class FakeAlteg:
     def __init__(self, rows):
         self.rows = rows
 
-    def cash_transactions(self, s, e):
+    def cash_transactions(self, s, e, account_id=None):
+        if account_id == config.ALTEG_CASHLESS_ACCOUNT:
+            return [{"id": 900, "date": "2026-10-19T12:00:00+0400", "amount": 16250, "expense": {"title": "Services rendered"}}]
         return self.rows
 
 
@@ -159,6 +161,14 @@ def test_alteg_sync_mapping_and_removal(client):
     a, u = sync.sync_alteg(main.con, acc, client=FakeAlteg(rows))
     assert a == 0 and u == 2
     assert account_balances(main.con)[acc["id"]] == 65000 - 336000 - 6100000
+
+
+def test_alteg_cashless_sales_feed_daily_takings(client):
+    acc = main.con.execute("SELECT * FROM accounts WHERE name='Каса салон'").fetchone()
+    sync.sync_alteg(main.con, acc, client=FakeAlteg(ALTEG_ROWS))
+    d = {x["date"]: x for x in reports.daily_cash(main.con, "2026-10-19", "2026-10-19")["days"]}["2026-10-19"]
+    assert d["cashless"] == 1625000 and d["cash"] == 88400 and d["total"] == 1713400
+    assert main.con.execute("SELECT COUNT(*) FROM transactions WHERE amount=1625000").fetchone()[0] == 0  # not in ledger
 
 
 def test_window_and_reports(client):
@@ -340,11 +350,13 @@ def test_cash_by_day(client):
     post = lambda **kw: client.post("/transactions/new", data=kw)
     post(kind="income", account_id=cash, amount="500", occurred_at="2026-10-18T10:00", description="a")
     post(kind="income", account_id=fop, amount="700", occurred_at="2026-10-18T12:00", description="b")
+    main.con.execute("INSERT INTO alteg_sales(external_id,occurred_at,amount,title) VALUES('s1','2026-10-18T13:00:00',30000,'x')")
+    main.con.commit()
     post(kind="expense", account_id=cash, amount="100", occurred_at="2026-10-19T10:00", description="молоко")
     post(kind="transfer", account_id=cash, to_account_id=safe, amount="300", occurred_at="2026-10-19T19:00", description="Інкасація")
     r = reports.daily_cash(main.con, "2026-10-17", "2026-10-19")
     d = {x["date"]: x for x in r["days"]}
-    assert d["2026-10-18"]["cash"] == 50000 and d["2026-10-18"]["cashless"] == 70000 and d["2026-10-18"]["total"] == 120000
+    assert d["2026-10-18"]["cash"] == 50000 and d["2026-10-18"]["cashless"] == 30000 and d["2026-10-18"]["total"] == 80000 and d["2026-10-18"]["bank"] == 70000
     assert d["2026-10-19"]["expense"] == 10000 and d["2026-10-19"]["incasso"] == 30000
     assert r["closing"] == 110000 and d["2026-10-18"]["closing"] == 110000 + 10000 + 30000
     assert d["2026-10-17"]["closing"] == d["2026-10-18"]["closing"] - 50000

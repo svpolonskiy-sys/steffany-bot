@@ -15,6 +15,7 @@ ALTEG_LOGIN = os.environ.get("ALTEG_LOGIN", "")
 ALTEG_PASSWORD = os.environ.get("ALTEG_PASSWORD", "")
 ALTEG_LOCATION = os.environ.get("ALTEG_LOCATION", "751396")  # Київська 77
 ALTEG_CASH_ACCOUNT = int(os.environ.get("ALTEG_CASH_ACCOUNT", "1526207"))  # "Основна каса"
+ALTEG_CASHLESS_ACCOUNT = int(os.environ.get("ALTEG_CASHLESS_ACCOUNT", "1526208"))  # "Розрахунковий рахунок" (card sales, daily takings only)
 
 OWNER_EMAIL = os.environ.get("OWNER_EMAIL", "")
 OWNER_PASSWORD = os.environ.get("OWNER_PASSWORD", "")

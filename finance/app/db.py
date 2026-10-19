@@ -55,6 +55,10 @@ CREATE TABLE IF NOT EXISTS credit_ops(
   direction TEXT NOT NULL CHECK(direction IN ('C','D')), amount INTEGER NOT NULL,
   description TEXT NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS ix_credit_acc ON credit_ops(account_id, occurred_at);
+CREATE TABLE IF NOT EXISTS alteg_sales(
+  id INTEGER PRIMARY KEY, external_id TEXT UNIQUE NOT NULL, occurred_at TEXT NOT NULL,
+  amount INTEGER NOT NULL, title TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS ix_sales_date ON alteg_sales(occurred_at);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS sync_log(
   id INTEGER PRIMARY KEY, at TEXT NOT NULL, account_id INTEGER, ok INTEGER NOT NULL,

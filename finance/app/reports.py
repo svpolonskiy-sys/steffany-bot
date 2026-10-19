@@ -84,7 +84,7 @@ def daily_cash(con, d_from: str, d_to: str) -> dict:
     marks = lambda ids: ",".join("?" * len(ids)) or "NULL"
     start, end = _d.fromisoformat(d_from), _d.fromisoformat(d_to)
     days = {(start + _td(days=i)).isoformat(): dict(date=(start + _td(days=i)).isoformat(), cash=0, cashless=0,
-                                                       other=0, expense=0, incasso=0, deposit=0, net=0)
+                                                       other=0, expense=0, incasso=0, deposit=0, net=0, bank=0)
             for i in range((end - start).days + 1)}
     q = ("SELECT t.*, COALESCE(c.exclude,0) excl FROM transactions t LEFT JOIN categories c ON c.id=t.category_id "
          "WHERE t.deleted_at IS NULL AND t.occurred_at >= ?")
@@ -108,7 +108,7 @@ def daily_cash(con, d_from: str, d_to: str) -> dict:
             if t["account_id"] in desk:
                 d["cash"] += a
             elif t["account_id"] in fops:
-                d["cashless"] += a
+                d["bank"] += a  # bank credit date, informational only (settlement lags the sale)
             else:
                 d["other"] += a
         elif t["kind"] == "expense" and t["account_id"] in desk:
@@ -118,6 +118,9 @@ def daily_cash(con, d_from: str, d_to: str) -> dict:
                 d["incasso"] += a
             elif t["to_account_id"] in desk and t["account_id"] not in desk:
                 d["deposit"] += a
+    for r in con.execute("SELECT substr(occurred_at,1,10) day, SUM(amount) s FROM alteg_sales "
+                         "WHERE occurred_at BETWEEN ? AND ? GROUP BY 1", (d_from + "T00:00:00", d_to + "T23:59:59")):
+        days[r["day"]]["cashless"] += r["s"]
     close = desk_now - after_net
     out = []
     for key in sorted(days, reverse=True):
@@ -126,7 +129,7 @@ def daily_cash(con, d_from: str, d_to: str) -> dict:
         d["closing"] = close
         close -= d["net"]
         out.append(d)
-    keys = ("cash", "cashless", "other", "total", "expense", "incasso", "deposit")
+    keys = ("cash", "cashless", "other", "total", "expense", "incasso", "deposit", "bank")
     return {"from": d_from, "to": d_to, "days": out, "totals": {k: sum(d[k] for d in out) for k in keys},
             "opening": close, "closing": out[0]["closing"] if out else desk_now,
             "avg_total": (sum(d["total"] for d in out) // len(out)) if out else 0}

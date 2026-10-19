@@ -212,6 +212,7 @@ def dashboard(request: Request, u=Depends(current_user)):
     b = reports.balances(c)
     today = datetime.now(config.KYIV).date()
     day = reports.build(c, today.isoformat(), today.isoformat())
+    takings = reports.daily_cash(c, today.isoformat(), today.isoformat())["days"][0]
     month = reports.build(c, today.replace(day=1).isoformat(), today.isoformat())
     recent = c.execute(
         "SELECT t.*, a.name acc, a2.name acc2, c.name cat FROM transactions t JOIN accounts a ON a.id=t.account_id "
@@ -221,7 +222,7 @@ def dashboard(request: Request, u=Depends(current_user)):
         "SELECT COUNT(*) FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL "
         "AND t.user_edited=0 AND (c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))").fetchone()[0]
     return render(request, "dashboard.html", u, categories=lists(c)["categories"], bal=b, day=day, month=month, recent=recent,
-                  credit=sync.credit_summary(c), last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
+                  takings=takings, credit=sync.credit_summary(c), last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
                   in_window=sync.in_work_window())
 
 

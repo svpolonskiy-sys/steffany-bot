@@ -32,13 +32,14 @@ class AltegClient:
             raise AltegError("Alteg: не вдалось увійти (перевірте ключ/логін/пароль)")
         self.user_token = d["data"]["user_token"]
 
-    def cash_transactions(self, start: str, end: str):
+    def cash_transactions(self, start: str, end: str, account_id: int | None = None):
+        account_id = account_id or config.ALTEG_CASH_ACCOUNT
         if not self.user_token:
             self.login()
         out, page = [], 1
         while True:
             r = self.s.get(f"{API}/transactions/{config.ALTEG_LOCATION}", headers=self._h(), timeout=60,
-                           params={"start_date": start, "end_date": end, "account_id": config.ALTEG_CASH_ACCOUNT,
+                           params={"start_date": start, "end_date": end, "account_id": account_id,
                                    "count": 200, "page": page})
             d = r.json()
             if not d.get("success"):

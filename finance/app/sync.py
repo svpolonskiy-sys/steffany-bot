@@ -228,8 +228,22 @@ def sync_alteg(con, acc, client=None) -> tuple[int, int]:
         if ex["external_id"] not in seen:
             update_tx(con, ex["id"], None, note="видалено в Alteg", user_edit=False, deleted_at=now_local())
             updated += 1
+    sync_cashless_sales(con, client, start, end)
     con.commit()
     return added, updated
+
+
+def sync_cashless_sales(con, client, start: str, end: str):
+    """Card sales registered in Alteg on the sale day. Used ONLY for the daily takings tab: the money itself
+    reaches the FOP account days later and is booked from the bank statement (no double counting)."""
+    rows = client.cash_transactions(start, end, account_id=config.ALTEG_CASHLESS_ACCOUNT)
+    con.execute("DELETE FROM alteg_sales WHERE occurred_at >= ?", (start + "T00:00:00",))
+    for t in rows:
+        kop = int(round(float(t.get("amount") or 0) * 100))
+        if kop <= 0:
+            continue
+        con.execute("INSERT OR REPLACE INTO alteg_sales(external_id,occurred_at,amount,title) VALUES(?,?,?,?)",
+                    (f"alteg:{t['id']}", alteg.local_dt(t["date"]), kop, (t.get("expense") or {}).get("title") or ""))
 
 
 def sync_account(con, acc, **kw):
