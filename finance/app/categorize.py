@@ -8,7 +8,8 @@ HINTS = [
     ("income", "торгової виручки", "Оплата послуг"),
     ("income", "еквайринг", "Оплата послуг"),
     ("income", "терміналу", "Оплата послуг"),
-    ("income", "pos", "Оплата послуг"),
+    ("income", "кільк тр", "Оплата послуг"),
+    ("income", "cmps", "Оплата послуг"),
     ("expense", "комісія", "Комісія банку"),
     ("expense", "комісію", "Комісія банку"),
     ("expense", "єдиний податок", "Податки"),
@@ -33,8 +34,16 @@ def get_or_create_category(con, name: str, kind: str, auto: bool = False) -> int
                        (name, kind, 1 if auto else 0)).lastrowid
 
 
+_LAT = str.maketrans({"i": "і", "I": "І"})
+
+
 def _clean(s: str) -> str:
     return re.sub(r"\s+", " ", s or "").strip()
+
+
+def norm(s: str) -> str:
+    """Lower-case text for matching; banks write Ukrainian with a Latin 'i' ("Комiсiя")."""
+    return _clean(s).translate(_LAT).lower()
 
 
 def suggest_name(description: str, counterparty: str) -> str:
@@ -51,12 +60,12 @@ def categorize(con, kind: str, description: str, counterparty: str = "", create:
     """Returns category_id (or None for transfers/unknown)."""
     if kind == "transfer":
         return None
-    text = (_clean(description) + " " + _clean(counterparty)).lower()
+    text = norm(description) + " " + norm(counterparty)
     for r in con.execute(
             "SELECT r.* FROM rules r JOIN categories c ON c.id=r.category_id "
             "WHERE c.archived=0 AND r.direction IN ('any',?) ORDER BY r.priority DESC, length(r.pattern) DESC, r.id",
             (kind,)):
-        if r["pattern"].lower() in text:
+        if norm(r["pattern"]) in text:
             return r["category_id"]
     for direction, sub, cat in HINTS:
         if direction == kind and sub in text:
@@ -86,7 +95,7 @@ def apply_rule_to_existing(con, category_id: int, pattern: str, kind: str | None
     """Re-categorise matching transactions that are auto/fallback categorised (never touches
     transactions the user categorised explicitly)."""
     from .db import update_tx
-    p = pattern.lower()
+    p = norm(pattern)
     n = 0
     rows = con.execute(
         "SELECT t.* FROM transactions t LEFT JOIN categories c ON c.id=t.category_id "
@@ -95,7 +104,7 @@ def apply_rule_to_existing(con, category_id: int, pattern: str, kind: str | None
     for t in rows:
         if kind and t["kind"] != kind:
             continue
-        if p in (t["description"] + " " + t["counterparty"]).lower() and t["category_id"] != category_id:
+        if p in norm(t["description"] + " " + t["counterparty"]) and t["category_id"] != category_id:
             update_tx(con, t["id"], user_id, note=f"правило «{pattern}»", user_edit=False, category_id=category_id)
             n += 1
     return n
@@ -114,7 +123,7 @@ def merge_category(con, src_id: int, dst_id: int, user_id=None) -> int:
 
 # Довідник Nomi компанії Steffany (назви збережено як у Nomi)
 SEED_INCOME = ["Інвестиції", "Інші доходи", "Оплата послуг", "Каса за день", "Каса кава", "Суборенда",
-               "Продаж товарів", "Додаткові надходження"]
+               "Продаж товарів", "Додаткові надходження", "Кредит"]
 SEED_EXPENSE = ["Youtube", "Інтернет", "Канцелярія", "Витрати на персонал", "Кредит", "Квіти", "Товар на вітрину",
                 "Мобільний звязок", "Товари одноразового використання", "Інкасація", "Реалізація товару",
                 "Оплата послуг іп телефоніі", "Обладнання", "Програмне забезпечення", "Навчання персоналу",
@@ -146,6 +155,21 @@ SEED_RULES = [  # (kind, substring, category, priority)
     ("expense", "крем", "Матеріал в роботу", 1), ("expense", "препарат", "Матеріал в роботу", 1),
     ("expense", "оплата товару", "Матеріал в роботу", 1),
     ("expense", "комісі", "Комісія банку", 1),
+    ("expense", "обслуговування рахунку", "Комісія за обслуговування рахунку", 4),
+    ("expense", "еквайринг", "Комісія банку", 3),
+    ("expense", "заробітн", "Зарплата", 4), ("expense", "з/п", "Зарплата", 4),
+    ("expense", "єсв", "Податки", 5), ("expense", "пдфо", "Податки", 5), ("expense", "вз/", "Податки", 5),
+    ("expense", "податок", "Податки", 3), ("expense", "єдиний", "Податки", 3),
+    ("expense", "кредитн", "Кредит", 4), ("expense", "компенсація комунал", "Комунальні", 4),
+    ("expense", "комунально", "Комунальні", 3), ("expense", "абразив", "Матеріал в роботу", 2),
+    ("expense", "ковпачк", "Матеріал в роботу", 2), ("expense", "гель", "Матеріал в роботу", 2),
+    ("expense", "оплата за товар", "Матеріал в роботу", 2),
+    ("expense", "лiцензiйна", "Програмне забезпечення", 3), ("expense", "ліцензійна", "Програмне забезпечення", 3),
+    ("expense", "модерація сайту", "Реклама", 3), ("expense", "комунікаційні", "Мобільний звязок", 3),
+    ("expense", "зв'язку", "Мобільний звязок", 3), ("expense", "звязку", "Мобільний звязок", 3),
+    ("expense", "живлення", "Обладнання", 3), ("expense", "переказ власних коштів", "Виведення грошей з бізнесу", 3),
+    ("expense", "абонен", "Інтернет", 3),
+    ("income", "кредитним договором", "Кредит", 4),
 ]
 
 
