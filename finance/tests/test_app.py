@@ -573,3 +573,17 @@ def test_payroll_waves_tied_to_month_worked(client):
     assert main.con.execute("SELECT COUNT(*) FROM transactions WHERE description LIKE 'Виплата ЗП за 2026-09%'").fetchone()[0] == 2
     client.post("/payroll/record-cash", data={"month": "2026-09", "pay_date": "2026-10-07", f"amt_{safe}": "40000"})
     assert main.con.execute("SELECT COUNT(*) FROM transactions WHERE description LIKE 'Виплата ЗП за 2026-09%'").fetchone()[0] == 2   # no double booking
+
+
+def test_cleaners_stay_a_cost_when_payroll_comes_from_sheet(client):
+    from app import pl
+    d = __import__("datetime").date
+    main.con.execute("INSERT INTO payroll(month,section,name,gross) VALUES('2026-09','Перукарі','М1',10000000)")
+    main.con.commit()
+    cash = accid("Каса салон")
+    zp, staff = cat.get_or_create_category(main.con, "Зарплата", "expense"), cat.get_or_create_category(main.con, "Витрати на персонал", "expense")
+    post = lambda **kw: client.post("/transactions/new", data=dict(kind="expense", account_id=cash, occurred_at="2026-09-10T10:00", **kw))
+    post(amount="3000", category_id=zp, description="зп Лисюк")            # in the sheet -> not added twice
+    post(amount="336", category_id=staff, description="Зп прибиральниці")  # not in the sheet -> still a cost
+    c = pl.compute(main.con, d(2026, 9, 1), d(2026, 9, 30))
+    assert c["pay_mode"] and c["labour"] == 10000000 + 33600 and c["paid_payroll"] == 300000

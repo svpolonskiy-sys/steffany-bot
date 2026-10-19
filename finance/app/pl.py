@@ -149,9 +149,9 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
         elif g == "capex":
             exp.setdefault("capex", {})[name] = exp.setdefault("capex", {}).get(name, 0) + amt
         else:
-            if pay_mode and g == "labour":
-                paid_payroll += amt          # cash settlement of payroll accrued above: memo only
-                continue
+            if pay_mode and g == "labour" and name in payroll.SHEET_CATEGORIES:
+                paid_payroll += amt          # settlement of payroll accrued from the sheet: memo only
+                continue                     # (other staff cost, e.g. cleaners, is NOT in the sheet and stays a cost)
             if g == "tax" and is_ptax:
                 if pay_mode:
                     if ESV.search(norm(t["description"] + " " + t["counterparty"])):
@@ -207,7 +207,7 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     oi = sum(other_income.values())
     revenue = sales + oi
     cogs = tot("cogs")
-    labour = (sum(pay.values()) + esv) if pay_mode else (tot("labour") + payroll_tax)
+    labour = (sum(pay.values()) + esv + tot("labour")) if pay_mode else (tot("labour") + payroll_tax)
     opex = sum(tot(g) for g in ("rent", "utilities", "marketing", "admin", "bank"))
     gross = revenue - cogs
     contribution = gross - labour
@@ -299,6 +299,7 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
             if cur["pay"].get(sec) or prev["pay"].get(sec):
                 add(sec + (" (оцінка)" if est and cur["pay"].get(sec) else ""), amount=cur["pay"].get(sec, 0),
                     pamount=prev["pay"].get(sec, 0), indent=1)
+        cats(cur["exp"].get("labour", {}), prev["exp"].get("labour", {}))   # staff outside the sheet (cleaners, etc.)
         add("ЄСВ роботодавця (за місяцем нарахування)", "esv", indent=1)
     else:
         cats(cur["exp"].get("labour", {}), prev["exp"].get("labour", {}))

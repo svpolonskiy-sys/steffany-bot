@@ -130,6 +130,8 @@ def maybe_sync(con, every_hours: float = 3):
 
 
 MASTER_SECTIONS = ("Перукарі", "Майстри манікюру")
+# ledger categories that are settlements of the sheet payroll (cleaners etc. under "Витрати на персонал" are not in the sheet)
+SHEET_CATEGORIES = ("Зарплата", "Премія", "Відпускні", "ЛІКАРНЯНІ")
 
 
 def month_costs(con, ym: str) -> dict[str, int] | None:
@@ -278,7 +280,7 @@ def payments_recorded(con, ym: str) -> dict:
          "COALESCE(c.exclude,0) ex, COALESCE(c.pl_group,'') pg FROM transactions t JOIN accounts a ON a.id=t.account_id "
          "LEFT JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL AND t.kind='expense' AND t.occurred_at BETWEEN ? AND ?")
     for t in con.execute(q, (ms.isoformat() + "T00:00:00", (nxt + timedelta(days=12)).isoformat() + "T23:59:59")):
-        if group_of(t["cname"] or "Інші витрати", "expense", t["ex"], t["pg"]) != "labour":
+        if group_of(t["cname"] or "Інші витрати", "expense", t["ex"], t["pg"]) != "labour" or t["cname"] not in SHEET_CATEGORIES:
             continue
         paid = date.fromisoformat(t["occurred_at"][:10])
         txt = _n(t["description"])
