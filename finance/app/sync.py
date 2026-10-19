@@ -228,7 +228,14 @@ def sync_alteg(con, acc, client=None) -> tuple[int, int]:
         if ex["external_id"] not in seen:
             update_tx(con, ex["id"], None, note="видалено в Alteg", user_edit=False, deleted_at=now_local())
             updated += 1
-    sync_cashless_sales(con, client, start, end)
+    con.commit()
+    try:  # analytics must never break the cash ledger
+        sync_cashless_sales(con, client, start, end)
+        set_setting(con, "pay_sync_error", "")
+    except Exception as e:
+        log.exception("alteg payments sync failed")
+        con.rollback()
+        set_setting(con, "pay_sync_error", f"{type(e).__name__}: {e}"[:300])
     con.commit()
     return added, updated
 
@@ -237,7 +244,8 @@ def sync_cashless_sales(con, client, start: str, end: str):
     """Alteg payments (cash desk + card) by sale day, with master / service / direction.
     Cash feeds the ledger separately; card payments here are ONLY for the daily takings and analytics: the
     money reaches the FOP account days later and is booked from the bank statement (no double counting)."""
-    recs = {r["id"]: r for r in client.records(start, end)}
+    back = (date.fromisoformat(start) - timedelta(days=21)).isoformat()  # visits paid later than they happened
+    recs = {r["id"]: r for r in client.records(back, end)}
     catalog = {x["id"]: x for x in client.services()}
     cats = {x["id"]: x["title"] for x in client.service_categories()}
     fetched: dict[int, dict | None] = {}
@@ -249,7 +257,7 @@ def sync_cashless_sales(con, client, start: str, end: str):
                 continue
             rid = t.get("record_id") or 0
             rec = recs.get(rid)
-            if rid and rec is None:
+            if rid and rec is None and len(fetched) < 400:
                 if rid not in fetched:
                     fetched[rid] = client.record(rid)
                 rec = fetched[rid]

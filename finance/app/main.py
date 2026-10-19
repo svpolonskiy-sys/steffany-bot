@@ -226,11 +226,28 @@ def dashboard(request: Request, u=Depends(current_user)):
                   in_window=sync.in_work_window())
 
 
+_bg = {"running": False}
+
+
+def _run_sync_bg():
+    try:
+        sync.sync_all(get_con(), force=True)
+    except Exception:
+        log.exception("manual sync failed")
+    finally:
+        _bg["running"] = False
+
+
 @app.post("/sync")
 def sync_now(request: Request, u=Depends(current_user)):
-    res = sync.sync_all(get_con(), force=True)
-    bad = [k for k, v in res.items() if v is None]
-    flash(request, "Оновлено" if not bad else "Помилка оновлення: " + ", ".join(bad) + " (див. «Рахунки»)")
+    """Runs in the background: a full history refresh can take minutes, longer than a web request may live."""
+    import threading
+    if _bg["running"]:
+        flash(request, "Оновлення вже виконується, зачекайте 1–3 хвилини і оновіть сторінку")
+    else:
+        _bg["running"] = True
+        threading.Thread(target=_run_sync_bg, daemon=True).start()
+        flash(request, "Оновлення запущено. Оновіть сторінку через хвилину-дві: дані з банків і Alteg підтягнуться.")
     return RedirectResponse(request.headers.get("referer", "/"), status_code=303)
 
 
@@ -456,7 +473,8 @@ def cash_page(request: Request, u=Depends(current_user)):
 @app.get("/cash/detail", response_class=HTMLResponse)
 def cash_detail(request: Request, u=Depends(current_user)):
     a, b, pr = _cash_period(request, "today")
-    return render(request, "cash_detail.html", u, det=reports.takings_detail(get_con(), a, b), d_from=a, d_to=b, preset=pr)
+    return render(request, "cash_detail.html", u, det=reports.takings_detail(get_con(), a, b), d_from=a, d_to=b, preset=pr,
+                  pay_error=get_setting(get_con(), "pay_sync_error", ""))
 
 
 @app.get("/api/cash/detail")

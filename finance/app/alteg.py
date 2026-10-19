@@ -1,4 +1,6 @@
 """Altegio (alteg.io) CRM: imports cash-desk operations of one location."""
+import time
+
 import requests
 
 from . import config
@@ -16,6 +18,21 @@ class AltegClient:
         self.s = session
         self.user_token = None
 
+    def _call(self, fn, *a, **kw):
+        """HTTP call with retries: Alteg sometimes drops connections under load."""
+        last = None
+        for i in range(5):
+            try:
+                r = fn(*a, **kw)
+                if r.status_code in (429, 500, 502, 503, 504):
+                    raise AltegError(f"HTTP {r.status_code}")
+                time.sleep(0.12)  # be gentle with the API
+                return r
+            except (requests.RequestException, AltegError) as e:
+                last = e
+                time.sleep(2 * (i + 1))
+        raise AltegError(f"Alteg недоступний: {last}")
+
     def _h(self, user=True):
         auth = f"Bearer {config.ALTEG_PARTNER_KEY}"
         if user and self.user_token:
@@ -25,8 +42,8 @@ class AltegClient:
     def login(self):
         if not (config.ALTEG_PARTNER_KEY and config.ALTEG_LOGIN and config.ALTEG_PASSWORD):
             raise AltegError("Не задано ALTEG_PARTNER_KEY / ALTEG_LOGIN / ALTEG_PASSWORD")
-        r = self.s.post(f"{API}/auth", headers=self._h(False), timeout=40,
-                        json={"login": config.ALTEG_LOGIN, "password": config.ALTEG_PASSWORD})
+        r = self._call(self.s.post, f"{API}/auth", headers=self._h(False), timeout=40,
+                       json={"login": config.ALTEG_LOGIN, "password": config.ALTEG_PASSWORD})
         d = r.json()
         if not d.get("success"):
             raise AltegError("Alteg: не вдалось увійти (перевірте ключ/логін/пароль)")
@@ -38,8 +55,8 @@ class AltegClient:
             self.login()
         out, page = [], 1
         while True:
-            r = self.s.get(f"{API}/transactions/{config.ALTEG_LOCATION}", headers=self._h(), timeout=60,
-                           params={"start_date": start, "end_date": end, "account_id": account_id,
+            r = self._call(self.s.get, f"{API}/transactions/{config.ALTEG_LOCATION}", headers=self._h(), timeout=60,
+                          params={"start_date": start, "end_date": end, "account_id": account_id,
                                    "count": 200, "page": page})
             d = r.json()
             if not d.get("success"):
@@ -58,7 +75,7 @@ def _paged(self, path: str, **params):
         self.login()
     out, page = [], 1
     while True:
-        r = self.s.get(f"{API}{path}", headers=self._h(), timeout=60, params={**params, "count": 200, "page": page})
+        r = self._call(self.s.get, f"{API}{path}", headers=self._h(), timeout=60, params={**params, "count": 200, "page": page})
         d = r.json()
         if not d.get("success"):
             raise AltegError(f"Alteg {path}: {d.get('meta', {}).get('message', r.status_code)}")
@@ -76,7 +93,10 @@ def _records(self, start: str, end: str):
 def _record(self, rid: int):
     if not self.user_token:
         self.login()
-    d = self.s.get(f"{API}/record/{config.ALTEG_LOCATION}/{rid}", headers=self._h(), timeout=40).json()
+    try:
+        d = self._call(self.s.get, f"{API}/record/{config.ALTEG_LOCATION}/{rid}", headers=self._h(), timeout=40).json()
+    except AltegError:
+        return None
     return d.get("data") if d.get("success") else None
 
 

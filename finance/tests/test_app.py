@@ -386,3 +386,20 @@ def test_cash_by_day(client):
     assert "Сьогодні" in t and "Вчора" in t and client.get("/cash?preset=yesterday").status_code == 200
     assert client.get("/cash/export.xlsx?date_from=2026-10-01&date_to=2026-10-19").content[:2] == b"PK"
     assert client.get("/cash?date_from=2026-10-19&date_to=2026-10-01").status_code == 400
+
+
+def test_alteg_client_retries_dropped_connections(monkeypatch):
+    import requests as rq
+    monkeypatch.setattr("app.alteg.time.sleep", lambda s: None)
+    calls = {"n": 0}
+
+    class Sess:
+        def get(self, url, **kw):
+            calls["n"] += 1
+            if calls["n"] < 3:
+                raise rq.ConnectionError("Connection aborted")
+            return FakeResp({"success": True, "data": []})
+
+    c = alteg.AltegClient(session=Sess())
+    c.user_token = "x"
+    assert c.records("2026-10-01", "2026-10-02") == [] and calls["n"] == 3
