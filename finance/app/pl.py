@@ -15,7 +15,7 @@ Expenses can be taken by payment date or by the month named in the payment text 
 import re
 from datetime import date, timedelta
 
-from . import config
+from . import config, payroll
 from .categorize import norm
 
 EXPENSE_GROUPS = [
@@ -43,6 +43,7 @@ DEFAULT_GROUP = {
     "Інші доходи": "other_income", "Інвестиції": "nonpl",
 }
 PAYROLL_TAX = re.compile(r"(єсв|пдфо|вз/|військов\w* збір|єдин\w* соціальн)")
+ESV = re.compile(r"(єсв|єдин\w* соціальн)")
 MONTHS = {"січ": 1, "лют": 2, "берез": 3, "квіт": 4, "трав": 5, "черв": 6, "лип": 7, "серп": 8, "верес": 9,
           "жовт": 10, "листоп": 11, "груд": 12}
 MONTH_RE = re.compile(r"\bза\s+(?:\w+\s+)?(" + "|".join(MONTHS) + r")\w*(?:\s+(\d{4}))?")
@@ -94,12 +95,17 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     wide_lo, wide_hi = (lo - timedelta(days=75)).isoformat() + "T00:00:00", (hi + timedelta(days=75)).isoformat() + "T23:59:59"
     other_income, exp, nonpl = {}, {}, {}
     payroll_tax = 0
+    pay, est_months = payroll.for_period(con, lo, hi)
+    pay_mode = sum(pay.values()) > 0   # payroll accrual replaces ledger salary payments (avoids double counting)
+    esv = pit = paid_payroll = 0
     q = ("SELECT t.kind, t.amount, t.occurred_at, t.description, t.counterparty, c.name cname, COALESCE(c.exclude,0) ex, "
          "COALESCE(c.pl_group,'') pg FROM transactions t LEFT JOIN categories c ON c.id=t.category_id "
          "WHERE t.deleted_at IS NULL AND t.kind IN ('income','expense') AND t.occurred_at BETWEEN ? AND ?")
     for t in con.execute(q, (wide_lo, wide_hi)):
         paid = date.fromisoformat(t["occurred_at"][:10])
-        eff = accrual_date(t["description"], paid) if (accrual and t["kind"] == "expense") else paid
+        is_ptax = t["kind"] == "expense" and bool(PAYROLL_TAX.search(norm(t["description"] + " " + t["counterparty"])))
+        use_acc = (accrual and t["kind"] == "expense") or (pay_mode and is_ptax)
+        eff = accrual_date(t["description"], paid) if use_acc else paid
         if not (lo <= eff <= hi):
             continue
         name = t["cname"] or ("Інші доходи" if t["kind"] == "income" else "Інші витрати")
@@ -114,8 +120,17 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
         elif g == "capex":
             exp.setdefault("capex", {})[name] = exp.setdefault("capex", {}).get(name, 0) + amt
         else:
-            if g == "tax" and PAYROLL_TAX.search(norm(t["description"] + " " + t["counterparty"])):
-                payroll_tax += amt
+            if pay_mode and g == "labour":
+                paid_payroll += amt          # cash settlement of payroll accrued above: memo only
+                continue
+            if g == "tax" and is_ptax:
+                if pay_mode:
+                    if ESV.search(norm(t["description"] + " " + t["counterparty"])):
+                        esv += amt           # employer contribution: real extra cost
+                    else:
+                        pit += amt           # ПДФО/ВЗ are withheld from gross pay: already inside payroll
+                else:
+                    payroll_tax += amt
                 continue
             d = exp.setdefault(g, {})
             d[name] = d.get(name, 0) + amt
@@ -129,7 +144,7 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     oi = sum(other_income.values())
     revenue = sales + oi
     cogs = tot("cogs")
-    labour = tot("labour") + payroll_tax
+    labour = (sum(pay.values()) + esv) if pay_mode else (tot("labour") + payroll_tax)
     opex = sum(tot(g) for g in ("rent", "utilities", "marketing", "admin", "bank"))
     gross = revenue - cogs
     contribution = gross - labour
@@ -138,7 +153,8 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     net = ebitda - interest - tax
     days = (hi - lo).days + 1
     return dict(services=services, goods=goods, gift=gift, other_income=other_income, sales=sales, oi=oi, revenue=revenue,
-                exp=exp, payroll_tax=payroll_tax, cogs=cogs, labour=labour, opex=opex, gross=gross,
+                exp=exp, payroll_tax=payroll_tax, pay=pay, pay_mode=pay_mode, est_months=est_months, esv=esv, pit=pit,
+                paid_payroll=paid_payroll, cogs=cogs, labour=labour, opex=opex, gross=gross,
                 contribution=contribution, ebitda=ebitda, interest=interest, tax=tax, net=net, nonpl=nonpl,
                 n_pay=n_pay, cash_rev=cash_rev, card_rev=card_rev, days=days, capex=tot("capex"))
 
@@ -186,8 +202,16 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
     add("ВАЛОВИЙ ПРИБУТОК", "gross", kind="total", note="маржа")
 
     add("ОПЛАТА ПРАЦІ", kind="head")
-    cats(cur["exp"].get("labour", {}), prev["exp"].get("labour", {}))
-    add("ЄСВ, ПДФО, військовий збір (податки на оплату праці)", "payroll_tax", indent=1)
+    if cur["pay_mode"]:
+        est = bool(cur["est_months"])
+        for sec in payroll.SECTION_ORDER:
+            if cur["pay"].get(sec) or prev["pay"].get(sec):
+                add(sec + (" (оцінка)" if est and cur["pay"].get(sec) else ""), amount=cur["pay"].get(sec, 0),
+                    pamount=prev["pay"].get(sec, 0), indent=1)
+        add("ЄСВ роботодавця (за місяцем нарахування)", "esv", indent=1)
+    else:
+        cats(cur["exp"].get("labour", {}), prev["exp"].get("labour", {}))
+        add("ЄСВ, ПДФО, військовий збір (податки на оплату праці)", "payroll_tax", indent=1)
     add("Разом оплата праці", "labour", kind="sub")
     add("ПРИБУТОК ПІСЛЯ ОПЛАТИ ПРАЦІ", "contribution", kind="total")
 
@@ -208,6 +232,9 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
     memo = []
     if cur["gift"] or prev["gift"]:
         memo.append(("Продано подарункових сертифікатів (зобов'язання, не виручка)", cur["gift"]))
+    if cur["pay_mode"]:
+        memo.append(("Виплачено зарплати й авансів у обліку (банк + каса), для звірки з нарахованою", cur["paid_payroll"]))
+        memo.append(("ПДФО та військовий збір, сплачені до бюджету (утримуються із зарплати, вже в нарахованій)", cur["pit"]))
     if cur["capex"]:
         memo.append(("Обладнання (капітальні витрати, не в P&L)", cur["capex"]))
     for (kind, name), v in sorted(cur["nonpl"].items(), key=lambda x: -x[1]):
@@ -240,4 +267,4 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
         m = nxt
     return dict(from_=d_from, to=d_to, prev_from=plo.isoformat(), prev_to=phi.isoformat(), lines=lines, memo=memo, kpis=kpis,
                 split=split, months=months if len(months) > 1 else [], cur=cur, prev_net=prev["net"], prev_revenue=prev["revenue"],
-                accrual=accrual, prev_ok=prev_ok, empty=(rev == 0 and cur["cogs"] == 0 and cur["labour"] == 0 and cur["opex"] == 0))
+                accrual=accrual, prev_ok=prev_ok, pay_mode=cur["pay_mode"], est_months=cur["est_months"], empty=(rev == 0 and cur["cogs"] == 0 and cur["labour"] == 0 and cur["opex"] == 0))

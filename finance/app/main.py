@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import categorize as cat, config, pl, privat, reports, sync
+from . import categorize as cat, config, payroll, pl, privat, reports, sync
 from .db import (account_balances, add_audit, connect, get_setting, insert_tx, lock, now_local, set_setting,
                  update_tx)
 from .security import encrypt, hash_password, verify_password
@@ -543,7 +543,20 @@ def pl_page(request: Request, u=Depends(current_user)):
     a, b, pr = _pl_period(request)
     acc = request.query_params.get("accrual") == "1"
     return render(request, "pl.html", u, rep=pl.build(get_con(), a, b, acc), d_from=a, d_to=b, preset=pr, accrual=acc,
-                  pay_error=get_setting(get_con(), "pay_sync_error", ""))
+                  pay_error=get_setting(get_con(), "pay_sync_error", ""),
+                  payroll_months=payroll.covered_months(get_con()), payroll_at=get_setting(get_con(), "payroll_synced_at"),
+                  payroll_err=get_setting(get_con(), "payroll_error", ""), can_payroll=u["role"] in ("owner", "accountant"))
+
+
+@app.post("/payroll/sync")
+def payroll_sync(request: Request, u=Depends(staff_cat)):
+    try:
+        months = payroll.sync(get_con())
+        flash(request, "Зарплатну таблицю оновлено, місяці: " + ", ".join(months))
+    except Exception as e:
+        get_con().rollback()
+        flash(request, f"Не вдалось оновити таблицю: {e}")
+    return RedirectResponse(request.headers.get("referer", "/pl"), status_code=303)
 
 
 @app.get("/pl/export.xlsx")

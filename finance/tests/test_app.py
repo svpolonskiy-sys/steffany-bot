@@ -449,3 +449,58 @@ def test_pl_formulas(client):
         assert client.get(u).status_code == 200, u
     assert client.get("/pl/export.xlsx").content[:2] == b"PK"
     assert client.get("/api/pl?date_from=2026-10-01&date_to=2026-10-31", headers={"x-api-token": "tok123"}).json()["lines"]
+
+
+def _fake_sheet(path, rows_by_sheet):
+    from openpyxl import Workbook
+    wb = Workbook()
+    wb.remove(wb.active)
+    for title, secs in rows_by_sheet.items():
+        ws = wb.create_sheet(title)
+        ws.append(["Салон краси Steffany -"])
+        ws.append(["Місяць:", None, title])
+        for sec, hdr, people in secs:
+            ws.append([sec])
+            ws.append(["№", "Прізвище, ім'я"] + hdr)
+            for i, (name, *vals) in enumerate(people, 1):
+                ws.append([float(i), name] + list(vals))
+            ws.append([None, "РАЗОМ"])
+        ws.append(["ЗВЕДЕНІ ПОКАЗНИКИ"])
+    wb.save(path)
+
+
+def test_payroll_import_and_pl_uses_it(client, tmp_path):
+    import datetime
+    from app import payroll, pl
+    f = tmp_path / "zp.xlsx"
+    hdr = ["Відпрац.\nзмін", "Сума\nпродажів", "Каса\nза місяць", "Нарахув.\n%", "Зарплата", "Податки", "Відпускні", "Лікарняні", "Штраф/списання"]
+    _fake_sheet(f, {"Вересень 2026": [
+        ("ПЕРУКАРІ", hdr, [("Майстер А", 10, 0, 100000, 40000, 40000, 2000, 0, 0, 1000)]),
+        ("ІНШІ ПРАЦІВНИКИ", ["ЗП", "Аванс", "До виплати"], [("Завгосп", 8000, 0, 8000)])],
+        "жовтень2026": [("ІНШІ ПРАЦІВНИКИ", ["ЗП", "Аванс", "До виплати"], [("Завгосп", 8000, 8000, 0)])]})
+    data = payroll.parse(f.read_bytes(), 2026)
+    assert sorted(data) == ["2026-09", "2026-10"]
+    p = data["2026-09"][0]
+    assert (p["section"], p["gross"], p["fines"]) == ("Перукарі", 4000000, 100000)
+    main.con.executemany("INSERT INTO payroll(month,section,name,gross,vacation,sick,fines,taxes,sales) VALUES(?,?,?,?,?,?,?,?,?)",
+                         [("2026-09", r["section"], r["name"], r["gross"], r["vacation"], r["sick"], r["fines"], r["taxes"], r["sales"]) for r in data["2026-09"]] +
+                         [("2026-10", r["section"], r["name"], r["gross"], r["vacation"], r["sick"], r["fines"], r["taxes"], r["sales"]) for r in data["2026-10"]])
+    assert payroll.covered_months(main.con) == ["2026-09"]          # half-filled October is NOT a filled month
+    d = datetime.date
+    # ledger: salary payment (cash settlement), ЄСВ for September paid in October, ПДФО
+    fop = accid("ФОП 1")
+    cc = lambda n, k: cat.get_or_create_category(main.con, n, k)
+    post = lambda **kw: client.post("/transactions/new", data=kw)
+    post(kind="expense", account_id=fop, amount="30000", occurred_at="2026-10-03T10:00", category_id=cc("Зарплата", "expense"), description="Заробітна плата за вересень")
+    post(kind="expense", account_id=fop, amount="2000", occurred_at="2026-10-03T10:00", category_id=cc("Податки", "expense"), description="101 ЄСВ / з/п за вересень")
+    post(kind="expense", account_id=fop, amount="1000", occurred_at="2026-10-03T10:00", category_id=cc("Податки", "expense"), description="101 ПДФО/ з/п за вересень")
+    c = pl.compute(main.con, d(2026, 9, 1), d(2026, 9, 30))
+    assert c["pay_mode"] and c["pay"]["Перукарі"] == 3900000 and c["pay"]["Інші працівники"] == 800000
+    assert c["esv"] == 200000 and c["pit"] == 100000 and c["paid_payroll"] == 0  # salary was paid on 3 Oct
+    assert c["labour"] == 3900000 + 800000 + 200000                  # payroll + ЄСВ; salary payment and ПДФО not added again
+    # October is estimated from Alteg takings (40%) + fixed part carried over from September
+    main.con.execute("INSERT INTO alteg_pay(external_id,occurred_at,amount,method,staff_id,staff_name,staff_role,service_title,category_title,item_type) VALUES('p1','2026-10-05T10:00:00',1000000,'cash',1,'Майстер А','Перукар','Стрижка','Перукарські послуги','service')")
+    main.con.commit()
+    o = pl.compute(main.con, d(2026, 10, 1), d(2026, 10, 31))
+    assert o["est_months"] == ["2026-10"] and o["pay"]["Перукарі"] == 400000 and o["pay"]["Інші працівники"] == 800000
+    assert o["paid_payroll"] == 3000000 and o["esv"] == 0

@@ -18,6 +18,11 @@
 <div class="split big">{% for p in rep.split if p.pct>0 %}<div class="tipme" style="width:{{ p.pct }}%;background:{{ p.color }}" data-t="{{ p.label }}" data-v="{{ p.v|money }}" data-s="{{ p.pct }}% виручки"></div>{% endfor %}</div>
 <div class="legend2">{% for p in rep.split %}<span><i class="dot" style="background:{{ p.color }}"></i>{{ p.label }} <b>{{ p.pct }}%</b></span>{% endfor %}</div></div>{% endif %}
 
+<div class="card" style="margin-top:12px;font-size:13px"><b>Оплата праці:</b>
+{% if rep.pay_mode %}нарахована за зарплатною таблицею{% if payroll_months %} (місяці: {{ payroll_months|join(', ') }}){% endif %}{% if rep.est_months %}; за <b>{{ rep.est_months|join(', ') }}</b> таблиці ще немає, тому це <b>оцінка</b> за ставками (майстри 40%, бровіст 60%, косметолог за схемою) + фіксована частина за попереднім місяцем{% endif %}.
+{% else %}береться з банківських і касових виплат (таблицю зарплати не підключено).{% endif %}
+<span class="mut">{% if payroll_at %}Таблицю оновлено {{ payroll_at|dt }}.{% endif %}{% if payroll_err %} <span class="out">Помилка: {{ payroll_err }}</span>{% endif %}</span>
+{% if can_payroll %}<form method="post" action="/payroll/sync" style="display:inline;margin-left:8px"><button class="sm sec">↻ Оновити з таблиці</button></form>{% endif %}</div>
 <h2>Звіт</h2>
 <table class="pl"><tr><th>Стаття</th><th class="r">Сума</th><th class="r">% виручки</th>{% if rep.prev_ok %}<th class="r hm">Попередній період</th><th class="r hm">Зміна</th>{% endif %}</tr>
 {% for l in rep.lines %}<tr class="pl-{{ l.kind }}"><td style="padding-left:{{ 12 + l.indent*18 }}px">{{ l.label }}</td><td class="r num">{{ l.amount|money if l.amount is not none else '' }}</td><td class="r mut">{{ (l.pct ~ '%') if l.pct is not none else '' }}</td>

@@ -323,5 +323,10 @@ def sync_all(con, force=False):
         for acc in con.execute("SELECT * FROM accounts WHERE active=1 AND source!='manual' "
                                "ORDER BY (kind='credit'), sort, id").fetchall():
             res[acc["name"]] = sync_account(con, acc)
+        try:
+            from . import payroll
+            payroll.maybe_sync(con)
+        except Exception:
+            log.exception("payroll sync failed")
         set_setting(con, "last_sync_all", now_local())
     return res

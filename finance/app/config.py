@@ -26,3 +26,6 @@ SYNC_TO_HOUR = 21
 SYNC_INTERVAL_SEC = int(os.environ.get("SYNC_INTERVAL_SEC", "3300"))
 SCHEDULER_ENABLED = os.environ.get("SCHEDULER_ENABLED", "1") == "1"
 COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "0") == "1"
+
+# Google Sheet with monthly payroll calculation (link-shared, read-only export); set as a secret, not in git
+PAYROLL_SHEET_ID = os.environ.get("PAYROLL_SHEET_ID", "")
