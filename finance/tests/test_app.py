@@ -296,3 +296,10 @@ def test_excluded_categories_and_contract_summary(client):
     c = sync.credit_summary(main.con)["contracts"][0]
     assert (c["taken"], c["repaid"], c["principal_debt"]) == (20000, 10000, 10000)
     assert (c["interest_accrued"], c["interest_paid"], c["debt"]) == (300, 200, 10100)
+
+
+def test_search_is_case_insensitive_for_cyrillic(client):
+    a = accid("Робочі гроші")
+    client.post("/transactions/new", data={"kind": "expense", "account_id": a, "amount": "50",
+                                           "occurred_at": "2026-10-19T10:00", "description": "Зняття готівки в банкоматі"})
+    assert "Зняття готівки" in client.get("/transactions?q=ГОТІВКИ").text

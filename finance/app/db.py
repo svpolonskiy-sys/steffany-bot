@@ -74,6 +74,7 @@ def connect(path: str | None = None) -> sqlite3.Connection:
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     con = sqlite3.connect(path, check_same_thread=False, timeout=30)
     con.row_factory = sqlite3.Row
+    con.create_function("lower", 1, lambda v: v.lower() if isinstance(v, str) else v)  # SQLite lower() is ASCII-only
     con.execute("PRAGMA foreign_keys=ON")
     if path != ":memory:":
         con.execute("PRAGMA journal_mode=WAL")
