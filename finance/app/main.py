@@ -200,6 +200,12 @@ def logout(request: Request):
     return RedirectResponse("/login", status_code=303)
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(open(f"{BASE_DIR}/static/favicon-32.png", "rb").read(), media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/health")
 def health():
     return {"ok": True}

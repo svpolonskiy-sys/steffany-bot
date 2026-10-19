@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}<h1>Кредити — контроль погашення</h1>
+{% extends "base.html" %}{% block title %}Кредити{% endblock %}{% block body %}<h1>Кредити — контроль погашення</h1>
 <div class="grid"><div class="card" style="border-color:var(--out)"><div class="lbl">Загальний борг</div><div class="big out num">{{ credit.total_debt|money }}</div></div></div>
 <h2>Кредитні договори</h2><table><tr><th>Договір</th><th class="r">Взято (тіло)</th><th class="r">Погашено (тіло)</th><th class="r">Борг по тілу</th><th class="r">Відсотки нараховано / сплачено</th><th class="r">Загальний борг</th></tr>
 {% for c in credit.contracts %}<tr><td>{{ c.contract }}<br><span class="mut">з {{ c.first[:10] }}</span></td><td class="r num">{{ c.taken|money }}</td><td class="r num in">{{ c.repaid|money }}</td><td class="r num out">{{ c.principal_debt|money }}</td>

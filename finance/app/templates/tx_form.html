@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}<h1>{{ 'Операція №' ~ t.id if t else 'Нова операція' }}</h1>
+{% extends "base.html" %}{% block title %}Операція{% endblock %}{% block body %}<h1>{{ 'Операція №' ~ t.id if t else 'Нова операція' }}</h1>
 {% if t and t.deleted_at %}<div class="flash">Видалено {{ t.deleted_at|dt }}. <form method="post" action="/transactions/{{ t.id }}/restore" style="display:inline"><button class="sm">Відновити</button></form></div>{% endif %}
 {% if not t and presets %}<p class="presets"><span class="mut">Швидкий переказ:</span><br>{% for lbl,f,to,d in presets %}<a class="btn sec sm" href="/transactions/new?kind=transfer&from_acc={{ f }}&to_acc={{ to }}&desc={{ d|urlencode }}">{{ lbl }}</a>{% endfor %}</p>{% endif %}
 <form method="post" class="card" style="max-width:640px" id="f">

@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}<h1>Каса по днях <a class="btn sec sm" style="margin-left:8px;vertical-align:middle" href="/cash/detail?date_from={{ d_from }}&date_to={{ d_to }}">Майстри й послуги за період →</a></h1>
+{% extends "base.html" %}{% block title %}Каса{% endblock %}{% block body %}<h1>Каса по днях <a class="btn sec sm" style="margin-left:8px;vertical-align:middle" href="/cash/detail?date_from={{ d_from }}&date_to={{ d_to }}">Майстри й послуги за період →</a></h1>
 <div class="pills">{% for k,t in [('today','Сьогодні'),('yesterday','Вчора'),('7','7 днів'),('30','30 днів'),('month','Цей місяць'),('prev_month','Минулий місяць')] %}<a class="{{ 'on' if preset==k }}" href="?preset={{ k }}">{{ t }}</a>{% endfor %}</div>
 <form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
 <div style="flex:0 0 auto"><button>Показати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/cash/export.xlsx?date_from={{ d_from }}&date_to={{ d_to }}">Excel ↓</a></div></div></form>

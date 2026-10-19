@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}
+{% extends "base.html" %}{% block title %}Зарплата{% endblock %}{% block body %}
 <h1>Зарплата: нарахування і виплати</h1>
 <div class="pills">{% for m in months %}<a class="{{ 'on' if m==ym }}" href="?month={{ m }}">{{ m }}</a>{% endfor %}</div>
 {% if not costs %}<div class="card"><b>За {{ month_name }} зарплатної таблиці ще немає.</b><div class="mut">Коли місяць буде заповнено в таблиці (з виплат 7 числа), тут з'явиться звірка.</div></div>{% else %}

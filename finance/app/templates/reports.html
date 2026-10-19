@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}<h1>Звіти</h1>
+{% extends "base.html" %}{% block title %}Звіти{% endblock %}{% block body %}<h1>Звіти</h1>
 <div class="pills">{% for k,t in [('today','Сьогодні'),('yesterday','Вчора'),('week','Тиждень'),('month','Цей місяць'),('prev_month','Минулий місяць')] %}<a class="{{ 'on' if preset==k }}" href="?preset={{ k }}&account={{ acc or '' }}">{{ t }}</a>{% endfor %}</div>
 <form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
 <div><label>Рахунок</label><select name="account"><option value="">Усі</option>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if acc==a.id }}>{{ a.name }}</option>{% endfor %}</select></div>

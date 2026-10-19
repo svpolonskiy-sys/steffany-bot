@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}<h1>Рахунки</h1>
+{% extends "base.html" %}{% block title %}Рахунки{% endblock %}{% block body %}<h1>Рахунки</h1>
 <table><tr><th>Назва</th><th>Тип</th><th>Джерело</th><th class="r">Баланс</th><th>Оновлення</th>{% if is_owner %}<th></th>{% endif %}</tr>
 {% for a in accs %}<tr class="{{ 'del' if not a.active }}"><td>{{ a.name }}</td><td>{{ ACC_KINDS[a.kind] }}</td><td>{{ SRC[a.source] }}{% if a.iban %}<br><span class="mut">{{ a.iban }}</span>{% endif %}</td>
 <td class="r num">{{ bal[a.id]|money }}</td><td class="mut">{{ (a.last_sync_at or '')|dt }}<br>{% if a.last_sync_status and a.last_sync_status!='ok' %}<span class="out">{{ a.last_sync_status[:90] }}</span>{% endif %}</td>

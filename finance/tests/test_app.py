@@ -620,3 +620,12 @@ def test_transaction_filters(client):
     assert "<mark>Гель</mark>" in html and "Знайдено операцій" in html
     assert client.get("/transactions/export.csv?kind=expense").text.count("Витрата") == 2
     assert client.get("/transactions/export.xlsx?kind=income").content[:2] == b"PK"
+
+
+def test_favicon_and_titles(client):
+    page = client.get("/cash").text
+    assert "favicon.svg" in page and "<title>₴ Каса · Steffany</title>" in page
+    anon = TestClient(main.app)
+    assert anon.get("/login").status_code == 200 and "favicon.svg" in anon.get("/login").text
+    assert client.get("/favicon.ico").headers["content-type"] == "image/png"
+    assert client.get("/static/favicon.svg").status_code == 200 and client.get("/static/manifest.webmanifest").status_code == 200

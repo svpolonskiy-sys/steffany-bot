@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}
+{% extends "base.html" %}{% block title %}Огляд{% endblock %}{% block body %}
 <div class="grid accs"><div class="card total" style="grid-column:1/-1"><div class="lbl">Всього грошей у компанії</div><div class="big num">{{ bal.total|money }}</div>
 <div class="lbl">{% if last_sync %}Банки й Alteg оновлено: {{ last_sync|dt }}{% else %}Ще не оновлювалось{% endif %}
 {% if not in_window %} · нічний режим (21:00–08:00 без оновлень){% endif %}</div></div>

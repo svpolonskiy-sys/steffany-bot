@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}<h1>Користувачі</h1>
+{% extends "base.html" %}{% block title %}Користувачі{% endblock %}{% block body %}<h1>Користувачі</h1>
 <table><tr><th>Ім'я</th><th>Email</th><th>Роль / статус / новий пароль</th></tr>{% for x in users %}<tr class="{{ 'del' if not x.active }}"><td>{{ x.name }}</td><td>{{ x.email }}</td>
 <td><form method="post" action="/users/{{ x.id }}" class="row fit" style="margin:0"><select name="role" style="width:150px">{% for k,v in ROLES.items() %}<option value="{{ k }}" {{ 'selected' if x.role==k }}>{{ v }}</option>{% endfor %}</select>
 <select name="active" style="width:110px"><option value="1">Активний</option><option value="0" {{ 'selected' if not x.active }}>Вимкнений</option></select>

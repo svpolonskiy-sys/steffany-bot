@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block body %}<h1>Категорії та правила</h1>
+{% extends "base.html" %}{% block title %}Категорії{% endblock %}{% block body %}<h1>Категорії та правила</h1>
 <p class="mut">Нові операції розподіляються за правилами; якщо правила немає — категорія створюється автоматично (позначка «авто»), її можна перейменувати або об'єднати з іншою.</p>
 {% if can_edit %}<form method="post" action="/categories" class="card"><div class="row"><div><label>Нова категорія</label><input name="name" required></div>
 <div><label>Тип</label><select name="kind"><option value="expense">Витрата</option><option value="income">Надходження</option></select></div><div style="flex:0 0 auto"><button>Додати</button></div></div></form>
