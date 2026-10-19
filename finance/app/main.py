@@ -501,16 +501,19 @@ def accounts_page(request: Request, u=Depends(current_user)):
 @app.post("/accounts")
 def account_save(request: Request, id: int | None = Form(None), name: str = Form(...), kind: str = Form(...),
                  source: str = Form(...), iban: str = Form(""), token: str = Form(""), opening: str = Form(""),
+                 current: str = Form(""),
                  active: str = Form("1"), u=Depends(owner_only)):
     if kind not in ACC_KINDS or source not in SRC:
         raise HTTPException(400)
     c = get_con()
-    op = None
-    if opening.strip():
+    def money_in(v):
         try:
-            op = round(float(opening.replace(" ", "").replace(",", ".")) * 100)
+            return round(float(v.replace(" ", "").replace("\u00a0", "").replace(",", ".")) * 100)
         except ValueError:
-            raise HTTPException(400, "Некоректний початковий залишок")
+            raise HTTPException(400, "Некоректна сума залишку")
+
+    op = money_in(opening) if opening.strip() else None
+    cur_target = money_in(current) if current.strip() else None
     with lock():
         if id:
             c.execute("UPDATE accounts SET name=?,kind=?,source=?,iban=?,active=? WHERE id=?",
@@ -519,11 +522,14 @@ def account_save(request: Request, id: int | None = Form(None), name: str = Form
                 c.execute("UPDATE accounts SET token_enc=? WHERE id=?", (encrypt(token.strip()), id))
             if op is not None:
                 c.execute("UPDATE accounts SET opening_balance=?, opening_auto=1 WHERE id=?", (op, id))
+            if cur_target is not None:  # balance as of now: opening = target - everything booked so far
+                booked = account_balances(c)[id] - c.execute("SELECT opening_balance FROM accounts WHERE id=?", (id,)).fetchone()[0]
+                c.execute("UPDATE accounts SET opening_balance=?, opening_auto=1 WHERE id=?", (cur_target - booked, id))
         else:
             c.execute("INSERT INTO accounts(name,kind,source,iban,token_enc,opening_balance,sort) "
                       "VALUES(?,?,?,?,?,?,(SELECT COALESCE(MAX(sort),0)+1 FROM accounts))",
                       (name.strip(), kind, source, iban.strip().replace(" ", ""),
-                       encrypt(token.strip()), op or 0))
+                       encrypt(token.strip()), cur_target if cur_target is not None else (op or 0)))
         c.commit()
     flash(request, "Рахунок збережено")
     return RedirectResponse("/accounts", status_code=303)

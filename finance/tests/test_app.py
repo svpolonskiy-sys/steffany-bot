@@ -252,3 +252,15 @@ def test_transfer_between_own_fops_counted_once(client):
     rows = main.con.execute("SELECT kind FROM transactions").fetchall()
     assert [r["kind"] for r in rows] == ["transfer"]
     assert reports.build(main.con, "2026-10-01", "2026-10-31")["income"] == 0
+
+
+def test_set_current_balance(client):
+    cash = accid("Каса салон")
+    client.post("/transactions/new", data={"kind": "income", "account_id": cash, "amount": "266,27",
+                                           "occurred_at": "2026-10-19T10:00", "description": "x"})
+    client.post("/accounts", data={"id": cash, "name": "Каса салон", "kind": "cash", "source": "alteg",
+                                   "current": "28 227,03", "active": "1"})
+    assert account_balances(main.con)[cash] == 2822703
+    client.post("/transactions/new", data={"kind": "expense", "account_id": cash, "amount": "27,03",
+                                           "occurred_at": "2026-10-19T11:00", "description": "молоко"})
+    assert account_balances(main.con)[cash] == 2820000
