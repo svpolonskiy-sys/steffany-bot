@@ -303,3 +303,23 @@ def test_search_is_case_insensitive_for_cyrillic(client):
     client.post("/transactions/new", data={"kind": "expense", "account_id": a, "amount": "50",
                                            "occurred_at": "2026-10-19T10:00", "description": "Зняття готівки в банкоматі"})
     assert "Зняття готівки" in client.get("/transactions?q=ГОТІВКИ").text
+
+
+def test_inline_category_change_creates_rule_for_future(client):
+    a = accid("Каса салон")
+    for d in ("альфа смс поповнення", "альфа смс поповнення картки"):
+        client.post("/transactions/new", data={"kind": "expense", "account_id": a, "amount": "100",
+                                               "occurred_at": "2026-10-19T10:00", "description": d})
+    ids = [r["id"] for r in main.con.execute("SELECT id FROM transactions ORDER BY id")]
+    target = cat.get_or_create_category(main.con, "Інтернет", "expense")
+    assert cat.suggest_pattern("альфа смс поповнення картки 123", "") == "альфа смс поповнення картки"
+    r = client.post(f"/transactions/{ids[0]}/category", data={"category_id": target, "rule_text": "альфа смс"})
+    assert r.json() == {"ok": True, "similar": 1}
+    got = [r["category_id"] for r in main.con.execute("SELECT category_id FROM transactions ORDER BY id")]
+    assert got == [target, target]
+    # future import with the same words follows the user's choice
+    assert cat.categorize(main.con, "expense", "Альфа СМС оплата", "") == target
+    # wrong kind is rejected
+    inc = cat.get_or_create_category(main.con, "Оплата послуг", "income")
+    assert client.post(f"/transactions/{ids[0]}/category", data={"category_id": inc}).status_code == 400
+    assert "catsel" in client.get("/transactions").text

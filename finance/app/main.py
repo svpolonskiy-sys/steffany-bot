@@ -92,7 +92,7 @@ def money(k, sign=False):
 
 tpl.env.filters["money"] = money
 tpl.env.filters["dt"] = lambda s: (s or "").replace("T", " ")[:16]
-tpl.env.globals.update(ROLES=ROLES, KINDS=KINDS, ACC_KINDS=ACC_KINDS, SRC=SRC)
+tpl.env.globals.update(suggest_pattern=cat.suggest_pattern, ROLES=ROLES, KINDS=KINDS, ACC_KINDS=ACC_KINDS, SRC=SRC)
 
 
 class Redirect(Exception):
@@ -220,7 +220,7 @@ def dashboard(request: Request, u=Depends(current_user)):
     uncategorised = c.execute(
         "SELECT COUNT(*) FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL "
         "AND t.user_edited=0 AND (c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))").fetchone()[0]
-    return render(request, "dashboard.html", u, bal=b, day=day, month=month, recent=recent,
+    return render(request, "dashboard.html", u, categories=lists(c)["categories"], bal=b, day=day, month=month, recent=recent,
                   credit=sync.credit_summary(c), last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
                   in_window=sync.in_work_window())
 
@@ -360,6 +360,24 @@ def tx_update(request: Request, tid: int, kind: str = Form(...), account_id: int
         c.commit()
     flash(request, "Збережено." + extra)
     return RedirectResponse("/transactions", status_code=303)
+
+
+@app.post("/transactions/{tid}/category")
+def tx_set_category(tid: int, category_id: int = Form(...), rule_text: str = Form(""), u=Depends(current_user)):
+    """Inline category change from lists; with rule_text it becomes a rule for all similar transactions."""
+    c = get_con()
+    t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
+    k = c.execute("SELECT * FROM categories WHERE id=?", (category_id,)).fetchone()
+    if not t or not k or t["kind"] == "transfer" or k["kind"] != t["kind"]:
+        raise HTTPException(400, "Категорія не підходить до цієї операції")
+    n = 0
+    with lock():
+        update_tx(c, tid, u["id"], note="категорію змінено вручну", category_id=category_id)
+        if rule_text.strip():
+            cat.add_rule(c, category_id, rule_text, t["kind"], priority=10)
+            n = cat.apply_rule_to_existing(c, category_id, rule_text, t["kind"], u["id"], override=True)
+        c.commit()
+    return {"ok": True, "similar": n}
 
 
 @app.post("/transactions/{tid}/delete")

@@ -1,7 +1,15 @@
 <table><tr><th>Дата</th><th>Рахунок</th><th>Категорія</th><th>Опис</th><th class="r">Сума</th></tr>
 {% for t in (recent if recent else rows) %}<tr class="{{ 'del' if t.deleted_at }}"><td class="num"><a href="/transactions/{{ t.id }}">{{ t.occurred_at|dt }}</a></td>
 <td>{{ t.acc }}{% if t.acc2 %} → {{ t.acc2 }}{% endif %}</td>
-<td>{% if t.kind=='transfer' %}<span class="tag">переказ</span>{% else %}{{ t.cat or '—' }}{% endif %}</td>
+<td>{% if t.kind=='transfer' %}<span class="tag">переказ</span>{% elif categories is defined and not t.deleted_at %}<select class="catsel" data-id="{{ t.id }}" data-cur="{{ t.category_id or '' }}" data-pat="{{ suggest_pattern(t.description, t.counterparty) }}" style="padding:4px 6px;min-width:150px">
+{% if not t.category_id %}<option value="">—</option>{% endif %}{% for c in categories if c.kind==t.kind %}<option value="{{ c.id }}" {{ 'selected' if c.id==t.category_id }}>{{ c.name }}</option>{% endfor %}</select>{% else %}{{ t.cat or '—' }}{% endif %}</td>
 <td class="hm">{{ t.counterparty }} {{ t.description[:90] }}</td>
 <td class="r num {{ 'in' if t.kind=='income' else 'out' if t.kind=='expense' else 'mut' }}">{{ '+' if t.kind=='income' else '−' if t.kind=='expense' else '⇄' }} {{ t.amount|money }}</td></tr>
 {% else %}<tr><td colspan="5" class="mut">Немає операцій</td></tr>{% endfor %}</table>
+
+<script>document.querySelectorAll('.catsel').forEach(function(sel){sel.addEventListener('change',function(){
+ var pat=prompt('Категорію змінено.\n\nЗастосувати до всіх схожих операцій (теперішніх і майбутніх)?\nКлюч пошуку в описі або контрагенті (очистіть і натисніть OK, щоб змінити лише цю операцію):',sel.dataset.pat);
+ if(pat===null){sel.value=sel.dataset.cur;return}
+ var f=new FormData();f.append('category_id',sel.value);f.append('rule_text',pat);
+ fetch('/transactions/'+sel.dataset.id+'/category',{method:'POST',body:f}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(d){
+  if(d.similar){alert('Готово. Також змінено схожих операцій: '+d.similar)}location.reload()}).catch(function(){alert('Не вдалось зберегти');sel.value=sel.dataset.cur})})});</script>

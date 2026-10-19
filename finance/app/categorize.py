@@ -66,6 +66,20 @@ def suggest_name(description: str, counterparty: str) -> str:
     return ""
 
 
+GENERIC_COUNTERPARTIES = ("розрахунки за картками", "приватбанк", "казначейств")
+
+
+def suggest_pattern(description: str, counterparty: str) -> str:
+    """Key phrase for 'apply to similar transactions': a real counterparty, else the stable words
+    of the description (numbers, dates and card masks dropped)."""
+    cp = _clean(counterparty).strip("\"'«»“”")
+    if len(cp) > 3 and not any(g in cp.lower() for g in GENERIC_COUNTERPARTIES):
+        return cp[:60]
+    words = [w for w in _clean(description).split() if not re.search(r"[\d*№]", w)]
+    out = " ".join(words[:4]).lower()
+    return out[:60] if len(out) >= 3 else _clean(description).lower()[:50]
+
+
 def categorize(con, kind: str, description: str, counterparty: str = "", create: bool = True, own_name: str = ""):
     """Returns category_id (or None for transfers/unknown)."""
     if kind == "transfer":
@@ -93,15 +107,19 @@ def add_rule(con, category_id: int, pattern: str, direction: str = "any", priori
     pattern = _clean(pattern)
     if not pattern:
         return None
-    ex = con.execute("SELECT id FROM rules WHERE category_id=? AND lower(pattern)=? AND direction=?",
-                     (category_id, pattern.lower(), direction)).fetchone()
-    if ex:
+    ex = con.execute("SELECT id, category_id FROM rules WHERE lower(pattern)=? AND direction=?",
+                     (pattern.lower(), direction)).fetchone()
+    if ex:  # same key again: the latest choice wins
+        if ex["category_id"] != category_id:
+            con.execute("UPDATE rules SET category_id=?, priority=MAX(priority, ?) WHERE id=?",
+                        (category_id, priority, ex["id"]))
         return ex["id"]
     return con.execute("INSERT INTO rules(category_id,pattern,direction,priority) VALUES(?,?,?,?)",
                        (category_id, pattern, direction, priority)).lastrowid
 
 
-def apply_rule_to_existing(con, category_id: int, pattern: str, kind: str | None, user_id=None) -> int:
+def apply_rule_to_existing(con, category_id: int, pattern: str, kind: str | None, user_id=None,
+                           override: bool = False) -> int:
     """Re-categorise matching transactions that are auto/fallback categorised (never touches
     transactions the user categorised explicitly)."""
     from .db import update_tx
@@ -110,7 +128,7 @@ def apply_rule_to_existing(con, category_id: int, pattern: str, kind: str | None
     rows = con.execute(
         "SELECT t.* FROM transactions t LEFT JOIN categories c ON c.id=t.category_id "
         "WHERE t.deleted_at IS NULL AND t.kind!='transfer' AND t.user_edited=0 "
-        "AND (c.id IS NULL OR c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))").fetchall()
+        + ("" if override else "AND (c.id IS NULL OR c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))")).fetchall()
     for t in rows:
         if kind and t["kind"] != kind:
             continue
