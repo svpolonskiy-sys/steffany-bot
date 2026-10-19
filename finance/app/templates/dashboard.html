@@ -8,7 +8,7 @@
 {% if a.bank_balance is not none and a.bank_balance!=a.balance %}<br><span class="warn">банк: {{ a.bank_balance|money }}</span>{% endif %}</div></div>{% endfor %}</div>
 <form method="post" action="/sync" style="margin:10px 0"><button class="sec sm">↻ Оновити зараз</button></form>
 {% if credit.credits %}<h2>Кредити — контроль погашення</h2><div class="grid">
-<div class="card" style="border-color:var(--out)"><div class="lbl">Загальний борг по кредитах</div><div class="big out num">{{ credit.total_debt|money }}</div><div class="lbl">не входить у суму грошей вище</div></div>
+<div class="card" style="border-color:var(--out)"><div class="lbl">Загальний борг по кредитах</div><div class="big out num">{{ credit.total_debt|money }}</div><div class="lbl">взято всього {{ credit.total_taken|money }}, погашено {{ credit.total_repaid|money }}<br>не входить у суму грошей вище</div></div>
 {% for k in credit.credits if k.debt %}<div class="card"><div class="lbl">{{ k.name }}</div><div class="big num {{ 'out' if k.debt }}">{{ k.debt|money }}</div>
 <div class="lbl">погашено з 01.09: <b class="in">{{ k.repaid|money }}</b>{% if k.last_payment %}<br>останній платіж {{ k.last_payment|dt }}{% endif %}</div></div>{% endfor %}</div>
 <p><a href="/credits">Деталі кредитів →</a></p>{% endif %}

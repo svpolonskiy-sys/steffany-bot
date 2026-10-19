@@ -48,6 +48,7 @@ def bootstrap(c):
         sid = c.execute("SELECT id FROM accounts WHERE name='Сейф'").fetchone()["id"]
         set_setting(c, "safe_account_id", str(sid))
     cat.seed(c)
+    cat.migrate(c)
     c.commit()
 
 
@@ -446,6 +447,14 @@ def category_add(request: Request, name: str = Form(...), kind: str = Form(...),
     cat.get_or_create_category(get_con(), name, kind)
     get_con().commit()
     flash(request, "Категорію додано")
+    return RedirectResponse("/categories", status_code=303)
+
+
+@app.post("/categories/{cid}/exclude")
+def category_exclude(request: Request, cid: int, exclude: str = Form("0"), u=Depends(staff_cat)):
+    get_con().execute("UPDATE categories SET exclude=? WHERE id=?", (1 if exclude == "1" else 0, cid))
+    get_con().commit()
+    flash(request, "Збережено")
     return RedirectResponse("/categories", status_code=303)
 
 

@@ -11,6 +11,8 @@
 <table><tr><th>Категорія</th><th class="r">К-сть</th><th class="r">Сума</th><th class="r">%</th></tr>
 {% set tot = rep.income if kind=='income' else rep.expense %}{% for c in rep.by_category if c.kind==kind %}
 <tr><td>{{ c.category }}</td><td class="r">{{ c.count }}</td><td class="r num">{{ c.sum|money }}</td><td class="r mut">{{ (c.sum*100/tot)|round(1) if tot else 0 }}%</td></tr>{% else %}<tr><td colspan="4" class="mut">Немає даних</td></tr>{% endfor %}</table>{% endfor %}
+{% if rep.excluded %}<h2>Не враховано в прибутку (кредити, застава)</h2><table><tr><th>Категорія</th><th>Тип</th><th class="r">К-сть</th><th class="r">Сума</th></tr>
+{% for c in rep.excluded %}<tr><td>{{ c.category }}</td><td>{{ 'надходження' if c.kind=='income' else 'витрата' }}</td><td class="r">{{ c.count }}</td><td class="r num">{{ c.sum|money }}</td></tr>{% endfor %}</table>{% endif %}
 <h2>По рахунках</h2><table><tr><th>Рахунок</th><th class="r">Надходження</th><th class="r">Витрати</th><th class="r">Перекази (нетто)</th></tr>
 {% for a in rep.by_account %}<tr><td>{{ a.account }}</td><td class="r num in">{{ a.income|money }}</td><td class="r num out">{{ a.expense|money }}</td><td class="r num mut">{{ a.transfers_net|money(true) }}</td></tr>{% endfor %}</table>
 <h2>По днях</h2><table><tr><th>Дата</th><th class="r">Надходження</th><th class="r">Витрати</th></tr>

@@ -197,3 +197,28 @@ def seed(con):
         cid = get_or_create_category(con, cat, kind)
         add_rule(con, cid, pat, kind, priority=prio)
     con.commit()
+
+
+# Categories that move money but are not income/expense of the business (reports show them separately)
+EXCLUDED = [("Кредит", "income"), ("Кредит", "expense"), ("Застава", "income"), ("Застава", "expense")]
+EXCLUDED_RULES = [  # (kind, pattern, category, priority)
+    ("expense", "кошти забезпечення", "Застава", 8), ("income", "коштів-забезпечення", "Застава", 8),
+    ("income", "повернення комунально-забезпечувального", "Застава", 8),
+]
+
+
+def migrate(con):
+    """Idempotent upgrades applied on every start (safe on an existing database)."""
+    for name, kind in EXCLUDED:
+        cid = get_or_create_category(con, name, kind)
+        con.execute("UPDATE categories SET exclude=1, auto=0 WHERE id=?", (cid,))
+    for kind, pat, cname, prio in EXCLUDED_RULES:
+        cid = get_or_create_category(con, cname, kind)
+        if not con.execute("SELECT 1 FROM rules WHERE category_id=? AND lower(pattern)=?", (cid, pat)).fetchone():
+            add_rule(con, cid, pat, kind, priority=prio)
+            apply_rule_to_existing(con, cid, pat, kind)
+    if not con.execute("SELECT 1 FROM settings WHERE key='credit_backfill_v1'").fetchone():
+        con.execute("UPDATE accounts SET last_sync_at=NULL, last_sync_status='' WHERE kind='credit'")
+        con.execute("DELETE FROM credit_ops")
+        con.execute("INSERT INTO settings(key,value) VALUES('credit_backfill_v1','1')")
+    con.commit()

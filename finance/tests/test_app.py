@@ -264,3 +264,35 @@ def test_set_current_balance(client):
     client.post("/transactions/new", data={"kind": "expense", "account_id": cash, "amount": "27,03",
                                            "occurred_at": "2026-10-19T11:00", "description": "молоко"})
     assert account_balances(main.con)[cash] == 2820000
+
+
+def test_excluded_categories_and_contract_summary(client):
+    cash = accid("Каса салон")
+    cid = cat.get_or_create_category(main.con, "Кредит", "income")
+    client.post("/transactions/new", data={"kind": "income", "account_id": cash, "amount": "1000",
+                                           "occurred_at": "2026-10-19T10:00", "category_id": cid})
+    client.post("/transactions/new", data={"kind": "income", "account_id": cash, "amount": "500",
+                                           "occurred_at": "2026-10-19T10:00", "description": "послуга"})
+    r = reports.build(main.con, "2026-10-01", "2026-10-31")
+    assert r["income"] == 50000 and r["excluded"][0]["sum"] == 100000
+    assert account_balances(main.con)[cash] == 150000  # still in the cash balance
+    # contract summary: principal acct + overdue acct + interest acct
+    ids = {}
+    for iban, bal in (("P", -10000), ("V", 0), ("I", -100)):
+        ids[iban] = main.con.execute(
+            "INSERT INTO accounts(name,kind,source,iban,bank_balance) VALUES(?,?,?,?,?)",
+            (iban, "credit", "privat", iban, bal)).lastrowid
+    ops = [("P", "D", 20000, "Перерахування коштiв згiдно з кредитним договором КД-2"),
+           ("P", "C", 5000, "Винос кредита на прострочення по договору КД-2"),
+           ("V", "D", 5000, "Винос кредита на прострочення по договору КД-2"),
+           ("V", "C", 5000, "Погашення заборгованостi за кредитним договором КД-2"),
+           ("P", "C", 5000, "Погашення заборгованостi за кред.договором КД-2"),
+           ("I", "D", 300, "Нарахування вiдсоткiв згiдно кредитного договору КД-2"),
+           ("I", "C", 200, "Погашення вiдсоткiв по кредитному договору КД-2")]
+    for i, (a, d, amt, desc) in enumerate(ops):
+        main.con.execute("INSERT INTO credit_ops(account_id,external_id,occurred_at,direction,amount,description) VALUES(?,?,?,?,?,?)",
+                         (ids[a], f"e{i}", "2026-10-0%dT10:00:00" % (i + 1), d, amt, desc))
+    main.con.commit()
+    c = sync.credit_summary(main.con)["contracts"][0]
+    assert (c["taken"], c["repaid"], c["principal_debt"]) == (20000, 10000, 10000)
+    assert (c["interest_accrued"], c["interest_paid"], c["debt"]) == (300, 200, 10100)

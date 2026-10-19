@@ -1,5 +1,9 @@
 {% extends "base.html" %}{% block body %}<h1>Кредити — контроль погашення</h1>
 <div class="grid"><div class="card" style="border-color:var(--out)"><div class="lbl">Загальний борг</div><div class="big out num">{{ credit.total_debt|money }}</div></div></div>
+<h2>Кредитні договори</h2><table><tr><th>Договір</th><th class="r">Взято (тіло)</th><th class="r">Погашено (тіло)</th><th class="r">Борг по тілу</th><th class="r">Відсотки нараховано / сплачено</th><th class="r">Загальний борг</th></tr>
+{% for c in credit.contracts %}<tr><td>{{ c.contract }}<br><span class="mut">з {{ c.first[:10] }}</span></td><td class="r num">{{ c.taken|money }}</td><td class="r num in">{{ c.repaid|money }}</td><td class="r num out">{{ c.principal_debt|money }}</td>
+<td class="r num">{{ c.interest_accrued|money }} / {{ c.interest_paid|money }}</td><td class="r num out"><b>{{ c.debt|money }}</b></td></tr>{% endfor %}
+<tr><td><b>Разом</b></td><td class="r num"><b>{{ credit.total_taken|money }}</b></td><td class="r num in"><b>{{ credit.total_repaid|money }}</b></td><td class="r num out"><b>{{ (credit.total_taken-credit.total_repaid)|money }}</b></td><td></td><td class="r num out"><b>{{ credit.total_debt|money }}</b></td></tr></table>
 <h2>Кредитні лінії</h2><table><tr><th>Рахунок</th><th class="r">Борг зараз</th><th class="r">Погашено з 01.09</th><th class="r">Списано/видано</th><th>Останній платіж</th></tr>
 {% for k in credit.credits %}<tr><td>{{ k.name }}<br><span class="mut">{{ k.iban }}</span></td><td class="r num out">{{ k.debt|money }}</td>
 <td class="r num in">{{ k.repaid|money }} <span class="mut">({{ k.repaid_n }})</span></td><td class="r num">{{ k.charged|money }}</td><td>{{ (k.last_payment or '—')|dt }}</td></tr>

@@ -7,7 +7,8 @@
 <div><label>Для</label><select name="direction"><option value="any">будь-якого</option><option value="expense">витрат</option><option value="income">надходжень</option></select></div>
 <div style="flex:0 0 auto"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" name="apply" value="1" checked style="width:auto">і до наявних</label><button>Створити правило</button></div></div></form>{% endif %}
 {% for kind,title in [('expense','Витрати'),('income','Надходження')] %}<h2>{{ title }}</h2><table><tr><th>Назва</th><th class="r">Операцій</th><th></th></tr>
-{% for c in cats if c.kind==kind %}<tr><td>{{ c.name }} {% if c.auto %}<span class="tag auto">авто</span>{% endif %}</td><td class="r">{{ c.n }}</td>
+{% for c in cats if c.kind==kind %}<tr><td>{{ c.name }} {% if c.auto %}<span class="tag auto">авто</span>{% endif %}{% if c.exclude %}<span class="tag">не в прибутку</span>{% endif %}
+{% if can_edit %}<form method="post" action="/categories/{{ c.id }}/exclude" style="display:inline"><input type="hidden" name="exclude" value="{{ 0 if c.exclude else 1 }}"><button class="sm sec" style="padding:1px 7px;font-size:12px">{{ 'враховувати' if c.exclude else 'не враховувати в прибутку' }}</button></form>{% endif %}</td><td class="r">{{ c.n }}</td>
 <td>{% if can_edit %}<form method="post" action="/categories/{{ c.id }}" class="row fit" style="margin:0"><input name="name" value="{{ c.name }}" style="width:170px">
 <button class="sm sec">Перейменувати</button><select name="merge_into" style="width:150px"><option value="">Об'єднати з…</option>{% for d in cats if d.kind==kind and d.id!=c.id %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select><button class="sm sec" onclick="return !this.form.merge_into.value||confirm('Об\'єднати?')">OK</button></form>{% endif %}</td></tr>{% endfor %}</table>{% endfor %}
 <h2>Правила</h2><table><tr><th>Містить</th><th>Для</th><th>Категорія</th><th></th></tr>

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS categories(
   id INTEGER PRIMARY KEY, name TEXT NOT NULL,
   kind TEXT NOT NULL CHECK(kind IN ('income','expense')),
   auto INTEGER NOT NULL DEFAULT 0, archived INTEGER NOT NULL DEFAULT 0,
+  exclude INTEGER NOT NULL DEFAULT 0,
   UNIQUE(name, kind));
 CREATE TABLE IF NOT EXISTS rules(
   id INTEGER PRIMARY KEY, category_id INTEGER NOT NULL REFERENCES categories(id),
@@ -77,6 +78,9 @@ def connect(path: str | None = None) -> sqlite3.Connection:
     if path != ":memory:":
         con.execute("PRAGMA journal_mode=WAL")
     con.executescript(SCHEMA)
+    cols = {r[1] for r in con.execute("PRAGMA table_info(categories)")}
+    if "exclude" not in cols:  # DBs created before the flag existed
+        con.execute("ALTER TABLE categories ADD COLUMN exclude INTEGER NOT NULL DEFAULT 0")
     return con
 
 

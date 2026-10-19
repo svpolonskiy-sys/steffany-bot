@@ -24,7 +24,7 @@ def presets(today: date):
 
 def build(con, d_from: str, d_to: str, account_id: int | None = None) -> dict:
     lo, hi = period_bounds(d_from, d_to)
-    q = ("SELECT t.*, c.name cat, a.name acc, a2.name acc2 FROM transactions t "
+    q = ("SELECT t.*, c.name cat, COALESCE(c.exclude,0) excl, a.name acc, a2.name acc2 FROM transactions t "
          "JOIN accounts a ON a.id=t.account_id LEFT JOIN accounts a2 ON a2.id=t.to_account_id "
          "LEFT JOIN categories c ON c.id=t.category_id "
          "WHERE t.deleted_at IS NULL AND t.occurred_at BETWEEN ? AND ?")
@@ -34,7 +34,7 @@ def build(con, d_from: str, d_to: str, account_id: int | None = None) -> dict:
         args += [account_id, account_id]
     rows = con.execute(q + " ORDER BY t.occurred_at", args).fetchall()
     inc = exp = 0
-    cats, accs, days, transfers = {}, {}, {}, []
+    cats, accs, days, transfers, excl = {}, {}, {}, [], {}
     for t in rows:
         a = t["amount"]
         if t["kind"] == "transfer":
@@ -44,7 +44,11 @@ def build(con, d_from: str, d_to: str, account_id: int | None = None) -> dict:
             if t["acc2"] and (not account_id or t["to_account_id"] == account_id):
                 accs.setdefault(t["acc2"], [0, 0, 0])[2] += a
             continue
-        sign = 1 if t["kind"] == "income" else -1
+        if t["excl"]:
+            e = excl.setdefault((t["kind"], t["cat"]), [0, 0])
+            e[0] += a
+            e[1] += 1
+            continue
         if t["kind"] == "income":
             inc += a
         else:
@@ -63,6 +67,7 @@ def build(con, d_from: str, d_to: str, account_id: int | None = None) -> dict:
         "from": d_from, "to": d_to, "income": inc, "expense": exp, "net": inc - exp,
         "transfers_total": sum(t["amount"] for t in transfers),
         "by_category": by_cat,
+        "excluded": [{"kind": k[0], "category": k[1], "sum": v[0], "count": v[1]} for k, v in sorted(excl.items())],
         "by_account": [{"account": k, "income": v[0], "expense": v[1], "transfers_net": v[2]} for k, v in accs.items()],
         "by_day": [{"date": k, "income": v[0], "expense": v[1]} for k, v in sorted(days.items())],
         "transactions": rows,

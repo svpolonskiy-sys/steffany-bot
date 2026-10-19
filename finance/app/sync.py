@@ -1,4 +1,5 @@
 import logging
+import re
 
 import requests
 from datetime import date, datetime, timedelta
@@ -25,7 +26,7 @@ def _log(con, account_id, ok, message, added=0, updated=0):
 
 
 def _window_start(acc, overlap_days=3) -> str:
-    hist = get_setting_start()
+    hist = config.CREDIT_HISTORY_START if acc["kind"] == "credit" else get_setting_start()
     if not acc["last_sync_at"] or acc["last_sync_status"] != "ok":
         return hist
     d = datetime.fromisoformat(acc["last_sync_at"]).date() - timedelta(days=overlap_days)
@@ -78,7 +79,7 @@ def sync_privat(con, acc, session=None) -> tuple[int, int]:
 def discover_credits(con, parent, token, session) -> list[int]:
     """Credit lines ('L' accounts with debt or activity since HISTORY_START) found under the FOP's token."""
     known = {r["iban"] for r in con.execute("SELECT iban FROM accounts WHERE iban!=''")}
-    start = date.fromisoformat(config.HISTORY_START)
+    start = date.fromisoformat(config.CREDIT_HISTORY_START)
     new = []
     for b in privat.fetch_all_balances(token, session=session):
         iban = b.get("acc") or ""
@@ -120,21 +121,60 @@ def sync_credit(con, acc, session=None) -> tuple[int, int]:
     return added, 0
 
 
+def _contract(desc: str) -> str | None:
+    m = re.search(r"КД-(\d+)", desc or "")
+    return f"КД-{m.group(1)}" if m else None
+
+
 def credit_summary(con) -> dict:
-    """Credit lines for repayment control. Debt = negative bank balance."""
+    """Credit lines for repayment control. Debt = negative bank balance. Contracts are rebuilt from the
+    bank's own wording: disbursement = debit on the principal account, repayment = 'Погашення заборгованості',
+    'Винос кредита на прострочення' is only a move between accounts."""
+    from .categorize import norm
     rows, total = [], 0
+    contracts: dict[str, dict] = {}
     for a in con.execute("SELECT * FROM accounts WHERE kind='credit' AND active=1 ORDER BY sort,id"):
-        ops = con.execute("SELECT direction, SUM(amount) s, COUNT(*) n, MAX(occurred_at) last FROM credit_ops "
-                          "WHERE account_id=? GROUP BY direction", (a["id"],)).fetchall()
-        d = {o["direction"]: o for o in ops}
+        ops = con.execute("SELECT direction, amount, occurred_at, description FROM credit_ops WHERE account_id=? "
+                          "ORDER BY occurred_at", (a["id"],)).fetchall()
         debt = max(-(a["bank_balance"] or 0), 0)
         total += debt
+        cnt = {}
+        repaid = charged = repaid_n = 0
+        last = None
+        for o in ops:
+            cnt[_contract(o["description"])] = cnt.get(_contract(o["description"]), 0) + 1
+            if o["direction"] == "C":
+                repaid += o["amount"]; repaid_n += 1; last = o["occurred_at"]
+            else:
+                charged += o["amount"]
+        main = max((k for k in cnt if k), key=lambda k: cnt[k], default=None)
+        if main:
+            c = contracts.setdefault(main, dict(contract=main, taken=0, repaid=0, interest_accrued=0,
+                                                interest_paid=0, debt=0, first=None))
+            c["debt"] += debt
+            for o in ops:
+                t = norm(o["description"])
+                c["first"] = min(filter(None, [c["first"], o["occurred_at"]]))
+                if "відсот" in t:
+                    if o["direction"] == "D" and "нарахування" in t:
+                        c["interest_accrued"] += o["amount"]
+                    elif o["direction"] == "C" and "погашення" in t:
+                        c["interest_paid"] += o["amount"]
+                elif "винос кредита" in t:
+                    continue
+                elif o["direction"] == "D":
+                    c["taken"] += o["amount"]
+                elif o["direction"] == "C":
+                    c["repaid"] += o["amount"]
         rows.append({"id": a["id"], "name": a["name"], "iban": a["iban"], "debt": debt,
                      "bank_balance": a["bank_balance"], "synced_at": a["bank_balance_at"],
-                     "repaid": d["C"]["s"] if "C" in d else 0, "repaid_n": d["C"]["n"] if "C" in d else 0,
-                     "last_payment": d["C"]["last"] if "C" in d else None,
-                     "charged": d["D"]["s"] if "D" in d else 0})
-    return {"credits": rows, "total_debt": total}
+                     "repaid": repaid, "repaid_n": repaid_n, "last_payment": last, "charged": charged,
+                     "contract": main})
+    cl = sorted(contracts.values(), key=lambda c: c["contract"])
+    for c in cl:
+        c["principal_debt"] = c["taken"] - c["repaid"]
+    return {"credits": rows, "total_debt": total, "contracts": cl,
+            "total_taken": sum(c["taken"] for c in cl), "total_repaid": sum(c["repaid"] for c in cl)}
 
 
 def _safe_account_id(con):
