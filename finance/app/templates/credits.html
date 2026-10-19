@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block body %}<h1>Кредити — контроль погашення</h1>
+<div class="grid"><div class="card" style="border-color:var(--out)"><div class="lbl">Загальний борг</div><div class="big out num">{{ credit.total_debt|money }}</div></div></div>
+<h2>Кредитні лінії</h2><table><tr><th>Рахунок</th><th class="r">Борг зараз</th><th class="r">Погашено з 01.09</th><th class="r">Списано/видано</th><th>Останній платіж</th></tr>
+{% for k in credit.credits %}<tr><td>{{ k.name }}<br><span class="mut">{{ k.iban }}</span></td><td class="r num out">{{ k.debt|money }}</td>
+<td class="r num in">{{ k.repaid|money }} <span class="mut">({{ k.repaid_n }})</span></td><td class="r num">{{ k.charged|money }}</td><td>{{ (k.last_payment or '—')|dt }}</td></tr>
+{% else %}<tr><td colspan="5" class="mut">Кредитних рахунків не знайдено. Вони підтягуються автоматично разом з оновленням ФОП.</td></tr>{% endfor %}</table>
+<p class="mut">Борг — від'ємний залишок кредитного рахунку в банку. «Погашено» — зарахування на кредитний рахунок, «списано/видано» — списання з нього (видача, відсотки, комісії), так, як їх показує банк.</p>
+<h2>Платежі з розрахункового рахунку (стаття «Кредит»)</h2><table><tr><th>Дата</th><th>Рахунок</th><th>Опис</th><th class="r">Сума</th></tr>
+{% for t in repay %}<tr><td class="num"><a href="/transactions/{{ t.id }}">{{ t.occurred_at|dt }}</a></td><td>{{ t.acc }}</td><td>{{ t.description[:100] }}</td><td class="r num out">{{ t.amount|money }}</td></tr>{% else %}<tr><td colspan="4" class="mut">Немає</td></tr>{% endfor %}</table>
+<h2>Операції по кредитних рахунках</h2><table><tr><th>Дата</th><th>Рахунок</th><th>Опис</th><th class="r">Сума</th></tr>
+{% for o in ops %}<tr><td class="num">{{ o.occurred_at|dt }}</td><td>{{ o.aname }}</td><td>{{ o.description[:100] }}</td><td class="r num {{ 'in' if o.direction=='C' else 'out' }}">{{ '+' if o.direction=='C' else '−' }} {{ o.amount|money }}</td></tr>{% else %}<tr><td colspan="4" class="mut">Немає операцій</td></tr>{% endfor %}</table>{% endblock %}

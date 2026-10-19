@@ -23,7 +23,7 @@ log = logging.getLogger("app")
 BASE_DIR = __file__.rsplit("/", 1)[0]
 ROLES = {"owner": "Власник", "accountant": "Бухгалтер", "admin": "Адміністратор"}
 KINDS = {"income": "Надходження", "expense": "Витрата", "transfer": "Переказ"}
-ACC_KINDS = {"fop": "Рахунок ФОП", "cash": "Готівкова каса", "card": "Приватна картка"}
+ACC_KINDS = {"fop": "Рахунок ФОП", "cash": "Готівкова каса", "card": "Приватна картка", "credit": "Кредитна лінія"}
 SRC = {"manual": "вручну", "privat": "Приватбанк", "alteg": "Alteg"}
 
 con = None  # set in create_app / lifespan
@@ -220,7 +220,7 @@ def dashboard(request: Request, u=Depends(current_user)):
         "SELECT COUNT(*) FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL "
         "AND t.user_edited=0 AND (c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))").fetchone()[0]
     return render(request, "dashboard.html", u, bal=b, day=day, month=month, recent=recent,
-                  last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
+                  credit=sync.credit_summary(c), last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
                   in_window=sync.in_work_window())
 
 
@@ -260,7 +260,7 @@ def tx_query(p: dict):
 
 
 def lists(c):
-    return dict(accounts=c.execute("SELECT * FROM accounts WHERE active=1 ORDER BY sort,id").fetchall(),
+    return dict(accounts=c.execute("SELECT * FROM accounts WHERE active=1 AND kind!='credit' ORDER BY sort,id").fetchall(),
                 categories=c.execute("SELECT * FROM categories WHERE archived=0 ORDER BY kind DESC, name").fetchall())
 
 
@@ -377,6 +377,18 @@ def tx_restore(request: Request, tid: int, u=Depends(current_user)):
         get_con().commit()
     flash(request, "Відновлено")
     return RedirectResponse(f"/transactions/{tid}", status_code=303)
+
+
+# ---------- credits ----------
+@app.get("/credits", response_class=HTMLResponse)
+def credits_page(request: Request, u=Depends(current_user)):
+    c = get_con()
+    ops = c.execute("SELECT o.*, a.name aname FROM credit_ops o JOIN accounts a ON a.id=o.account_id "
+                    "ORDER BY o.occurred_at DESC, o.id DESC LIMIT 300").fetchall()
+    repay = c.execute(
+        "SELECT t.*, a.name acc FROM transactions t JOIN accounts a ON a.id=t.account_id JOIN categories k ON k.id=t.category_id "
+        "WHERE t.deleted_at IS NULL AND k.name='Кредит' AND t.kind='expense' ORDER BY t.occurred_at DESC LIMIT 100").fetchall()
+    return render(request, "credits.html", u, credit=sync.credit_summary(c), ops=ops, repay=repay)
 
 
 # ---------- reports ----------
@@ -586,7 +598,7 @@ def change_password(request: Request, old: str = Form(...), new: str = Form(...)
 # ---------- JSON API (session or X-API-Token) ----------
 @app.get("/api/balances")
 def api_balances(_=Depends(api_user)):
-    return reports.balances(get_con())
+    return {**reports.balances(get_con()), **sync.credit_summary(get_con())}
 
 
 @app.get("/api/report")

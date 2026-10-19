@@ -72,7 +72,7 @@ def build(con, d_from: str, d_to: str, account_id: int | None = None) -> dict:
 def balances(con) -> dict:
     bal = account_balances(con)
     out = []
-    for a in con.execute("SELECT * FROM accounts WHERE active=1 ORDER BY sort,id"):
+    for a in con.execute("SELECT * FROM accounts WHERE active=1 AND kind!='credit' ORDER BY sort,id"):
         out.append({"id": a["id"], "name": a["name"], "kind": a["kind"], "source": a["source"],
                     "balance": bal[a["id"]], "bank_balance": a["bank_balance"],
                     "synced_at": a["last_sync_at"], "status": a["last_sync_status"]})

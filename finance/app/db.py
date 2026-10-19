@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users(
   pw_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS accounts(
   id INTEGER PRIMARY KEY, name TEXT NOT NULL,
-  kind TEXT NOT NULL CHECK(kind IN ('fop','cash','card')),
+  kind TEXT NOT NULL CHECK(kind IN ('fop','cash','card','credit')),
   source TEXT NOT NULL CHECK(source IN ('privat','alteg','manual')),
   iban TEXT DEFAULT '', token_enc TEXT DEFAULT '',
   opening_balance INTEGER NOT NULL DEFAULT 0, opening_auto INTEGER NOT NULL DEFAULT 0,
@@ -48,6 +48,12 @@ CREATE TABLE IF NOT EXISTS audit(
   id INTEGER PRIMARY KEY, tx_id INTEGER, action TEXT NOT NULL, user_id INTEGER,
   at TEXT NOT NULL, before_json TEXT, after_json TEXT, note TEXT DEFAULT '');
 CREATE INDEX IF NOT EXISTS ix_audit_tx ON audit(tx_id);
+CREATE TABLE IF NOT EXISTS credit_ops(
+  id INTEGER PRIMARY KEY, account_id INTEGER NOT NULL REFERENCES accounts(id),
+  external_id TEXT UNIQUE NOT NULL, occurred_at TEXT NOT NULL,
+  direction TEXT NOT NULL CHECK(direction IN ('C','D')), amount INTEGER NOT NULL,
+  description TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS ix_credit_acc ON credit_ops(account_id, occurred_at);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS sync_log(
   id INTEGER PRIMARY KEY, at TEXT NOT NULL, account_id INTEGER, ok INTEGER NOT NULL,

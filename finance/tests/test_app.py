@@ -199,3 +199,31 @@ def test_short_patterns_are_whole_words():
     assert name(cat.categorize(con, "expense", "Оплата грошові кошти забезпечення зг рах", "")) == "Інші витрати"
     assert name(cat.categorize(con, "expense", "зп на карту Іванова", "")) == "Зарплата"
     assert name(cat.categorize(con, "expense", "Комiсiя по еквайрингу за вересень", "")) == "Комісія банку"
+
+
+class FakeBank:
+    def get(self, url, **kw):
+        if url.endswith("/balance"):
+            b = [{"acc": "UA1", "currency": "UAH", "atp": "T", "balanceOut": "1000.00"},
+                 {"acc": "UA9", "currency": "UAH", "atp": "L", "balanceOut": "-5000.00"},
+                 {"acc": "UA8", "currency": "UAH", "atp": "L", "balanceOut": "0.00"}]
+            if kw.get("params", {}).get("acc"):
+                b = [x for x in b if x["acc"] == kw["params"]["acc"]]
+            return FakeResp({"status": "SUCCESS", "balances": b})
+        acc = kw["params"]["acc"]
+        tx = [{"ID": "k1", "TRANTYPE": "C", "SUM": "700.00", "CCY": "UAH", "OSND": "Погашення",
+               "DATE_TIME_DAT_OD_TIM_P": "10.10.2026 10:00:00"}] if acc == "UA9" else []
+        return FakeResp({"status": "SUCCESS", "transactions": tx})
+
+
+def test_credit_lines_separate_from_cash(client):
+    a = main.con.execute("SELECT * FROM accounts WHERE name='ФОП 1'").fetchone()
+    main.con.execute("UPDATE accounts SET iban='UA1', token_enc=? WHERE id=?", (encrypt("tok"), a["id"]))
+    main.con.commit()
+    a = main.con.execute("SELECT * FROM accounts WHERE id=?", (a["id"],)).fetchone()
+    assert sync.sync_account(main.con, a, session=FakeBank()) is not None
+    cs = sync.credit_summary(main.con)
+    assert cs["total_debt"] == 500000 and len(cs["credits"]) == 1  # UA8 has no debt/activity -> not created
+    assert cs["credits"][0]["repaid"] == 70000
+    assert reports.balances(main.con)["total"] == 100000  # credit not in cash total
+    assert client.get("/credits").status_code == 200 and "5 000,00" in client.get("/").text

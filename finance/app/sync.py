@@ -64,6 +64,68 @@ def sync_privat(con, acc, session=None) -> tuple[int, int]:
     return added, 0
 
 
+def discover_credits(con, parent, token, session) -> list[int]:
+    """Credit lines ('L' accounts with debt or activity since HISTORY_START) found under the FOP's token."""
+    known = {r["iban"] for r in con.execute("SELECT iban FROM accounts WHERE iban!=''")}
+    start = date.fromisoformat(config.HISTORY_START)
+    new = []
+    for b in privat.fetch_all_balances(token, session=session):
+        iban = b.get("acc") or ""
+        if b.get("atp") != "L" or iban in known or b.get("currency", "UAH") != "UAH":
+            continue
+        active = privat.to_kop(b.get("balanceOut") or "0") != 0
+        if not active:
+            active = bool(privat.fetch_transactions(token, iban, start, date.today(), session=session))
+        if not active:
+            continue
+        cur = con.execute(
+            "INSERT INTO accounts(name,kind,source,iban,token_enc,sort) VALUES(?,?,?,?,?,(SELECT COALESCE(MAX(sort),0)+1 FROM accounts))",
+            (f"Кредит …{iban[-6:]} ({parent['name']})", "credit", "privat", iban, parent["token_enc"]))
+        new.append(cur.lastrowid)
+        known.add(iban)
+    con.commit()
+    return new
+
+
+def sync_credit(con, acc, session=None) -> tuple[int, int]:
+    token = decrypt(acc["token_enc"])
+    session = session or requests
+    start = date.fromisoformat(_window_start(acc))
+    added = 0
+    for t in privat.fetch_transactions(token, acc["iban"], start, date.today(), session=session):
+        uid = t.get("ID") or ((t.get("REF") or "") + (t.get("REFN") or ""))
+        amount = privat.to_kop(t.get("SUM") or "0")
+        if not uid or amount <= 0 or (t.get("CCY") or "UAH") != "UAH":
+            continue
+        cur = con.execute(
+            "INSERT OR IGNORE INTO credit_ops(account_id,external_id,occurred_at,direction,amount,description) VALUES(?,?,?,?,?,?)",
+            (acc["id"], f"privat:{acc['iban']}:{uid}", privat.parse_dt(t), "C" if t.get("TRANTYPE") == "C" else "D",
+             amount, (t.get("OSND") or "").strip()))
+        added += cur.rowcount
+    bal = privat.fetch_balance(token, acc["iban"], session=session)
+    if bal is not None:
+        con.execute("UPDATE accounts SET bank_balance=?, bank_balance_at=? WHERE id=?", (bal, now_local(), acc["id"]))
+    con.commit()
+    return added, 0
+
+
+def credit_summary(con) -> dict:
+    """Credit lines for repayment control. Debt = negative bank balance."""
+    rows, total = [], 0
+    for a in con.execute("SELECT * FROM accounts WHERE kind='credit' AND active=1 ORDER BY sort,id"):
+        ops = con.execute("SELECT direction, SUM(amount) s, COUNT(*) n, MAX(occurred_at) last FROM credit_ops "
+                          "WHERE account_id=? GROUP BY direction", (a["id"],)).fetchall()
+        d = {o["direction"]: o for o in ops}
+        debt = max(-(a["bank_balance"] or 0), 0)
+        total += debt
+        rows.append({"id": a["id"], "name": a["name"], "iban": a["iban"], "debt": debt,
+                     "bank_balance": a["bank_balance"], "synced_at": a["bank_balance_at"],
+                     "repaid": d["C"]["s"] if "C" in d else 0, "repaid_n": d["C"]["n"] if "C" in d else 0,
+                     "last_payment": d["C"]["last"] if "C" in d else None,
+                     "charged": d["D"]["s"] if "D" in d else 0})
+    return {"credits": rows, "total_debt": total}
+
+
 def _safe_account_id(con):
     v = get_setting(con, "safe_account_id")
     if v:
@@ -121,8 +183,17 @@ def sync_alteg(con, acc, client=None) -> tuple[int, int]:
 
 def sync_account(con, acc, **kw):
     try:
-        if acc["source"] == "privat":
+        if acc["kind"] == "credit":
+            a, u = sync_credit(con, acc, **kw)
+        elif acc["source"] == "privat":
             a, u = sync_privat(con, acc, **kw)
+            if acc["kind"] == "fop":
+                try:
+                    sess = kw.get("session") or requests
+                    for cid in discover_credits(con, acc, decrypt(acc["token_enc"]), sess):
+                        sync_account(con, con.execute("SELECT * FROM accounts WHERE id=?", (cid,)).fetchone(), session=sess)
+                except Exception:
+                    log.exception("credit discovery failed")
         elif acc["source"] == "alteg":
             a, u = sync_alteg(con, acc, **kw)
         else:
@@ -141,7 +212,8 @@ def sync_all(con, force=False):
         return {"skipped": "поза робочим часом (21:00-08:00)"}
     res = {}
     with lock():
-        for acc in con.execute("SELECT * FROM accounts WHERE active=1 AND source!='manual' ORDER BY sort,id").fetchall():
+        for acc in con.execute("SELECT * FROM accounts WHERE active=1 AND source!='manual' "
+                               "ORDER BY (kind='credit'), sort, id").fetchall():
             res[acc["name"]] = sync_account(con, acc)
         set_setting(con, "last_sync_all", now_local())
     return res

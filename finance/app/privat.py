@@ -56,6 +56,25 @@ def fetch_balance(token: str, acc: str, session=requests) -> int | None:
     return None
 
 
+def fetch_all_balances(token: str, session=requests) -> list[dict]:
+    """Every account the token can see (one token = one FOP, many accounts incl. credit lines)."""
+    today = date.today().strftime("%d-%m-%Y")
+    out, follow = [], None
+    for _ in range(20):
+        params = {"startDate": today, "endDate": today, "limit": 100}
+        if follow:
+            params["followId"] = follow
+        r = session.get(f"{BASE}/balance", headers=_headers(token), params=params, timeout=40)
+        data = _json(r)
+        _check(r, data)
+        out += data.get("balances") or []
+        if data.get("exist_next_page") in (True, "true", "True") and data.get("next_page_id"):
+            follow = data["next_page_id"]
+        else:
+            return out
+    return out
+
+
 def fetch_transactions(token: str, acc: str, start: date, end: date, session=requests, max_pages=200):
     out, follow = [], None
     for _ in range(max_pages):
