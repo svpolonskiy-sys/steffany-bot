@@ -541,7 +541,7 @@ def _pl_period(request):
 @app.get("/pl", response_class=HTMLResponse)
 def pl_page(request: Request, u=Depends(current_user)):
     a, b, pr = _pl_period(request)
-    acc = request.query_params.get("accrual") == "1"
+    acc = request.query_params.get("accrual", "1") == "1"
     return render(request, "pl.html", u, rep=pl.build(get_con(), a, b, acc), d_from=a, d_to=b, preset=pr, accrual=acc,
                   pay_error=get_setting(get_con(), "pay_sync_error", ""),
                   payroll_months=payroll.covered_months(get_con()), payroll_at=get_setting(get_con(), "payroll_synced_at"),
@@ -564,7 +564,7 @@ def pl_xlsx(request: Request, u=Depends(current_user)):
     from openpyxl import Workbook
     from openpyxl.styles import Font
     a, b, _ = _pl_period(request)
-    rep = pl.build(get_con(), a, b, request.query_params.get("accrual") == "1")
+    rep = pl.build(get_con(), a, b, request.query_params.get("accrual", "1") == "1")
     wb = Workbook()
     ws = wb.active
     ws.title = "P&L"
@@ -599,7 +599,7 @@ def pl_xlsx(request: Request, u=Depends(current_user)):
 @app.get("/api/pl")
 def api_pl(request: Request, _=Depends(api_user)):
     a, b, _p = _pl_period(request)
-    r = pl.build(get_con(), a, b, request.query_params.get("accrual") == "1")
+    r = pl.build(get_con(), a, b, request.query_params.get("accrual", "1") == "1")
     k = lambda v: None if v is None else v / 100
     return JSONResponse({"from": a, "to": b, "accrual": r["accrual"], "kpis": {**r["kpis"], "avg_check": k(r["kpis"]["avg_check"]),
                          "rev_per_day": k(r["kpis"]["rev_per_day"]), "bep": k(r["kpis"]["bep"])},

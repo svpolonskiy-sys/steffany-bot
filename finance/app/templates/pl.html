@@ -4,7 +4,7 @@
 {% if pay_error %}<div class="flash">Дані з Alteg оновились не повністю: {{ pay_error }}. Виручка може бути неповною.</div>{% endif %}
 <div class="pills">{% for key,t in [('month','Цей місяць'),('prev_month','Минулий місяць'),('quarter','Квартал'),('all','З початку обліку')] %}<a class="{{ 'on' if preset==key }}" href="?preset={{ key }}&accrual={{ 1 if accrual else 0 }}">{{ t }}</a>{% endfor %}</div>
 <form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
-<div><label>Облік витрат</label><select name="accrual"><option value="0" {{ 'selected' if not accrual }}>за датою оплати</option><option value="1" {{ 'selected' if accrual }}>за місяцем нарахування (з призначення платежу)</option></select></div>
+<div><label>Облік витрат</label><select name="accrual"><option value="1" {{ 'selected' if accrual }}>за місяцем нарахування (рекомендовано)</option><option value="0" {{ 'selected' if not accrual }}>за датою оплати</option></select></div>
 <div style="flex:0 0 auto"><button>Сформувати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/pl/export.xlsx?date_from={{ d_from }}&date_to={{ d_to }}&accrual={{ 1 if accrual else 0 }}">Excel ↓</a></div></div></form>
 
 {% if rep.empty %}<div class="card" style="margin-top:12px"><b>За цей період немає даних.</b><div class="mut">Облік у системі ведеться з 01.09.2026.</div></div>{% else %}
