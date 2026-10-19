@@ -236,7 +236,8 @@ def test_credit_lines_separate_from_cash(client):
     assert cs["total_debt"] == 500000 and len(cs["credits"]) == 1  # UA8 has no debt/activity -> not created
     assert cs["credits"][0]["repaid"] == 70000
     assert reports.balances(main.con)["total"] == 100000  # credit not in cash total
-    assert client.get("/credits").status_code == 200 and "5 000,00" in client.get("/").text
+    assert client.get("/credits").status_code == 200 and "5 000,00" in client.get("/credits").text
+    assert "Кредити — контроль погашення" not in client.get("/").text
 
 
 def test_transfer_between_own_fops_counted_once(client):

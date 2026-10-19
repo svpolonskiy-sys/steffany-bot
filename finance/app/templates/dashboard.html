@@ -7,11 +7,6 @@
 <div class="sub">{% if a.status and a.status!='ok' %}<span class="out">⚠ {{ a.status[:60] }}</span>{% elif a.synced_at %}оновл. {{ a.synced_at|dt }}{% else %}{{ SRC[a.source] }}{% endif %}
 {% if a.bank_balance is not none and a.bank_balance!=a.balance %}<br><span class="warn">банк: {{ a.bank_balance|money }}</span>{% endif %}</div></div>{% endfor %}</div>
 <form method="post" action="/sync" style="margin:10px 0"><button class="sec sm">↻ Оновити зараз</button></form>
-{% if credit.credits %}<h2>Кредити — контроль погашення</h2><div class="grid accs">
-<div class="card acc" style="border-color:var(--out)"><div class="nm">Борг по кредитах</div><div class="tg"></div><div class="big out num">{{ credit.total_debt|money }}</div><div class="sub">взято всього {{ credit.total_taken|money }}, погашено {{ credit.total_repaid|money }}<br>не входить у суму грошей вище</div></div>
-{% for k in credit.credits if k.debt %}<div class="card acc"><div class="nm" title="{{ k.name }}">{{ k.name.split(' (')[0] }}</div><div class="tg"><span class="tag">{{ k.contract or 'кредит' }}</span></div><div class="big num out">{{ k.debt|money }}</div>
-<div class="sub">погашено: <b class="in">{{ k.repaid|money }}</b>{% if k.last_payment %}<br>останній платіж {{ k.last_payment|dt }}{% endif %}</div></div>{% endfor %}</div>
-<p><a href="/credits">Деталі кредитів →</a></p>{% endif %}
 {% if review %}<div class="flash">Автоматично розподілено {{ review }} операцій — <a href="/transactions?kind=expense">перевірте категорії</a> та за потреби створіть правила в розділі «Категорії».</div>{% endif %}
 <div class="stats"><div class="card stat"><div class="k">Каса за сьогодні · <a href="/cash">по днях →</a></div><div class="v in">{{ takings.total|money }}</div>
 <div class="kv"><span>готівка</span><b>{{ takings.cash|money }}</b></div><div class="kv"><span>безготівка</span><b>{{ takings.cashless|money }}</b></div><div class="kv"><span>витрати з каси</span><b class="out">{{ takings.expense|money }}</b></div></div>
