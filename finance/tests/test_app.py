@@ -408,3 +408,44 @@ def test_alteg_client_retries_dropped_connections(monkeypatch):
     c = alteg.AltegClient(session=Sess())
     c.user_token = "x"
     assert c.records("2026-10-01", "2026-10-02") == [] and calls["n"] == 3
+
+
+def test_pl_formulas(client):
+    from app import pl
+    cash = accid("Каса салон")
+    fop = accid("ФОП 1")
+    cc = lambda n, k: cat.get_or_create_category(main.con, n, k)
+    main.con.executemany("INSERT INTO alteg_pay(external_id,occurred_at,amount,method,service_title,category_title,item_type) VALUES(?,?,?,?,?,?,?)", [
+        ("a1", "2026-10-05T10:00:00", 1000000, "cash", "Стрижка", "Перукарські послуги", "service"),
+        ("a2", "2026-10-05T11:00:00", 500000, "cashless", "Манікюр", "Манікюр та педикюр", "service"),
+        ("a3", "2026-10-06T11:00:00", 100000, "cash", "Товар", "Товари", "goods_transaction"),
+        ("a4", "2026-10-06T12:00:00", 50000, "cash", "Сертифікат", "Сертифікати", "")])
+    post = lambda **kw: client.post("/transactions/new", data=kw)
+    post(kind="expense", account_id=cash, amount="2000", occurred_at="2026-10-07T10:00", category_id=cc("Матеріал в роботу", "expense"), description="гель")
+    post(kind="expense", account_id=fop, amount="5000", occurred_at="2026-10-08T10:00", category_id=cc("Зарплата", "expense"), description="Заробітна плата за вересень 2026")
+    post(kind="expense", account_id=fop, amount="1000", occurred_at="2026-10-08T10:00", category_id=cc("Податки", "expense"), description="101 ЄСВ / з/п за вересень")
+    post(kind="expense", account_id=fop, amount="500", occurred_at="2026-10-09T10:00", category_id=cc("Податки", "expense"), description="Єдиний податок")
+    post(kind="expense", account_id=fop, amount="3000", occurred_at="2026-10-09T10:00", category_id=cc("Оренда", "expense"), description="орендна плата за жовтень")
+    post(kind="expense", account_id=fop, amount="400", occurred_at="2026-10-09T10:00", category_id=cc("Кредит", "expense"), description="Погашення")
+    post(kind="income", account_id=fop, amount="999", occurred_at="2026-10-09T10:00", category_id=cc("Оплата послуг", "income"), description="термінал (вже в Alteg)")
+    post(kind="income", account_id=fop, amount="300", occurred_at="2026-10-09T10:00", category_id=cc("Суборенда", "income"), description="суборенда")
+    main.con.execute("INSERT INTO credit_ops(account_id,external_id,occurred_at,direction,amount,description) VALUES(?,?,?,?,?,?)",
+                     (main.con.execute("INSERT INTO accounts(name,kind,source) VALUES('кр','credit','privat')").lastrowid, "i1", "2026-10-10T03:00:00", "D", 4000, "Нарахування відсотків КД-1"))
+    main.con.commit()
+    c = pl.compute(main.con, __import__("datetime").date(2026, 10, 1), __import__("datetime").date(2026, 10, 31))
+    assert c["sales"] == 1600000 and c["goods"] == 100000 and c["gift"] == 50000        # gift card is not revenue
+    assert c["oi"] == 30000 and c["revenue"] == 1630000                                    # bank terminal credit not double counted
+    assert c["cogs"] == 200000 and c["gross"] == 1430000
+    assert c["labour"] == 500000 + 100000 and c["contribution"] == 830000                  # ЄСВ counted as labour
+    assert c["opex"] == 300000 and c["ebitda"] == 530000
+    assert c["interest"] == 4000 and c["tax"] == 50000 and c["net"] == 530000 - 4000 - 50000
+    assert ("expense", "Кредит") in c["nonpl"]
+    # accrual: salary "за вересень" moves to September
+    sep = pl.compute(main.con, __import__("datetime").date(2026, 9, 1), __import__("datetime").date(2026, 9, 30), accrual=True)
+    assert sep["labour"] == 500000 + 100000
+    rep = pl.build(main.con, "2026-10-01", "2026-10-31")
+    assert rep["lines"][-1]["label"] == "ЧИСТИЙ ПРИБУТОК" and rep["lines"][-1]["amount"] == c["net"]
+    for u in ("/pl", "/pl?preset=prev_month&accrual=1", "/pl?date_from=2026-09-01&date_to=2026-10-31", "/categories"):
+        assert client.get(u).status_code == 200, u
+    assert client.get("/pl/export.xlsx").content[:2] == b"PK"
+    assert client.get("/api/pl?date_from=2026-10-01&date_to=2026-10-31", headers={"x-api-token": "tok123"}).json()["lines"]

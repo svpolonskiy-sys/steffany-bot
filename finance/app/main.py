@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import categorize as cat, config, privat, reports, sync
+from . import categorize as cat, config, pl, privat, reports, sync
 from .db import (account_balances, add_audit, connect, get_setting, insert_tx, lock, now_local, set_setting,
                  update_tx)
 from .security import encrypt, hash_password, verify_password
@@ -92,7 +92,7 @@ def money(k, sign=False):
 
 tpl.env.filters["money"] = money
 tpl.env.filters["dt"] = lambda s: (s or "").replace("T", " ")[:16]
-tpl.env.globals.update(suggest_pattern=cat.suggest_pattern, ROLES=ROLES, KINDS=KINDS, ACC_KINDS=ACC_KINDS, SRC=SRC)
+tpl.env.globals.update(suggest_pattern=cat.suggest_pattern, pl_group_of=lambda c: pl.group_of(c["name"], c["kind"], c["exclude"], c["pl_group"]), PL_EXP=pl.EXPENSE_GROUPS, PL_INC=pl.INCOME_GROUPS, ROLES=ROLES, KINDS=KINDS, ACC_KINDS=ACC_KINDS, SRC=SRC)
 
 
 class Redirect(Exception):
@@ -514,6 +514,88 @@ def cash_xlsx(request: Request, u=Depends(current_user)):
                     headers={"Content-Disposition": f"attachment; filename=cash_{a}_{b}.xlsx"})
 
 
+# ---------- P&L ----------
+def _pl_period(request):
+    today = datetime.now(config.KYIV).date()
+    q = request.query_params
+    first = today.replace(day=1)
+    prev_last = first - timedelta(days=1)
+    qs = date(today.year, 3 * ((today.month - 1) // 3) + 1, 1)
+    presets = {"month": (first, today), "prev_month": (prev_last.replace(day=1), prev_last), "quarter": (qs, today),
+               "all": (date.fromisoformat(config.HISTORY_START), today)}
+    pr = q.get("preset") or ("month" if not q.get("date_from") and not q.get("date_to") else "")
+    if pr in presets:
+        a, b = presets[pr]
+        return a.isoformat(), b.isoformat(), pr
+    a = q.get("date_from") or first.isoformat()
+    b = q.get("date_to") or today.isoformat()
+    try:
+        da, db = date.fromisoformat(a), date.fromisoformat(b)
+    except ValueError:
+        raise HTTPException(400, "Некоректна дата")
+    if db < da or (db - da).days > 800:
+        raise HTTPException(400, "Період має бути від 1 до 800 днів")
+    return a, b, ""
+
+
+@app.get("/pl", response_class=HTMLResponse)
+def pl_page(request: Request, u=Depends(current_user)):
+    a, b, pr = _pl_period(request)
+    acc = request.query_params.get("accrual") == "1"
+    return render(request, "pl.html", u, rep=pl.build(get_con(), a, b, acc), d_from=a, d_to=b, preset=pr, accrual=acc,
+                  pay_error=get_setting(get_con(), "pay_sync_error", ""))
+
+
+@app.get("/pl/export.xlsx")
+def pl_xlsx(request: Request, u=Depends(current_user)):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+    a, b, _ = _pl_period(request)
+    rep = pl.build(get_con(), a, b, request.query_params.get("accrual") == "1")
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "P&L"
+    ws.append([f"P&L {a} — {b}" + (" (за місяцем нарахування)" if rep["accrual"] else " (за датою оплати)")])
+    ws["A1"].font = Font(bold=True, size=13)
+    ws.append(["Стаття", "Сума, ₴", "% від виручки", f"Попередній період {rep['prev_from']} — {rep['prev_to']}", "Зміна, %"])
+    for l in rep["lines"]:
+        ws.append([("    " * l["indent"]) + l["label"], None if l["amount"] is None else reports.uah(l["amount"]), l["pct"],
+                   None if l["prev"] is None else reports.uah(l["prev"]), l["delta"]])
+        if l["kind"] in ("head", "sub", "total", "grand"):
+            for c in ws[ws.max_row]:
+                c.font = Font(bold=True)
+    ws.append([])
+    ws.append(["Поза P&L (довідково)"])
+    for label, v in rep["memo"]:
+        ws.append([label, reports.uah(v)])
+    if rep["months"]:
+        w2 = wb.create_sheet("По місяцях")
+        w2.append(["Місяць", "Виручка", "Матеріали", "Валовий прибуток", "Оплата праці", "Опер. витрати", "EBITDA", "Відсотки", "Податки", "Чистий прибуток"])
+        for m in rep["months"]:
+            w2.append([m["label"]] + [reports.uah(m[k]) for k in ("revenue", "cogs", "gross", "labour", "opex", "ebitda", "interest", "tax", "net")])
+    for w in wb.worksheets:
+        w.column_dimensions["A"].width = 58
+        for col in "BCDEFGHIJ":
+            w.column_dimensions[col].width = 18
+    buf = io.BytesIO()
+    wb.save(buf)
+    return Response(buf.getvalue(), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f"attachment; filename=PnL_{a}_{b}.xlsx"})
+
+
+@app.get("/api/pl")
+def api_pl(request: Request, _=Depends(api_user)):
+    a, b, _p = _pl_period(request)
+    r = pl.build(get_con(), a, b, request.query_params.get("accrual") == "1")
+    k = lambda v: None if v is None else v / 100
+    return JSONResponse({"from": a, "to": b, "accrual": r["accrual"], "kpis": {**r["kpis"], "avg_check": k(r["kpis"]["avg_check"]),
+                         "rev_per_day": k(r["kpis"]["rev_per_day"]), "bep": k(r["kpis"]["bep"])},
+                         "lines": [{"label": l["label"], "amount": k(l["amount"]), "pct": l["pct"], "prev": k(l["prev"]),
+                                    "delta_pct": l["delta"], "kind": l["kind"], "indent": l["indent"]} for l in r["lines"]],
+                         "memo": [{"label": a_, "amount": k(v)} for a_, v in r["memo"]],
+                         "months": [{x: (y if x == "label" else y / 100) for x, y in m.items()} for m in r["months"]]})
+
+
 # ---------- reports ----------
 def _period(request):
     today = datetime.now(config.KYIV).date()
@@ -569,6 +651,16 @@ def category_add(request: Request, name: str = Form(...), kind: str = Form(...),
     cat.get_or_create_category(get_con(), name, kind)
     get_con().commit()
     flash(request, "Категорію додано")
+    return RedirectResponse("/categories", status_code=303)
+
+
+@app.post("/categories/{cid}/pl")
+def category_pl(request: Request, cid: int, pl_group: str = Form(""), u=Depends(staff_cat)):
+    if pl_group and pl_group not in pl.GROUP_NAMES:
+        raise HTTPException(400)
+    get_con().execute("UPDATE categories SET pl_group=? WHERE id=?", (pl_group, cid))
+    get_con().commit()
+    flash(request, "Стаття P&L збережена")
     return RedirectResponse("/categories", status_code=303)
 
 

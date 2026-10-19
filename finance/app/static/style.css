@@ -98,3 +98,12 @@ details>summary{list-style:none}details>summary::-webkit-details-marker{display:
 .seg.a{background:linear-gradient(0deg,#8a5a44,#d09a7f);border-radius:3px 3px 0 0}
 
 .stack{display:flex;flex-direction:column;gap:14px;min-width:0}.dash2{align-items:start}
+/* P&L */
+table.pl td{padding-top:7px;padding-bottom:7px}
+.pl-head td{background:var(--bg);font-weight:700;font-size:12px;letter-spacing:.05em;color:var(--mut);padding-top:10px}
+.pl-item td{font-size:13.5px}.pl-item td:first-child{color:var(--ink)}
+.pl-sub td{font-weight:600;border-top:1px solid var(--line)}
+.pl-total td{font-weight:700;background:color-mix(in srgb,var(--acc) 9%,transparent);font-size:14.5px}
+.pl-grand td{font-weight:800;font-size:15.5px;background:color-mix(in srgb,var(--acc) 22%,transparent)}
+.split.big{height:20px;border-radius:10px;margin:2px 0 10px}.split.big>div{height:100%;transition:filter .15s}.split.big>div:hover{filter:brightness(1.2)}
+.legend2{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px}.legend2 b{font-weight:600}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% block body %}
+{% set k = rep.kpis %}
+<h1>P&amp;L — звіт про прибутки та збитки</h1>
+{% if pay_error %}<div class="flash">Дані з Alteg оновились не повністю: {{ pay_error }}. Виручка може бути неповною.</div>{% endif %}
+<div class="pills">{% for key,t in [('month','Цей місяць'),('prev_month','Минулий місяць'),('quarter','Квартал'),('all','З початку обліку')] %}<a class="{{ 'on' if preset==key }}" href="?preset={{ key }}&accrual={{ 1 if accrual else 0 }}">{{ t }}</a>{% endfor %}</div>
+<form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
+<div><label>Облік витрат</label><select name="accrual"><option value="0" {{ 'selected' if not accrual }}>за датою оплати</option><option value="1" {{ 'selected' if accrual }}>за місяцем нарахування (з призначення платежу)</option></select></div>
+<div style="flex:0 0 auto"><button>Сформувати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/pl/export.xlsx?date_from={{ d_from }}&date_to={{ d_to }}&accrual={{ 1 if accrual else 0 }}">Excel ↓</a></div></div></form>
+
+{% if rep.empty %}<div class="card" style="margin-top:12px"><b>За цей період немає даних.</b><div class="mut">Облік у системі ведеться з 01.09.2026.</div></div>{% else %}
+<div class="stats" style="margin-top:12px">
+<div class="card stat hero"><div class="k">Чистий прибуток · {{ d_from }} — {{ d_to }}</div><div class="v {{ 'in' if rep.cur.net>=0 else 'out' }}">{{ rep.cur.net|money(true) }}</div><div class="s">маржа {{ k.net_margin if k.net_margin is not none else '—' }}% · було {{ rep.prev_net|money }}</div></div>
+<div class="card stat"><div class="k">Виручка</div><div class="v">{{ rep.cur.revenue|money }}</div><div class="s">{{ k.rev_per_day|money }} на день · сер. чек {{ k.avg_check|money }}</div></div>
+<div class="card stat"><div class="k">Валова маржа</div><div class="v">{{ k.gross_margin if k.gross_margin is not none else '—' }}%</div><div class="s">матеріали й товари {{ k.cogs_pct if k.cogs_pct is not none else '—' }}% виручки</div></div>
+<div class="card stat"><div class="k">Оплата праці / оренда</div><div class="kv"><span>оплата праці</span><b>{{ k.labour_pct if k.labour_pct is not none else '—' }}%</b></div><div class="kv"><span>оренда</span><b>{{ k.rent_pct if k.rent_pct is not none else '—' }}%</b></div><div class="kv"><span>EBITDA</span><b>{{ k.ebitda_margin if k.ebitda_margin is not none else '—' }}%</b></div></div></div>
+
+{% if rep.split %}<div class="card" style="margin-top:14px"><h3 style="margin:0 0 10px;font-size:14.5px">Куди йде кожна гривня виручки</h3>
+<div class="split big">{% for p in rep.split if p.pct>0 %}<div class="tipme" style="width:{{ p.pct }}%;background:{{ p.color }}" data-t="{{ p.label }}" data-v="{{ p.v|money }}" data-s="{{ p.pct }}% виручки"></div>{% endfor %}</div>
+<div class="legend2">{% for p in rep.split %}<span><i class="dot" style="background:{{ p.color }}"></i>{{ p.label }} <b>{{ p.pct }}%</b></span>{% endfor %}</div></div>{% endif %}
+
+<h2>Звіт</h2>
+<table class="pl"><tr><th>Стаття</th><th class="r">Сума</th><th class="r">% виручки</th><th class="r hm">Попередній період</th><th class="r hm">Зміна</th></tr>
+{% for l in rep.lines %}<tr class="pl-{{ l.kind }}"><td style="padding-left:{{ 12 + l.indent*18 }}px">{{ l.label }}</td><td class="r num">{{ l.amount|money if l.amount is not none else '' }}</td><td class="r mut">{{ (l.pct ~ '%') if l.pct is not none else '' }}</td>
+<td class="r num mut hm">{{ l.prev|money if l.prev is not none else '' }}</td><td class="r hm {{ 'in' if l.delta and l.delta>0 else 'out' if l.delta and l.delta<0 else 'mut' }}">{{ ('%+.1f%%'|format(l.delta)) if l.delta is not none else '' }}</td></tr>{% endfor %}</table>
+<p class="mut" style="margin-top:6px">Попередній період: {{ rep.prev_from }} — {{ rep.prev_to }} (така сама тривалість). Для витрат «зміна» — це їх зростання, а не прибуток.</p>
+
+{% if rep.months %}<h2>Динаміка по місяцях</h2>
+<table><tr><th>Місяць</th><th class="r">Виручка</th><th class="r hm">Матеріали</th><th class="r hm">Оплата праці</th><th class="r hm">Опер. витрати</th><th class="r">EBITDA</th><th class="r">Чистий прибуток</th></tr>
+{% for m in rep.months %}<tr><td>{{ m.label }}</td><td class="r num">{{ m.revenue|money }}</td><td class="r num hm">{{ m.cogs|money }}</td><td class="r num hm">{{ m.labour|money }}</td><td class="r num hm">{{ m.opex|money }}</td><td class="r num">{{ m.ebitda|money }}</td><td class="r num"><b class="{{ 'in' if m.net>=0 else 'out' }}">{{ m.net|money(true) }}</b></td></tr>{% endfor %}</table>{% endif %}
+
+{% if rep.memo %}<h2>Поза P&amp;L (довідково)</h2><table><tr><th>Стаття</th><th class="r">Сума</th></tr>{% for label,v in rep.memo %}<tr><td>{{ label }}</td><td class="r num">{{ v|money }}</td></tr>{% endfor %}</table>{% endif %}
+{% if k.bep %}<div class="card" style="margin-top:14px"><div class="k mut" style="font-size:12px">Точка беззбитковості</div><div class="v num" style="font-size:22px;font-weight:700">{{ k.bep|money }}</div><div class="mut" style="font-size:12.5px">{{ k.bep_note }}.</div></div>{% endif %}
+<div id="tip" class="tip"></div>
+<script>(function(){var tip=document.getElementById('tip');function show(c,x,y){tip.innerHTML='<div class="td">'+c.dataset.t+'</div><div class="tv">'+c.dataset.v+'</div><div class="ts">'+(c.dataset.s||'')+'</div>';tip.style.display='block';var w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.min(Math.max(8,x-w/2),window.innerWidth-w-8)+'px';tip.style.top=Math.max(8,y-h-14)+'px'}
+document.querySelectorAll('.tipme').forEach(function(c){c.addEventListener('mousemove',function(e){show(c,e.clientX,e.clientY)});c.addEventListener('mouseleave',function(){tip.style.display='none'})})})();</script>
+{% endif %}
+
+<details class="card" style="margin-top:16px"><summary class="btn sec sm" style="display:inline-block">Як рахується звіт ▾</summary><div class="mut" style="margin-top:10px;line-height:1.6">
+<p><b>Виручка</b> = продажі з Alteg за днем продажу (готівка + картка): послуги за напрямками та роздрібні товари, + інші операційні доходи (суборенда, кава тощо). Банківські зарахування від терміналів у виручку не додаються, щоб не рахувати ті самі гроші двічі. Подарункові сертифікати — зобов'язання, виручкою стануть після використання, тому показані довідково.</p>
+<p><b>Валовий прибуток</b> = виручка − матеріали й товари (стаття «собівартість»).<br><b>Прибуток після оплати праці</b> = валовий прибуток − (зарплата, премії, відпускні, лікарняні + ЄСВ, ПДФО, військовий збір).<br><b>EBITDA</b> = прибуток після оплати праці − операційні витрати (оренда, комунальні, маркетинг, адміністративні, банківські комісії).<br><b>Чистий прибуток</b> = EBITDA − відсотки по кредитах (нараховані) − сплачені податки (єдиний тощо).</p>
+<p><b>Поза P&amp;L:</b> обладнання (капітальні витрати, амортизація не нараховується), тіло кредиту (отримання й погашення), застава, вилучення власника, інкасація та переказ між рахунками. Це рух грошей, а не прибуток.</p>
+<p><b>Облік витрат:</b> «за датою оплати» — витрата в місяці платежу. «За місяцем нарахування» — якщо в призначенні платежу є «за вересень 2026», витрата відноситься до вересня (зарплата за серпень, сплачена у вересні, потрапить у серпень). Найточніше працює для повних місяців.</p>
+<p><b>Статті P&amp;L</b> для категорій можна змінити на сторінці «Категорії».</p></div></details>
+{% endblock %}
