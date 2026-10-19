@@ -1,29 +1,56 @@
-{% extends "base.html" %}{% block body %}<h1>Каса: майстри, напрямки, послуги</h1>
+{% extends "base.html" %}{% block body %}
+{% set pal = ['#c08a6e','#5fbf86','#6aa7d8','#d9b44a','#a78bd6','#e07a8a','#7fc4c0','#9aa0a6'] %}
 {% if pay_error %}<div class="flash">Дані по майстрах оновились не повністю: {{ pay_error }}. Спробуйте «Оновити зараз» на головній.</div>{% endif %}
+<h1>Каса: майстри, напрямки, послуги</h1>
 <div class="pills">{% for k,t in [('today','Сьогодні'),('yesterday','Вчора'),('7','7 днів'),('30','30 днів'),('month','Цей місяць'),('prev_month','Минулий місяць')] %}<a class="{{ 'on' if preset==k }}" href="?preset={{ k }}">{{ t }}</a>{% endfor %}</div>
 <form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
 <div style="flex:0 0 auto"><button>Показати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/cash?date_from={{ d_from }}&date_to={{ d_to }}">← Каса по днях</a></div></div></form>
+
+{% if not det.n %}<div class="card" style="margin-top:12px"><b>Немає оплат за цей період.</b><div class="mut">Дані з Alteg оновлюються щогодини з 08:00 до 21:00. Якщо це свіже оновлення системи, зачекайте кілька хвилин і оновіть сторінку.</div></div>{% else %}
 <div class="stats" style="margin-top:12px">
-<div class="card stat"><div class="k">Каса {{ d_from if d_from==d_to else d_from ~ ' — ' ~ d_to }}</div><div class="v in">{{ det.total|money }}</div><div class="s">{{ det.n }} оплат · середній чек {{ det.avg|money }}</div></div>
-<div class="card stat"><div class="k">Структура</div><div class="kv"><span>готівка</span><b>{{ det.cash|money }}</b></div><div class="kv"><span>безготівка</span><b>{{ det.cashless|money }}</b></div></div>
-<div class="card stat"><div class="k">{{ 'Лідер дня' if d_from==d_to else 'Лідер періоду' }}</div>{% if det.masters %}<div class="v" style="font-size:18px;white-space:normal">{{ det.masters[0].name }}</div><div class="s">{{ det.masters[0].total|money }} · {{ det.masters[0].share }}% каси</div>{% else %}<div class="s">немає даних</div>{% endif %}</div></div>
+<div class="card stat hero"><div class="k">Каса {{ d_from if d_from==d_to else d_from ~ ' — ' ~ d_to }}</div><div class="v">{{ det.total|money }}</div>
+<div class="s">{% if det.delta is not none %}<span class="delta {{ 'up' if det.delta>=0 else 'down' }}">{{ '▲' if det.delta>=0 else '▼' }} {{ det.delta|abs }}%</span> до попереднього періоду ({{ det.prev_total|money }}){% else %}немає даних для порівняння{% endif %}</div></div>
+<div class="card stat"><div class="k">Готівка / безготівка</div>
+<div class="split"><div class="g" style="width:{{ (det.cash*100/det.total)|round(1) }}%"></div><div class="b" style="width:{{ (det.cashless*100/det.total)|round(1) }}%"></div></div>
+<div class="kv"><span><i class="dot g"></i>готівка</span><b>{{ det.cash|money }}</b></div><div class="kv"><span><i class="dot b"></i>безготівка</span><b>{{ det.cashless|money }}</b></div></div>
+<div class="card stat"><div class="k">Оплат · середній чек</div><div class="v">{{ det.n }}</div><div class="s">середній чек {{ det.avg|money }}</div></div>
+<div class="card stat"><div class="k">{{ 'Лідер дня' if d_from==d_to else 'Лідер періоду' }}</div><div class="v" style="font-size:17px;white-space:normal;line-height:1.25">{{ det.masters[0].name }}</div><div class="s">{{ det.masters[0].total|money }} · {{ det.masters[0].share }}% каси</div></div></div>
 
-<h2>Каса по майстрах</h2>
-<table><tr><th>Майстер</th><th class="r">Каса</th><th class="r hm">Готівка</th><th class="r hm">Безготівка</th><th class="r">Оплат</th><th class="r hm">Сер. чек</th><th style="width:22%">Частка</th></tr>
-{% for m in det.masters %}<tr><td><b>{{ m.name }}</b>{% if m.role %}<br><span class="mut">{{ m.role }}</span>{% endif %}</td><td class="r num"><b>{{ m.total|money }}</b></td><td class="r num hm">{{ m.cash|money }}</td><td class="r num hm">{{ m.cashless|money }}</td>
-<td class="r">{{ m.n }}</td><td class="r num hm">{{ m.avg|money }}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:7px;border-radius:4px;background:var(--bg)"><div class="share" style="width:{{ m.share }}%"></div></div><span class="mut" style="font-size:12px;min-width:38px">{{ m.share }}%</span></div></td></tr>
-{% else %}<tr><td colspan="7" class="mut">За цей період немає оплат (дані з Alteg оновлюються щогодини з 08:00 до 21:00).</td></tr>{% endfor %}</table>
+<div class="dash2">
+<div class="stack"><div class="card"><h3>Каса по майстрах</h3>
+{% set mx = det.masters[0].total %}{% for m in det.masters %}<div class="hrow tipme" data-t="{{ m.name }}" data-v="{{ m.total|money }}" data-s="готівка {{ m.cash|money }}<br>безготівка {{ m.cashless|money }}<br>{{ m.n }} оплат · сер. чек {{ m.avg|money }}">
+<div class="hl"><span class="nm">{{ m.name }}</span><span class="mut role">{{ m.role }}</span></div>
+<div class="hb"><div class="trk"><div class="seg2 g" style="width:{{ (m.cash*100/mx)|round(1) }}%;--i:{{ loop.index0 }}"></div><div class="seg2 b" style="width:{{ (m.cashless*100/mx)|round(1) }}%;--i:{{ loop.index0 }}"></div></div><span class="hv num">{{ m.total|money }}</span></div></div>{% endfor %}
+<p class="lbl" style="margin:10px 0 0"><i class="dot g"></i> готівка &nbsp; <i class="dot b"></i> безготівка</p></div>
 
-<h2>Напрямки</h2>
-<table><tr><th>Напрямок</th><th class="r">Каса</th><th class="r hm">Готівка</th><th class="r hm">Безготівка</th><th class="r">Оплат</th><th style="width:22%">Частка</th></tr>
-{% for c in det.categories %}<tr><td>{{ c.title }}</td><td class="r num"><b>{{ c.total|money }}</b></td><td class="r num hm">{{ c.cash|money }}</td><td class="r num hm">{{ c.cashless|money }}</td><td class="r">{{ c.n }}</td>
-<td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:7px;border-radius:4px;background:var(--bg)"><div class="share" style="width:{{ c.share }}%"></div></div><span class="mut" style="font-size:12px;min-width:38px">{{ c.share }}%</span></div></td></tr>{% endfor %}</table>
+<div class="card"><h3>Каса за годинами</h3>
+{% set hm = det.hours|max %}<div class="bars hours">{% for v in det.hours %}{% if loop.index0 >= 8 and loop.index0 <= 21 %}<div class="col tipme" style="--i:{{ loop.index0 }}" data-t="{{ '%02d'|format(loop.index0) }}:00 – {{ '%02d'|format(loop.index0+1) }}:00" data-v="{{ v|money }}" data-s="">
+<div class="seg a" style="height:{{ (v*100/hm)|round(1) if hm else 0 }}%;min-height:{{ 1 if v else 0 }}px"></div></div>{% endif %}{% endfor %}</div>
+<div class="hlabels">{% for v in det.hours %}{% if loop.index0 >= 8 and loop.index0 <= 21 %}<span>{{ loop.index0 }}</span>{% endif %}{% endfor %}</div></div>
+</div><div class="stack"><div class="card"><h3>Напрямки</h3>
+{% set ns = namespace(off=25) %}
+<div class="donutwrap"><svg viewBox="0 0 42 42" class="donut"><circle cx="21" cy="21" r="15.9155" fill="none" stroke="var(--line)" stroke-width="5.5"/>
+{% for c in det.categories %}<circle class="arc tipme" cx="21" cy="21" r="15.9155" fill="none" stroke="{{ pal[loop.index0 % pal|length] }}" stroke-width="5.5" stroke-dasharray="{{ c.share }} {{ 100-c.share }}" stroke-dashoffset="{{ ns.off }}" style="--i:{{ loop.index0 }}" data-t="{{ c.title }}" data-v="{{ c.total|money }}" data-s="{{ c.share }}% каси · {{ c.n }} оплат"/>{% set ns.off = ns.off - c.share %}{% endfor %}
+<text x="21" y="20.5" text-anchor="middle" class="dc1">{{ det.categories|length }}</text><text x="21" y="25" text-anchor="middle" class="dc2">напрямків</text></svg>
+<div class="legend">{% for c in det.categories %}<div class="lg"><i class="dot" style="background:{{ pal[loop.index0 % pal|length] }}"></i><span class="lgn">{{ c.title }}</span><b class="num">{{ c.total|money }}</b><span class="mut">{{ c.share }}%</span></div>{% endfor %}</div></div></div>
 
-<h2>Послуги</h2>
-<table><tr><th>Послуга</th><th>Напрямок</th><th class="r">К-сть</th><th class="r hm">Сер. ціна</th><th class="r">Каса</th></tr>
+<div class="card"><h3>Топ послуг</h3>
+{% set sm = det.services[0].total %}{% for x in det.services[:10] %}<div class="hrow tipme" data-t="{{ x.title }}" data-v="{{ x.total|money }}" data-s="{{ x.category }}<br>{{ x.n }} шт · сер. ціна {{ x.avg|money }}">
+<div class="hl"><span class="nm">{{ x.title }}</span><span class="mut role">{{ x.category }} · {{ x.n }} шт</span></div>
+<div class="hb"><div class="trk"><div class="seg2 a" style="width:{{ (x.total*100/sm)|round(1) }}%;--i:{{ loop.index0 }}"></div></div><span class="hv num">{{ x.total|money }}</span></div></div>{% endfor %}</div>
+
+</div></div>
+
+<details class="card" style="margin-top:14px"><summary class="btn sec sm" style="display:inline-block">Таблиці з деталями ▾</summary>
+<h2>Майстри</h2><table><tr><th>Майстер</th><th class="r">Каса</th><th class="r hm">Готівка</th><th class="r hm">Безготівка</th><th class="r">Оплат</th><th class="r hm">Сер. чек</th><th class="r">Частка</th></tr>
+{% for m in det.masters %}<tr><td><b>{{ m.name }}</b>{% if m.role %}<br><span class="mut">{{ m.role }}</span>{% endif %}</td><td class="r num"><b>{{ m.total|money }}</b></td><td class="r num hm">{{ m.cash|money }}</td><td class="r num hm">{{ m.cashless|money }}</td><td class="r">{{ m.n }}</td><td class="r num hm">{{ m.avg|money }}</td><td class="r mut">{{ m.share }}%</td></tr>{% endfor %}</table>
+<h2>Усі послуги</h2><table><tr><th>Послуга</th><th>Напрямок</th><th class="r">К-сть</th><th class="r hm">Сер. ціна</th><th class="r">Каса</th></tr>
 {% for x in det.services %}<tr><td>{{ x.title }}</td><td class="mut">{{ x.category }}</td><td class="r">{{ x.n }}</td><td class="r num hm">{{ x.avg|money }}</td><td class="r num"><b>{{ x.total|money }}</b></td></tr>{% endfor %}</table>
-
-<h2>Кожен майстер: що саме зробив</h2>
-{% for m in det.masters %}<details class="card" style="margin-bottom:8px"><summary style="cursor:pointer;display:flex;justify-content:space-between;gap:10px"><b>{{ m.name }}</b><span class="num">{{ m.total|money }} · {{ m.n }} оплат</span></summary>
-<table style="margin-top:10px"><tr><th>Послуга</th><th>Напрямок</th><th class="r">К-сть</th><th class="r">Сума</th></tr>{% for x in m.services %}<tr><td>{{ x.title }}</td><td class="mut">{{ x.category }}</td><td class="r">{{ x.n }}</td><td class="r num">{{ x.total|money }}</td></tr>{% endfor %}</table></details>{% endfor %}
-<p class="mut">Дані з Alteg: оплати готівкою (каса) й карткою (безготівка) за днем продажу, з розбивкою за майстром і послугою візиту. «Без майстра» — продаж товарів і сертифікатів, які не прив'язані до візиту.</p>{% endblock %}
+<h2>Що зробив кожен майстер</h2>{% for m in det.masters %}<details class="card" style="margin-bottom:8px"><summary style="cursor:pointer;display:flex;justify-content:space-between;gap:10px"><b>{{ m.name }}</b><span class="num">{{ m.total|money }} · {{ m.n }} оплат</span></summary>
+<table style="margin-top:10px"><tr><th>Послуга</th><th>Напрямок</th><th class="r">К-сть</th><th class="r">Сума</th></tr>{% for x in m.services %}<tr><td>{{ x.title }}</td><td class="mut">{{ x.category }}</td><td class="r">{{ x.n }}</td><td class="r num">{{ x.total|money }}</td></tr>{% endfor %}</table></details>{% endfor %}</details>
+<div id="tip" class="tip"></div>
+<script>(function(){var tip=document.getElementById('tip');function show(c,x,y){tip.innerHTML='<div class="td">'+c.dataset.t+'</div><div class="tv">'+c.dataset.v+'</div><div class="ts">'+(c.dataset.s||'')+'</div>';tip.style.display='block';
+var w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.min(Math.max(8,x-w/2),window.innerWidth-w-8)+'px';tip.style.top=Math.max(8,y-h-14)+'px'}
+document.querySelectorAll('.tipme').forEach(function(c){c.addEventListener('mousemove',function(e){show(c,e.clientX,e.clientY)});c.addEventListener('mouseleave',function(){tip.style.display='none'});c.addEventListener('click',function(e){show(c,e.clientX,e.clientY)})})})();</script>
+{% endif %}
+<p class="mut">Дані з Alteg: оплати готівкою (каса) й карткою (безготівка) за днем продажу, з розбивкою за майстром і послугою візиту. «Без майстра» — продаж товарів і сертифікатів, не прив'язаних до візиту.</p>{% endblock %}

@@ -174,7 +174,18 @@ def takings_detail(con, d_from: str, d_to: str) -> dict:
     sl = sorted(svc.values(), key=lambda x: -x["total"])
     for x in sl:
         x["avg"] = x["total"] // x["n"] if x["n"] else 0
-    return {"from": d_from, "to": d_to, "total": total, "n": len(rows),
+    hours = [0] * 24
+    for r in rows:
+        hours[int(r["occurred_at"][11:13])] += r["amount"]
+    from datetime import date as _d, timedelta as _td
+    span = (_d.fromisoformat(d_to) - _d.fromisoformat(d_from)).days + 1
+    pe = _d.fromisoformat(d_from) - _td(days=1)
+    ps = pe - _td(days=span - 1)
+    prev = con.execute("SELECT COALESCE(SUM(amount),0) s FROM alteg_pay WHERE occurred_at BETWEEN ? AND ?",
+                       (ps.isoformat() + "T00:00:00", pe.isoformat() + "T23:59:59")).fetchone()["s"]
+    return {"from": d_from, "to": d_to, "total": total, "n": len(rows), "hours": hours,
+            "prev_total": prev, "prev_from": ps.isoformat(), "prev_to": pe.isoformat(),
+            "delta": round((total - prev) * 100 / prev, 1) if prev else None,
             "cash": sum(r["amount"] for r in rows if r["method"] == "cash"),
             "cashless": sum(r["amount"] for r in rows if r["method"] == "cashless"),
             "avg": total // len(rows) if rows else 0, "masters": ml, "categories": cl, "services": sl}
