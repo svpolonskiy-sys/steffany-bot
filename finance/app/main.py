@@ -252,30 +252,95 @@ def sync_now(request: Request, u=Depends(current_user)):
 
 
 # ---------- transactions ----------
-def tx_query(p: dict):
-    where, args = ["1=1"], []
-    if p.get("show") != "deleted":
-        where.append("t.deleted_at IS NULL")
-    else:
-        where.append("t.deleted_at IS NOT NULL")
-    if p.get("date_from"):
-        where.append("t.occurred_at >= ?"); args.append(p["date_from"] + "T00:00:00")
-    if p.get("date_to"):
-        where.append("t.occurred_at <= ?"); args.append(p["date_to"] + "T23:59:59")
-    if p.get("account"):
-        where.append("(t.account_id=? OR t.to_account_id=?)"); args += [int(p["account"])] * 2
-    if p.get("category"):
-        where.append("t.category_id=?"); args.append(int(p["category"]))
-    if p.get("kind") in KINDS:
-        where.append("t.kind=?"); args.append(p["kind"])
-    if p.get("q"):
-        where.append("(lower(t.description) LIKE ? OR lower(t.counterparty) LIKE ?)")
-        args += [f"%{p['q'].lower()}%"] * 2
+def parse_tx_filters(qp) -> dict:
+    """Query string -> filter dict. Multi-value: account, category, kind, source."""
+    def many(name):
+        return [v for v in qp.getlist(name) if v]
+    def kop(name):
+        try:
+            return round(float(qp.get(name, "").replace(" ", "").replace(",", ".")) * 100) if qp.get(name) else None
+        except ValueError:
+            return None
+    f = dict(accounts=[int(x) for x in many("account") if x.isdigit()],
+             categories=[x for x in many("category") if x.isdigit() or x == "none"],
+             kinds=[x for x in many("kind") if x in KINDS], sources=[x for x in many("source") if x in SRC],
+             q=(qp.get("q") or "").strip(), date_from=qp.get("date_from") or "", date_to=qp.get("date_to") or "",
+             amount_from=kop("amount_from"), amount_to=kop("amount_to"), deleted=qp.get("show") == "deleted",
+             sort=qp.get("sort") if qp.get("sort") in ("date_desc", "date_asc", "amount_desc", "amount_asc") else "date_desc")
+    return f
+
+
+SORTS = {"date_desc": "t.occurred_at DESC, t.id DESC", "date_asc": "t.occurred_at ASC, t.id ASC",
+         "amount_desc": "t.amount DESC, t.id DESC", "amount_asc": "t.amount ASC, t.id ASC"}
+
+
+def tx_query(f: dict, order=True):
+    where, args = ["t.deleted_at IS NOT NULL" if f["deleted"] else "t.deleted_at IS NULL"], []
+    if f["date_from"]:
+        where.append("t.occurred_at >= ?"); args.append(f["date_from"] + "T00:00:00")
+    if f["date_to"]:
+        where.append("t.occurred_at <= ?"); args.append(f["date_to"] + "T23:59:59")
+    if f["accounts"]:
+        ph = ",".join("?" * len(f["accounts"]))
+        where.append(f"(t.account_id IN ({ph}) OR t.to_account_id IN ({ph}))"); args += f["accounts"] * 2
+    if f["categories"]:
+        ids = [int(x) for x in f["categories"] if x != "none"]
+        parts = []
+        if ids:
+            parts.append(f"t.category_id IN ({','.join('?' * len(ids))})"); args += ids
+        if "none" in f["categories"]:
+            parts.append("(t.category_id IS NULL AND t.kind!='transfer')")
+        where.append("(" + " OR ".join(parts) + ")")
+    if f["kinds"]:
+        where.append(f"t.kind IN ({','.join('?' * len(f['kinds']))})"); args += f["kinds"]
+    if f["sources"]:
+        where.append(f"t.source IN ({','.join('?' * len(f['sources']))})"); args += f["sources"]
+    for word in f["q"].lower().split():   # every word must be found in the description or the counterparty
+        where.append("(lower(t.description) LIKE ? OR lower(t.counterparty) LIKE ?)"); args += [f"%{word}%"] * 2
+    if f["amount_from"] is not None:
+        where.append("t.amount >= ?"); args.append(f["amount_from"])
+    if f["amount_to"] is not None:
+        where.append("t.amount <= ?"); args.append(f["amount_to"])
     sql = ("SELECT t.*, a.name acc, a2.name acc2, c.name cat, u.name author FROM transactions t "
            "JOIN accounts a ON a.id=t.account_id LEFT JOIN accounts a2 ON a2.id=t.to_account_id "
            "LEFT JOIN categories c ON c.id=t.category_id LEFT JOIN users u ON u.id=t.created_by "
-           "WHERE " + " AND ".join(where) + " ORDER BY t.occurred_at DESC, t.id DESC")
+           "WHERE " + " AND ".join(where))
+    if order:
+        sql += " ORDER BY " + SORTS[f["sort"]]
     return sql, args
+
+
+def _items(request):
+    return [(k, v) for k, v in request.query_params.multi_items() if k != "page" and v != ""]
+
+
+def fu(items, set=None, drop=None, add=None) -> str:
+    """Builds a query string from the current filters: set (replace key), drop ((key, value) pairs or key), add (append value)."""
+    from urllib.parse import urlencode
+    out = list(items)
+    for k, v in (drop or []):
+        out = [(a, b) for a, b in out if not (a == k and (v is None or b == v))]
+    for k, v in (set or {}).items():
+        out = [(a, b) for a, b in out if a != k]
+        if v not in (None, ""):
+            out.append((k, v))
+    for k, v in (add or []):
+        out.append((k, v))
+    return "?" + urlencode(out)
+
+
+def hl(text, words):
+    """Escapes text and highlights searched words."""
+    from markupsafe import Markup, escape
+    t = str(escape(text or ""))
+    for w in sorted(set(words), key=len, reverse=True):
+        if w:
+            t = re.sub("(" + re.escape(str(escape(w))) + ")", r"<mark>\1</mark>", t, flags=re.I)
+    return Markup(t)
+
+
+tpl.env.globals["fu"] = fu
+tpl.env.globals["hl"] = hl
 
 
 def lists(c):
@@ -283,23 +348,59 @@ def lists(c):
                 categories=c.execute("SELECT * FROM categories WHERE archived=0 ORDER BY kind DESC, name").fetchall())
 
 
+def _tx_presets():
+    today = datetime.now(config.KYIV).date()
+    first = today.replace(day=1)
+    pl_ = first - timedelta(days=1)
+    return [("today", "Сьогодні", today, today), ("yesterday", "Вчора", today - timedelta(days=1), today - timedelta(days=1)),
+            ("week", "7 днів", today - timedelta(days=6), today), ("month", "Цей місяць", first, today),
+            ("prev_month", "Минулий місяць", pl_.replace(day=1), pl_)]
+
+
 @app.get("/transactions", response_class=HTMLResponse)
 def tx_list(request: Request, u=Depends(current_user)):
-    p = dict(request.query_params)
     c = get_con()
-    sql, args = tx_query(p)
-    page = max(int(p.get("page", 1) or 1), 1)
+    qp = request.query_params
+    f = parse_tx_filters(qp)
+    page = max(int(qp.get("page", 1) or 1), 1) if (qp.get("page") or "1").isdigit() else 1
+    sql, args = tx_query(f)
     total = c.execute(f"SELECT COUNT(*) FROM ({sql})", args).fetchone()[0]
     rows = c.execute(sql + " LIMIT 100 OFFSET ?", (*args, (page - 1) * 100)).fetchall()
-    sums = c.execute(f"SELECT kind, SUM(amount) s FROM ({sql}) GROUP BY kind", args).fetchall()
-    qs = "&".join(f"{k}={v}" for k, v in p.items() if k != "page" and v)
-    return render(request, "transactions.html", u, rows=rows, p=p, page=page, total=total, qs=qs,
-                  sums={r["kind"]: r["s"] for r in sums}, **lists(c))
+    sums = {r["kind"]: (r["s"], r["n"]) for r in c.execute(f"SELECT kind, SUM(amount) s, COUNT(*) n FROM ({sql}) GROUP BY kind", args)}
+    L = lists(c)
+    items = _items(request)
+    accn = {a["id"]: a["name"] for a in L["accounts"]}
+    catn = {str(k["id"]): k["name"] for k in L["categories"]}
+    chips = []
+    for v in f["accounts"]:
+        chips.append(("Рахунок: " + accn.get(v, str(v)), fu(items, drop=[("account", str(v))])))
+    for v in f["categories"]:
+        chips.append(("Категорія: " + ("без категорії" if v == "none" else catn.get(v, v)), fu(items, drop=[("category", v)])))
+    for v in f["kinds"]:
+        chips.append(("Тип: " + KINDS[v].lower(), fu(items, drop=[("kind", v)])))
+    for v in f["sources"]:
+        chips.append(("Джерело: " + SRC[v], fu(items, drop=[("source", v)])))
+    if f["q"]:
+        chips.append(("Опис: " + f["q"], fu(items, drop=[("q", None)])))
+    if f["date_from"] or f["date_to"]:
+        chips.append((f"Період: {f['date_from'] or '…'} — {f['date_to'] or '…'}", fu(items, drop=[("date_from", None), ("date_to", None)])))
+    if f["amount_from"] is not None or f["amount_to"] is not None:
+        chips.append((f"Сума: {qp.get('amount_from') or '0'} — {qp.get('amount_to') or '∞'}", fu(items, drop=[("amount_from", None), ("amount_to", None)])))
+    if f["deleted"]:
+        chips.append(("Видалені", fu(items, drop=[("show", None)])))
+    # type counts for the segmented control (same filters but without the type)
+    f2 = dict(f, kinds=[])
+    sql2, args2 = tx_query(f2, order=False)
+    kind_counts = {r["kind"]: r["n"] for r in c.execute(f"SELECT kind, COUNT(*) n FROM ({sql2}) GROUP BY kind", args2)}
+    return render(request, "transactions.html", u, rows=rows, f=f, page=page, total=total, sums=sums, chips=chips, items=items,
+                  kind_counts=kind_counts, presets=_tx_presets(), words=f["q"].lower().split(), **L,
+                  qs=fu(items).lstrip("?"), SORT_LABELS={"date_desc": "спочатку нові", "date_asc": "спочатку старі",
+                                                         "amount_desc": "сума ↓", "amount_asc": "сума ↑"})
 
 
 @app.get("/transactions/export.csv")
 def tx_csv(request: Request, u=Depends(current_user)):
-    sql, args = tx_query(dict(request.query_params))
+    sql, args = tx_query(parse_tx_filters(request.query_params))
     out = io.StringIO()
     w = csv.writer(out, delimiter=";")
     w.writerow(["Дата", "Рахунок", "Тип", "Категорія", "Сума", "Контрагент", "Опис", "Джерело"])
@@ -307,8 +408,28 @@ def tx_csv(request: Request, u=Depends(current_user)):
         w.writerow([t["occurred_at"].replace("T", " "), t["acc"] + (f" → {t['acc2']}" if t["acc2"] else ""),
                     KINDS[t["kind"]], t["cat"] or "", f"{t['amount'] / 100:.2f}".replace(".", ","),
                     t["counterparty"], t["description"], SRC.get(t["source"], t["source"])])
-    return Response("﻿" + out.getvalue(), media_type="text/csv; charset=utf-8",
+    return Response("\ufeff" + out.getvalue(), media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": "attachment; filename=transactions.csv"})
+
+
+@app.get("/transactions/export.xlsx")
+def tx_xlsx(request: Request, u=Depends(current_user)):
+    from openpyxl import Workbook
+    sql, args = tx_query(parse_tx_filters(request.query_params))
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Операції"
+    ws.append(["Дата", "Рахунок", "Тип", "Категорія", "Сума", "Контрагент", "Опис", "Джерело"])
+    for t in get_con().execute(sql, args):
+        sign = -1 if t["kind"] == "expense" else 1
+        ws.append([t["occurred_at"].replace("T", " "), t["acc"] + (f" → {t['acc2']}" if t["acc2"] else ""), KINDS[t["kind"]],
+                   t["cat"] or "", sign * t["amount"] / 100, t["counterparty"], t["description"], SRC.get(t["source"], t["source"])])
+    for col, wd in zip("ABCDEFGH", (18, 22, 14, 26, 14, 28, 60, 14)):
+        ws.column_dimensions[col].width = wd
+    buf = io.BytesIO()
+    wb.save(buf)
+    return Response(buf.getvalue(), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": "attachment; filename=transactions.xlsx"})
 
 
 def _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, description, counterparty, category_id):

@@ -333,7 +333,7 @@ def test_search_is_case_insensitive_for_cyrillic(client):
     a = accid("Робочі гроші")
     client.post("/transactions/new", data={"kind": "expense", "account_id": a, "amount": "50",
                                            "occurred_at": "2026-10-19T10:00", "description": "Зняття готівки в банкоматі"})
-    assert "Зняття готівки" in client.get("/transactions?q=ГОТІВКИ").text
+    assert "<mark>готівки</mark>" in client.get("/transactions?q=ГОТІВКИ").text
 
 
 def test_inline_category_change_creates_rule_for_future(client):
@@ -587,3 +587,36 @@ def test_cleaners_stay_a_cost_when_payroll_comes_from_sheet(client):
     post(amount="336", category_id=staff, description="Зп прибиральниці")  # not in the sheet -> still a cost
     c = pl.compute(main.con, d(2026, 9, 1), d(2026, 9, 30))
     assert c["pay_mode"] and c["labour"] == 10000000 + 33600 and c["paid_payroll"] == 300000
+
+
+def test_transaction_filters(client):
+    cash, safe, fop = accid("Каса салон"), accid("Сейф"), accid("ФОП 1")
+    mat = cat.get_or_create_category(main.con, "Матеріал в роботу", "expense")
+    zp = cat.get_or_create_category(main.con, "Зарплата", "expense")
+    post = lambda **kw: client.post("/transactions/new", data=kw)
+    post(kind="expense", account_id=cash, amount="100", occurred_at="2026-10-10T10:00", description="Гель лак Нейл", category_id=mat)
+    post(kind="expense", account_id=fop, amount="200", occurred_at="2026-10-11T10:00", description="Заробітна плата", category_id=zp)
+    post(kind="income", account_id=fop, amount="900", occurred_at="2026-10-12T10:00", description="Термінал")
+    post(kind="transfer", account_id=cash, to_account_id=safe, amount="300", occurred_at="2026-10-13T10:00", description="Інкасація")
+    main.con.execute("UPDATE transactions SET category_id=NULL WHERE description='Термінал'")
+    main.con.commit()
+
+    def n(qs):
+        r = client.get("/transactions" + qs)
+        assert r.status_code == 200
+        return len(__import__("re").findall(r'<tr class=""><td class="num"><a href="/transactions/\d+">', r.text))
+    assert n("") == 4
+    assert n("?kind=expense") == 2 and n("?kind=income") == 1 and n("?kind=transfer") == 1
+    assert n("?kind=expense&kind=income") == 3                                   # several types together
+    assert n(f"?account={safe}") == 1 and n(f"?account={cash}") == 2              # transfer matches either side
+    assert n(f"?account={cash}&account={fop}") == 4
+    assert n(f"?category={mat}") == 1 and n(f"?category={mat}&category={zp}") == 2
+    assert n("?category=none") == 1                                               # uncategorised, transfers excluded
+    assert n("?q=ГЕЛЬ") == 1 and n("?q=гель нейл") == 1 and n("?q=гель зарплата") == 0
+    assert n("?amount_from=150&amount_to=500") == 2
+    assert n("?date_from=2026-10-12&date_to=2026-10-13") == 2
+    assert n("?sort=amount_desc") == 4
+    html = client.get("/transactions?q=гель").text
+    assert "<mark>Гель</mark>" in html and "Знайдено операцій" in html
+    assert client.get("/transactions/export.csv?kind=expense").text.count("Витрата") == 2
+    assert client.get("/transactions/export.xlsx?kind=income").content[:2] == b"PK"

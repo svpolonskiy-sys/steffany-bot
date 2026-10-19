@@ -1,14 +1,52 @@
-{% extends "base.html" %}{% block body %}<h1>Операції</h1>
-<form method="get" class="card"><div class="row">
-<div><label>З</label><input type="date" name="date_from" value="{{ p.date_from or '' }}"></div>
-<div><label>По</label><input type="date" name="date_to" value="{{ p.date_to or '' }}"></div>
-<div><label>Рахунок</label><select name="account"><option value="">Усі</option>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if p.account==a.id|string }}>{{ a.name }}</option>{% endfor %}</select></div>
-<div><label>Категорія</label><select name="category"><option value="">Усі</option>{% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if p.category==c.id|string }}>{{ c.name }}</option>{% endfor %}</select></div>
-<div><label>Тип</label><select name="kind"><option value="">Усі</option>{% for k,v in KINDS.items() %}<option value="{{ k }}" {{ 'selected' if p.kind==k }}>{{ v }}</option>{% endfor %}</select></div>
-<div><label>Пошук</label><input name="q" value="{{ p.q or '' }}" placeholder="опис або контрагент"></div>
-<div><label>Показати</label><select name="show"><option value="">Активні</option><option value="deleted" {{ 'selected' if p.show=='deleted' }}>Видалені</option></select></div>
-<div style="flex:0 0 auto"><button>Знайти</button></div></div></form>
-<p class="mut">Знайдено: {{ total }} · надходження <b class="in">{{ (sums.income or 0)|money }}</b> · витрати <b class="out">{{ (sums.expense or 0)|money }}</b> ·
-<a href="/transactions/export.csv?{{ qs }}">CSV ↓</a></p>
+{% extends "base.html" %}{% block body %}
+<h1>Операції</h1>
+{# type segmented control #}
+<div class="seg3">{% set cur = f.kinds[0] if f.kinds|length==1 else '' %}
+<a class="{{ 'on' if not f.kinds }}" href="{{ fu(items, drop=[('kind',None)]) }}">Усі <span>{{ kind_counts.values()|sum }}</span></a>
+<a class="{{ 'on' if cur=='income' }}" href="{{ fu(items, set={'kind':'income'}) }}">Надходження <span>{{ kind_counts.get('income',0) }}</span></a>
+<a class="{{ 'on' if cur=='expense' }}" href="{{ fu(items, set={'kind':'expense'}) }}">Витрати <span>{{ kind_counts.get('expense',0) }}</span></a>
+<a class="{{ 'on' if cur=='transfer' }}" href="{{ fu(items, set={'kind':'transfer'}) }}">Перекази <span>{{ kind_counts.get('transfer',0) }}</span></a></div>
+<div class="pills" style="margin-top:10px">
+{% for key,label,a,b in presets %}<a class="{{ 'on' if f.date_from==a.isoformat() and f.date_to==b.isoformat() }}" href="{{ fu(items, set={'date_from':a.isoformat(),'date_to':b.isoformat()}) }}">{{ label }}</a>{% endfor %}
+<a class="{{ 'on' if not f.date_from and not f.date_to }}" href="{{ fu(items, drop=[('date_from',None),('date_to',None)]) }}">Весь час</a></div>
+
+<form method="get" id="ff" class="card fbar">
+{% for k in f.kinds %}<input type="hidden" name="kind" value="{{ k }}">{% endfor %}
+<div class="srch"><span>⌕</span><input name="q" value="{{ f.q }}" placeholder="Пошук в описі чи контрагенті (кілька слів — усі мають бути)" autocomplete="off">{% if f.q %}<a href="{{ fu(items, drop=[('q',None)]) }}" title="Очистити">×</a>{% endif %}</div>
+
+<details class="dd"><summary>Рахунки {% if f.accounts %}<b class="cnt">{{ f.accounts|length }}</b>{% endif %}</summary><div class="ddp">
+{% for a in accounts %}<label class="chk"><input type="checkbox" name="account" value="{{ a.id }}" {{ 'checked' if a.id in f.accounts }}> {{ a.name }}</label>{% endfor %}</div></details>
+
+<details class="dd"><summary>Категорії {% if f.categories %}<b class="cnt">{{ f.categories|length }}</b>{% endif %}</summary><div class="ddp wide">
+<input type="search" class="ddsearch" placeholder="Знайти категорію…" autocomplete="off">
+<label class="chk"><input type="checkbox" name="category" value="none" {{ 'checked' if 'none' in f.categories }}> <i>Без категорії</i></label>
+{% for kind,title in [('expense','Витрати'),('income','Надходження')] %}<div class="ddh">{{ title }}</div>
+{% for c in categories if c.kind==kind %}<label class="chk" data-n="{{ c.name|lower }}"><input type="checkbox" name="category" value="{{ c.id }}" {{ 'checked' if c.id|string in f.categories }}> {{ c.name }}</label>{% endfor %}{% endfor %}</div></details>
+
+<details class="dd"><summary>Ще фільтри {% if f.sources or f.amount_from is not none or f.amount_to is not none or f.deleted %}<b class="cnt">•</b>{% endif %}</summary><div class="ddp wide">
+<div class="ddh">Джерело</div>{% for k,v in SRC.items() %}<label class="chk"><input type="checkbox" name="source" value="{{ k }}" {{ 'checked' if k in f.sources }}> {{ v }}</label>{% endfor %}
+<div class="ddh">Сума, ₴</div><div class="row"><div><input name="amount_from" inputmode="decimal" placeholder="від" value="{{ request.query_params.get('amount_from','') }}"></div><div><input name="amount_to" inputmode="decimal" placeholder="до" value="{{ request.query_params.get('amount_to','') }}"></div></div>
+<div class="ddh">Період</div><div class="row"><div><input type="date" name="date_from" value="{{ f.date_from }}"></div><div><input type="date" name="date_to" value="{{ f.date_to }}"></div></div>
+<div class="ddh">Сортування</div><select name="sort">{% for k,v in SORT_LABELS.items() %}<option value="{{ k }}" {{ 'selected' if f.sort==k }}>{{ v }}</option>{% endfor %}</select>
+<label class="chk"><input type="checkbox" name="show" value="deleted" {{ 'checked' if f.deleted }}> Показати видалені</label></div></details>
+
+<button>Застосувати</button><a class="btn sec" href="/transactions">Скинути</a>
+</form>
+
+{% if chips %}<div class="chips">{% for label,url in chips %}<a class="chip" href="{{ url }}">{{ label }} <span>×</span></a>{% endfor %}</div>{% endif %}
+
+<div class="stats sumbar"><div class="card stat"><div class="k">Знайдено операцій</div><div class="v">{{ total }}</div></div>
+<div class="card stat"><div class="k">Надходження</div><div class="v in">{{ (sums.get('income',(0,0))[0])|money }}</div><div class="s">{{ sums.get('income',(0,0))[1] }} шт</div></div>
+<div class="card stat"><div class="k">Витрати</div><div class="v out">{{ (sums.get('expense',(0,0))[0])|money }}</div><div class="s">{{ sums.get('expense',(0,0))[1] }} шт</div></div>
+<div class="card stat"><div class="k">Перекази</div><div class="v" style="color:var(--mut)">{{ (sums.get('transfer',(0,0))[0])|money }}</div><div class="s">{{ sums.get('transfer',(0,0))[1] }} шт</div></div>
+<div class="card stat"><div class="k">Різниця (надх. − витр.)</div><div class="v">{{ ((sums.get('income',(0,0))[0]) - (sums.get('expense',(0,0))[0]))|money(true) }}</div><div class="s"><a href="/transactions/export.csv?{{ qs }}">CSV ↓</a> · <a href="/transactions/export.xlsx?{{ qs }}">Excel ↓</a></div></div></div>
+
 {% set recent = None %}{% include "tx_table.html" %}
-<p>{% if page>1 %}<a href="?{{ qs }}&page={{ page-1 }}">← Новіші</a>{% endif %} {% if total>page*100 %}<a href="?{{ qs }}&page={{ page+1 }}">Старіші →</a>{% endif %}</p>{% endblock %}
+<p>{% if page>1 %}<a href="{{ fu(items, set={'page': page-1}) }}">← Новіші</a>{% endif %} {% if total>page*100 %}<a href="{{ fu(items, set={'page': page+1}) }}">Старіші →</a>{% endif %} <span class="mut">стор. {{ page }} з {{ ((total+99)//100) or 1 }}</span></p>
+<script>(function(){var f=document.getElementById('ff'),t;function go(d){clearTimeout(t);t=setTimeout(function(){f.submit()},d)}
+f.querySelectorAll('input[type=checkbox],select,input[type=date]').forEach(function(e){e.addEventListener('change',function(){go(350)})});
+f.querySelectorAll('input[name=q],input[name=amount_from],input[name=amount_to]').forEach(function(e){e.addEventListener('input',function(){go(700)})});
+f.querySelectorAll('.ddsearch').forEach(function(s){s.addEventListener('input',function(){var v=s.value.toLowerCase();s.parentNode.querySelectorAll('label[data-n]').forEach(function(l){l.style.display=l.dataset.n.indexOf(v)>-1?'':'none'})})});
+document.addEventListener('click',function(e){document.querySelectorAll('details.dd[open]').forEach(function(d){if(!d.contains(e.target))d.removeAttribute('open')})});
+var q=f.querySelector('input[name=q]');if(q&&q.value){var l=q.value.length;q.focus();q.setSelectionRange(l,l)}})();</script>
+{% endblock %}
