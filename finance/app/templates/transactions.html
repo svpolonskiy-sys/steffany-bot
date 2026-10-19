@@ -23,8 +23,10 @@
 {% for kind,title in [('expense','Витрати'),('income','Надходження')] %}<div class="ddh">{{ title }}</div>
 {% for c in categories if c.kind==kind %}<label class="chk" data-n="{{ c.name|lower }}"><input type="checkbox" name="category" value="{{ c.id }}" {{ 'checked' if c.id|string in f.categories }}> {{ c.name }}</label>{% endfor %}{% endfor %}</div></details>
 
-<details class="dd"><summary>Ще фільтри {% if f.sources or f.amount_from is not none or f.amount_to is not none or f.deleted %}<b class="cnt">•</b>{% endif %}</summary><div class="ddp wide">
+<details class="dd"><summary>Ще фільтри {% if f.sources or f.authors or f.amount_from is not none or f.amount_to is not none or f.deleted %}<b class="cnt">•</b>{% endif %}</summary><div class="ddp wide">
 <div class="ddh">Джерело</div>{% for k,v in SRC.items() %}<label class="chk"><input type="checkbox" name="source" value="{{ k }}" {{ 'checked' if k in f.sources }}> {{ v }}</label>{% endfor %}
+<div class="ddh">Хто вніс</div><label class="chk"><input type="checkbox" name="author" value="system" {{ 'checked' if 'system' in f.authors }}> Система (банк / Alteg)</label>
+{% for x in users %}<label class="chk"><input type="checkbox" name="author" value="{{ x.id }}" {{ 'checked' if x.id|string in f.authors }}> {{ x.name }}</label>{% endfor %}
 <div class="ddh">Сума, ₴</div><div class="row"><div><input name="amount_from" inputmode="decimal" placeholder="від" value="{{ request.query_params.get('amount_from','') }}"></div><div><input name="amount_to" inputmode="decimal" placeholder="до" value="{{ request.query_params.get('amount_to','') }}"></div></div>
 <div class="ddh">Період</div><div class="row"><div><input type="date" name="date_from" value="{{ f.date_from }}"></div><div><input type="date" name="date_to" value="{{ f.date_to }}"></div></div>
 <div class="ddh">Сортування</div><select name="sort">{% for k,v in SORT_LABELS.items() %}<option value="{{ k }}" {{ 'selected' if f.sort==k }}>{{ v }}</option>{% endfor %}</select>

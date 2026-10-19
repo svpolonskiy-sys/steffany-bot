@@ -1,4 +1,6 @@
 import asyncio
+import secrets
+import sqlite3
 import csv
 import io
 import logging
@@ -21,7 +23,19 @@ from .security import encrypt, hash_password, verify_password
 
 log = logging.getLogger("app")
 BASE_DIR = __file__.rsplit("/", 1)[0]
+
+
+def _oi(v):
+    """HTML selects send '' for 'not chosen': -> None (a typed int field would answer 422)."""
+    try:
+        return int(v) if str(v).strip() else None
+    except (TypeError, ValueError):
+        raise HTTPException(400, "Некоректне значення поля")
+
+
 ROLES = {"owner": "Власник", "accountant": "Бухгалтер", "admin": "Адміністратор"}
+PERMS = {"analytics": "P&L, Зарплата, Кредити", "categories": "Керувати категоріями й правилами"}
+ROLE_DEFAULT_PERMS = {"owner": "analytics,categories", "accountant": "analytics,categories", "admin": ""}
 KINDS = {"income": "Надходження", "expense": "Витрата", "transfer": "Переказ"}
 ACC_KINDS = {"fop": "Рахунок ФОП", "cash": "Готівкова каса", "card": "Приватна картка", "credit": "Кредитна лінія"}
 SRC = {"manual": "вручну", "privat": "Приватбанк", "alteg": "Alteg"}
@@ -117,9 +131,36 @@ async def csrf_origin(request: Request, call_next):
 def current_user(request: Request):
     uid = request.session.get("uid")
     u = get_con().execute("SELECT * FROM users WHERE id=? AND active=1", (uid,)).fetchone() if uid else None
-    if not u:
+    if not u or request.session.get("ver", 0) != u["sess_ver"]:    # deactivated, or 'log out everywhere' was pressed
+        request.session.clear()
         raise Redirect("/login")
+    if u["must_change"] and request.url.path not in ("/password", "/logout"):
+        raise Redirect("/password")                                  # temporary password: choose your own first
     return u
+
+
+def has_perm(u, perm: str) -> bool:
+    return u["role"] == "owner" or perm in (u["perms"] or "").split(",")
+
+
+def need(perm: str):
+    def dep(u=Depends(current_user)):
+        if not has_perm(u, perm):
+            raise HTTPException(403, "Немає доступу до цього розділу. Зверніться до власника.")
+        return u
+    return dep
+
+
+def client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for", "")
+    return (fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "")) or ""
+
+
+def log_act(request: Request, user, action: str, details: str = ""):
+    """Who did what (settings, logins, exports...). Transaction changes have their own detailed history table."""
+    get_con().execute("INSERT INTO activity(at,user_id,user_name,action,details,ip) VALUES(?,?,?,?,?,?)",
+                      (now_local(), user["id"] if user else None, (user["name"] if user else ""), action, details[:500], client_ip(request)))
+    get_con().commit()
 
 
 def owner_only(u=Depends(current_user)):
@@ -128,10 +169,8 @@ def owner_only(u=Depends(current_user)):
     return u
 
 
-def staff_cat(u=Depends(current_user)):
-    if u["role"] not in ("owner", "accountant"):
-        raise HTTPException(403, "Лише для власника та бухгалтера")
-    return u
+staff_cat = need("categories")
+need_analytics = need("analytics")
 
 
 def api_user(request: Request):
@@ -143,7 +182,8 @@ def api_user(request: Request):
 
 def render(request, name, user=None, **ctx):
     flash = request.session.pop("flash", None)
-    return tpl.TemplateResponse(request, name, {"user": user, "flash": flash, "now": now_local(), **ctx})
+    can = {p_: (has_perm(user, p_) if user else False) for p_ in PERMS}
+    return tpl.TemplateResponse(request, name, {"user": user, "flash": flash, "now": now_local(), "can": can, **ctx})
 
 
 def flash(request, msg):
@@ -187,15 +227,23 @@ def login(request: Request, email: str = Form(...), password: str = Form(...)):
     u = get_con().execute("SELECT * FROM users WHERE email=? AND active=1", (email.strip().lower(),)).fetchone()
     if not u or not verify_password(password, u["pw_hash"]):
         _fail[ip] = recent + [time.time()]
+        log_act(request, None, "вхід: невдала спроба", email.strip().lower()[:80])
         flash(request, "Невірний email або пароль")
         return RedirectResponse("/login", status_code=303)
     request.session.clear()
     request.session["uid"] = u["id"]
+    request.session["ver"] = u["sess_ver"]
+    get_con().execute("UPDATE users SET last_login=?, last_ip=? WHERE id=?", (now_local(), client_ip(request), u["id"]))
+    log_act(request, u, "вхід")
     return RedirectResponse("/", status_code=303)
 
 
 @app.post("/logout")
 def logout(request: Request):
+    uid = request.session.get("uid")
+    u = get_con().execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone() if uid else None
+    if u:
+        log_act(request, u, "вихід")
     request.session.clear()
     return RedirectResponse("/login", status_code=303)
 
@@ -248,6 +296,7 @@ def _run_sync_bg():
 def sync_now(request: Request, u=Depends(current_user)):
     """Runs in the background: a full history refresh can take minutes, longer than a web request may live."""
     import threading
+    log_act(request, u, "ручне оновлення банків і Alteg")
     if _bg["running"]:
         flash(request, "Оновлення вже виконується, зачекайте 1–3 хвилини і оновіть сторінку")
     else:
@@ -270,6 +319,7 @@ def parse_tx_filters(qp) -> dict:
     f = dict(accounts=[int(x) for x in many("account") if x.isdigit()],
              categories=[x for x in many("category") if x.isdigit() or x == "none"],
              kinds=[x for x in many("kind") if x in KINDS], sources=[x for x in many("source") if x in SRC],
+             authors=[x for x in many("author") if x.isdigit() or x == "system"],
              q=(qp.get("q") or "").strip(), date_from=qp.get("date_from") or "", date_to=qp.get("date_to") or "",
              amount_from=kop("amount_from"), amount_to=kop("amount_to"), deleted=qp.get("show") == "deleted",
              sort=qp.get("sort") if qp.get("sort") in ("date_desc", "date_asc", "amount_desc", "amount_asc") else "date_desc")
@@ -301,13 +351,23 @@ def tx_query(f: dict, order=True):
         where.append(f"t.kind IN ({','.join('?' * len(f['kinds']))})"); args += f["kinds"]
     if f["sources"]:
         where.append(f"t.source IN ({','.join('?' * len(f['sources']))})"); args += f["sources"]
+    if f["authors"]:
+        ids = [int(x) for x in f["authors"] if x != "system"]
+        parts = []
+        if ids:
+            parts.append(f"t.created_by IN ({','.join('?' * len(ids))})"); args += ids
+        if "system" in f["authors"]:
+            parts.append("t.created_by IS NULL")
+        where.append("(" + " OR ".join(parts) + ")")
     for word in f["q"].lower().split():   # every word must be found in the description or the counterparty
         where.append("(lower(t.description) LIKE ? OR lower(t.counterparty) LIKE ?)"); args += [f"%{word}%"] * 2
     if f["amount_from"] is not None:
         where.append("t.amount >= ?"); args.append(f["amount_from"])
     if f["amount_to"] is not None:
         where.append("t.amount <= ?"); args.append(f["amount_to"])
-    sql = ("SELECT t.*, a.name acc, a2.name acc2, c.name cat, u.name author FROM transactions t "
+    sql = ("SELECT t.*, a.name acc, a2.name acc2, c.name cat, u.name author, "
+           "(SELECT u2.name FROM audit au JOIN users u2 ON u2.id=au.user_id WHERE au.tx_id=t.id AND au.action IN ('update','delete','restore') "
+           "ORDER BY au.id DESC LIMIT 1) editor FROM transactions t "
            "JOIN accounts a ON a.id=t.account_id LEFT JOIN accounts a2 ON a2.id=t.to_account_id "
            "LEFT JOIN categories c ON c.id=t.category_id LEFT JOIN users u ON u.id=t.created_by "
            "WHERE " + " AND ".join(where))
@@ -386,6 +446,9 @@ def tx_list(request: Request, u=Depends(current_user)):
         chips.append(("Тип: " + KINDS[v].lower(), fu(items, drop=[("kind", v)])))
     for v in f["sources"]:
         chips.append(("Джерело: " + SRC[v], fu(items, drop=[("source", v)])))
+    usern = {str(r["id"]): r["name"] for r in c.execute("SELECT id,name FROM users")}
+    for v in f["authors"]:
+        chips.append(("Автор: " + ("система (банк/Alteg)" if v == "system" else usern.get(v, v)), fu(items, drop=[("author", v)])))
     if f["q"]:
         chips.append(("Опис: " + f["q"], fu(items, drop=[("q", None)])))
     if f["date_from"] or f["date_to"]:
@@ -399,13 +462,14 @@ def tx_list(request: Request, u=Depends(current_user)):
     sql2, args2 = tx_query(f2, order=False)
     kind_counts = {r["kind"]: r["n"] for r in c.execute(f"SELECT kind, COUNT(*) n FROM ({sql2}) GROUP BY kind", args2)}
     return render(request, "transactions.html", u, rows=rows, f=f, page=page, total=total, sums=sums, chips=chips, items=items,
-                  kind_counts=kind_counts, presets=_tx_presets(), words=f["q"].lower().split(), **L,
+                  kind_counts=kind_counts, presets=_tx_presets(), users=c.execute("SELECT id,name FROM users WHERE active=1 ORDER BY name").fetchall(), words=f["q"].lower().split(), **L,
                   qs=fu(items).lstrip("?"), SORT_LABELS={"date_desc": "спочатку нові", "date_asc": "спочатку старі",
                                                          "amount_desc": "сума ↓", "amount_asc": "сума ↑"})
 
 
 @app.get("/transactions/export.csv")
 def tx_csv(request: Request, u=Depends(current_user)):
+    log_act(request, u, "експорт операцій (CSV)", str(request.url.query)[:200])
     sql, args = tx_query(parse_tx_filters(request.query_params))
     out = io.StringIO()
     w = csv.writer(out, delimiter=";")
@@ -421,6 +485,7 @@ def tx_csv(request: Request, u=Depends(current_user)):
 @app.get("/transactions/export.xlsx")
 def tx_xlsx(request: Request, u=Depends(current_user)):
     from openpyxl import Workbook
+    log_act(request, u, "експорт операцій (Excel)", str(request.url.query)[:200])
     sql, args = tx_query(parse_tx_filters(request.query_params))
     wb = Workbook()
     ws = wb.active
@@ -439,6 +504,7 @@ def tx_xlsx(request: Request, u=Depends(current_user)):
 
 
 def _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, description, counterparty, category_id):
+    to_account_id, category_id = _oi(to_account_id), _oi(category_id)
     if kind not in KINDS:
         raise HTTPException(400, "Невірний тип")
     d = dict(kind=kind, account_id=account_id, amount=parse_amount(amount), occurred_at=parse_dt(occurred_at),
@@ -472,8 +538,8 @@ def tx_new(request: Request, kind: str = "expense", from_acc: int | None = None,
 
 @app.post("/transactions/new")
 def tx_create(request: Request, kind: str = Form(...), account_id: int = Form(...),
-              to_account_id: int | None = Form(None), amount: str = Form(...), occurred_at: str = Form(...),
-              description: str = Form(""), counterparty: str = Form(""), category_id: int | None = Form(None),
+              to_account_id: str = Form(""), amount: str = Form(...), occurred_at: str = Form(...),
+              description: str = Form(""), counterparty: str = Form(""), category_id: str = Form(""),
               u=Depends(current_user)):
     c = get_con()
     d = _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, description, counterparty, category_id)
@@ -498,8 +564,8 @@ def tx_edit_page(request: Request, tid: int, u=Depends(current_user)):
 
 @app.post("/transactions/{tid}")
 def tx_update(request: Request, tid: int, kind: str = Form(...), account_id: int = Form(...),
-              to_account_id: int | None = Form(None), amount: str = Form(...), occurred_at: str = Form(...),
-              description: str = Form(""), counterparty: str = Form(""), category_id: int | None = Form(None),
+              to_account_id: str = Form(""), amount: str = Form(...), occurred_at: str = Form(...),
+              description: str = Form(""), counterparty: str = Form(""), category_id: str = Form(""),
               make_rule: str = Form(""), rule_text: str = Form(""), u=Depends(current_user)):
     c = get_con()
     if not c.execute("SELECT 1 FROM transactions WHERE id=?", (tid,)).fetchone():
@@ -555,14 +621,19 @@ def tx_restore(request: Request, tid: int, u=Depends(current_user)):
 
 # ---------- credits ----------
 @app.get("/credits", response_class=HTMLResponse)
-def credits_page(request: Request, u=Depends(current_user)):
+def credits_page(request: Request, u=Depends(need_analytics)):
     c = get_con()
     ops = c.execute("SELECT o.*, a.name aname FROM credit_ops o JOIN accounts a ON a.id=o.account_id "
                     "ORDER BY o.occurred_at DESC, o.id DESC LIMIT 300").fetchall()
     repay = c.execute(
         "SELECT t.*, a.name acc FROM transactions t JOIN accounts a ON a.id=t.account_id JOIN categories k ON k.id=t.category_id "
         "WHERE t.deleted_at IS NULL AND k.name='Кредит' AND t.kind='expense' ORDER BY t.occurred_at DESC LIMIT 100").fetchall()
-    return render(request, "credits.html", u, credit=sync.credit_summary(c), ops=ops, repay=repay)
+    summary = sync.credit_summary(c)
+    show_all = request.query_params.get("all") == "1"
+    if not show_all:
+        live = {k["id"] for k in summary["credits"] if k["active"]}
+        ops = [o for o in ops if o["account_id"] in live]
+    return render(request, "credits.html", u, credit=summary, ops=ops, repay=repay, show_all=show_all)
 
 
 # ---------- cash by day ----------
@@ -666,7 +737,7 @@ def _pl_period(request):
 
 
 @app.get("/pl", response_class=HTMLResponse)
-def pl_page(request: Request, u=Depends(current_user)):
+def pl_page(request: Request, u=Depends(need_analytics)):
     a, b, pr = _pl_period(request)
     acc = request.query_params.get("accrual", "1") == "1"
     return render(request, "pl.html", u, rep=pl.build(get_con(), a, b, acc), d_from=a, d_to=b, preset=pr, accrual=acc,
@@ -684,7 +755,7 @@ def _payroll_month(request):
 
 
 @app.get("/payroll", response_class=HTMLResponse)
-def payroll_page(request: Request, u=Depends(current_user)):
+def payroll_page(request: Request, u=Depends(need_analytics)):
     c = get_con()
     ym = _payroll_month(request)
     y, m = map(int, ym.split("-"))
@@ -703,7 +774,7 @@ def payroll_page(request: Request, u=Depends(current_user)):
 
 
 @app.post("/payroll/record-cash")
-async def payroll_record_cash(request: Request, u=Depends(staff_cat)):
+async def payroll_record_cash(request: Request, u=Depends(need_analytics)):
     """Books the cash part of a month's payroll (paid on the 7th from the safe / cash desk). Today's real balances already
     include this payout, so the opening balance is raised by the same amount: balances stay as they are, history gets right."""
     form = await request.form()
@@ -729,14 +800,16 @@ async def payroll_record_cash(request: Request, u=Depends(staff_cat)):
             c.execute("UPDATE accounts SET opening_balance=opening_balance+? WHERE id=?", (amt, aid))
             done += 1
         c.commit()
+    log_act(request, u, "зарплата: записано готівкову виплату", f"{month}: записано {done}, пропущено {skipped}")
     flash(request, f"Записано виплат: {done}" + (f"; пропущено (вже записано): {skipped}" if skipped else "") + ". Поточні залишки не змінились.")
     return RedirectResponse(f"/payroll?month={month}", status_code=303)
 
 
 @app.post("/payroll/sync")
-def payroll_sync(request: Request, u=Depends(staff_cat)):
+def payroll_sync(request: Request, u=Depends(need_analytics)):
     try:
         months = payroll.sync(get_con())
+        log_act(request, u, "зарплата: оновлено з таблиці", ", ".join(months))
         flash(request, "Зарплатну таблицю оновлено, місяці: " + ", ".join(months))
     except Exception as e:
         get_con().rollback()
@@ -745,7 +818,7 @@ def payroll_sync(request: Request, u=Depends(staff_cat)):
 
 
 @app.get("/pl/export.xlsx")
-def pl_xlsx(request: Request, u=Depends(current_user)):
+def pl_xlsx(request: Request, u=Depends(need_analytics)):
     from openpyxl import Workbook
     from openpyxl.styles import Font
     a, b, _ = _pl_period(request)
@@ -782,7 +855,9 @@ def pl_xlsx(request: Request, u=Depends(current_user)):
 
 
 @app.get("/api/pl")
-def api_pl(request: Request, _=Depends(api_user)):
+def api_pl(request: Request, who=Depends(api_user)):
+    if who is not True and not has_perm(who, "analytics"):
+        raise HTTPException(403, "Немає доступу")
     a, b, _p = _pl_period(request)
     r = pl.build(get_con(), a, b, request.query_params.get("accrual", "1") == "1")
     k = lambda v: None if v is None else v / 100
@@ -848,6 +923,7 @@ def category_add(request: Request, name: str = Form(...), kind: str = Form(...),
         raise HTTPException(400)
     cat.get_or_create_category(get_con(), name, kind)
     get_con().commit()
+    log_act(request, u, "категорії: додано", f"{name.strip()} ({kind})")
     flash(request, "Категорію додано")
     return RedirectResponse("/categories", status_code=303)
 
@@ -858,6 +934,7 @@ def category_pl(request: Request, cid: int, pl_group: str = Form(""), u=Depends(
         raise HTTPException(400)
     get_con().execute("UPDATE categories SET pl_group=? WHERE id=?", (pl_group, cid))
     get_con().commit()
+    log_act(request, u, "категорії: змінено статтю P&L", f"категорія #{cid} → {pl_group or 'за замовчуванням'}")
     flash(request, "Стаття P&L збережена")
     return RedirectResponse("/categories", status_code=303)
 
@@ -866,14 +943,16 @@ def category_pl(request: Request, cid: int, pl_group: str = Form(""), u=Depends(
 def category_exclude(request: Request, cid: int, exclude: str = Form("0"), u=Depends(staff_cat)):
     get_con().execute("UPDATE categories SET exclude=? WHERE id=?", (1 if exclude == "1" else 0, cid))
     get_con().commit()
+    log_act(request, u, "категорії: «не в прибутку» змінено", f"категорія #{cid}: {'так' if exclude == '1' else 'ні'}")
     flash(request, "Збережено")
     return RedirectResponse("/categories", status_code=303)
 
 
 @app.post("/categories/{cid}")
-def category_edit(request: Request, cid: int, name: str = Form(""), merge_into: int | None = Form(None),
+def category_edit(request: Request, cid: int, name: str = Form(""), merge_into: str = Form(""),
                   u=Depends(staff_cat)):
     c = get_con()
+    merge_into = _oi(merge_into)
     with lock():
         if merge_into and merge_into != cid:
             n = cat.merge_category(c, cid, merge_into, u["id"])
@@ -896,6 +975,7 @@ def rule_add(request: Request, pattern: str = Form(...), category_id: int = Form
         n = cat.apply_rule_to_existing(c, category_id, pattern, None if direction == "any" else direction,
                                        u["id"]) if apply else 0
         c.commit()
+    log_act(request, u, "правила: додано", f"«{pattern.strip()}» → категорія #{category_id}, перерозподілено {n}")
     flash(request, f"Правило додано. Перерозподілено операцій: {n}")
     return RedirectResponse("/categories", status_code=303)
 
@@ -904,6 +984,7 @@ def rule_add(request: Request, pattern: str = Form(...), category_id: int = Form
 def rule_del(request: Request, rid: int, u=Depends(staff_cat)):
     get_con().execute("DELETE FROM rules WHERE id=?", (rid,))
     get_con().commit()
+    log_act(request, u, "правила: видалено", f"правило #{rid}")
     return RedirectResponse("/categories", status_code=303)
 
 
@@ -915,17 +996,23 @@ def accounts_page(request: Request, u=Depends(current_user)):
     accs = c.execute("SELECT * FROM accounts ORDER BY active DESC, sort, id").fetchall()
     logs = c.execute("SELECT l.*, a.name aname FROM sync_log l LEFT JOIN accounts a ON a.id=l.account_id "
                      "ORDER BY l.id DESC LIMIT 15").fetchall()
-    return render(request, "accounts.html", u, accs=accs, bal=bal, logs=logs, is_owner=u["role"] == "owner",
+    show_all = request.query_params.get("all") == "1"
+    active_credit = {k["id"]: k["active"] for k in sync.credit_summary(c)["credits"]}
+    hidden = [a for a in accs if a["kind"] == "credit" and not active_credit.get(a["id"], True)]
+    if not show_all:
+        accs = [a for a in accs if a not in hidden]
+    return render(request, "accounts.html", u, accs=accs, bal=bal, logs=logs, is_owner=u["role"] == "owner", hidden_n=len(hidden), show_all=show_all,
                   last_sync=get_setting(c, "last_sync_all"))
 
 
 @app.post("/accounts")
-def account_save(request: Request, id: int | None = Form(None), name: str = Form(...), kind: str = Form(...),
+def account_save(request: Request, id: str = Form(""), name: str = Form(...), kind: str = Form(...),
                  source: str = Form(...), iban: str = Form(""), token: str = Form(""), opening: str = Form(""),
                  current: str = Form(""),
                  active: str = Form("1"), u=Depends(owner_only)):
     if kind not in ACC_KINDS or source not in SRC:
         raise HTTPException(400)
+    id = _oi(id)
     c = get_con()
     def money_in(v):
         try:
@@ -952,6 +1039,7 @@ def account_save(request: Request, id: int | None = Form(None), name: str = Form
                       (name.strip(), kind, source, iban.strip().replace(" ", ""),
                        encrypt(token.strip()), cur_target if cur_target is not None else (op or 0)))
         c.commit()
+    log_act(request, u, "рахунки: збережено", f"{name.strip()} ({ACC_KINDS.get(kind, kind)})")
     flash(request, "Рахунок збережено")
     return RedirectResponse("/accounts", status_code=303)
 
@@ -971,55 +1059,176 @@ def account_test(request: Request, aid: int, u=Depends(owner_only)):
 
 
 # ---------- users (owner) ----------
+def _perms_from(form_values) -> str:
+    return ",".join(p_ for p_ in PERMS if p_ in form_values)
+
+
+def _gen_password() -> str:
+    alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "".join(secrets.choice(alphabet) for _ in range(10))
+
+
 @app.get("/users", response_class=HTMLResponse)
 def users_page(request: Request, u=Depends(owner_only)):
-    return render(request, "users.html", u, users=get_con().execute("SELECT * FROM users ORDER BY id").fetchall())
+    return render(request, "users.html", u, users=get_con().execute("SELECT * FROM users ORDER BY id").fetchall(), PERMS=PERMS,
+                  defaults=ROLE_DEFAULT_PERMS, temp=request.session.pop("temp", None))
 
 
 @app.post("/users")
-def user_save(request: Request, email: str = Form(...), name: str = Form(...), role: str = Form(...),
-              password: str = Form(...), u=Depends(owner_only)):
-    if role not in ROLES or len(password) < 8:
+async def user_save(request: Request, u=Depends(owner_only)):
+    form = await request.form()
+    email, name, role = form.get("email", "").strip().lower(), form.get("name", "").strip(), form.get("role", "")
+    if role not in ROLES or not email or not name:
+        raise HTTPException(400, "Вкажіть ім'я, email і роль")
+    perms = _perms_from(form.getlist("perm")) if form.getlist("perm") or form.get("perms_set") else ROLE_DEFAULT_PERMS[role]
+    pw = (form.get("password") or "").strip() or _gen_password()
+    if len(pw) < 8:
         raise HTTPException(400, "Пароль мінімум 8 символів")
     c = get_con()
     try:
-        c.execute("INSERT INTO users(email,name,role,pw_hash) VALUES(?,?,?,?)",
-                  (email.strip().lower(), name.strip(), role, hash_password(password)))
+        c.execute("INSERT INTO users(email,name,title,role,perms,pw_hash,must_change) VALUES(?,?,?,?,?,?,1)",
+                  (email, name, form.get("title", "").strip(), role, perms, hash_password(pw)))
         c.commit()
-        flash(request, "Користувача додано")
-    except Exception:
+    except sqlite3.IntegrityError:
         flash(request, "Такий email вже існує")
+        return RedirectResponse("/users", status_code=303)
+    log_act(request, u, "користувачі: додано", f"{name} <{email}>, {ROLES[role]}, права: {perms or 'базові'}")
+    request.session["temp"] = {"name": name, "email": email, "password": pw}
     return RedirectResponse("/users", status_code=303)
 
 
 @app.post("/users/{uid}")
-def user_update(request: Request, uid: int, role: str = Form(...), active: str = Form("1"),
-                password: str = Form(""), u=Depends(owner_only)):
+async def user_update(request: Request, uid: int, u=Depends(owner_only)):
+    form = await request.form()
+    role, active = form.get("role", ""), form.get("active", "1")
     if role not in ROLES:
         raise HTTPException(400)
     c = get_con()
+    target = c.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+    if not target:
+        raise HTTPException(404)
     if uid == u["id"] and (role != "owner" or active != "1"):
         flash(request, "Не можна позбавити себе доступу власника")
         return RedirectResponse("/users", status_code=303)
-    c.execute("UPDATE users SET role=?, active=? WHERE id=?", (role, int(active), uid))
-    if password:
-        if len(password) < 8:
-            raise HTTPException(400, "Пароль мінімум 8 символів")
-        c.execute("UPDATE users SET pw_hash=? WHERE id=?", (hash_password(password), uid))
+    perms = _perms_from(form.getlist("perm"))
+    c.execute("UPDATE users SET role=?, active=?, title=?, perms=? WHERE id=?",
+              (role, int(active), form.get("title", target["title"]).strip(), perms, uid))
+    if active != "1" or role != target["role"] or perms != target["perms"]:
+        c.execute("UPDATE users SET sess_ver=sess_ver+1 WHERE id=?", (uid,))   # new rights apply at the next login
     c.commit()
+    log_act(request, u, "користувачі: змінено", f"{target['name']}: роль {ROLES[role]}, права: {perms or 'базові'}, {'активний' if active == '1' else 'вимкнений'}")
     flash(request, "Збережено")
     return RedirectResponse("/users", status_code=303)
 
 
+@app.post("/users/{uid}/reset")
+def user_reset(request: Request, uid: int, u=Depends(owner_only)):
+    c = get_con()
+    t = c.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+    if not t:
+        raise HTTPException(404)
+    pw = _gen_password()
+    c.execute("UPDATE users SET pw_hash=?, must_change=1, sess_ver=sess_ver+1 WHERE id=?", (hash_password(pw), uid))
+    c.commit()
+    log_act(request, u, "користувачі: скинуто пароль", t["name"])
+    request.session["temp"] = {"name": t["name"], "email": t["email"], "password": pw}
+    return RedirectResponse("/users", status_code=303)
+
+
+@app.post("/users/{uid}/logout-all")
+def user_logout_all(request: Request, uid: int, u=Depends(owner_only)):
+    t = get_con().execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+    get_con().execute("UPDATE users SET sess_ver=sess_ver+1 WHERE id=?", (uid,))
+    get_con().commit()
+    if t:
+        log_act(request, u, "користувачі: завершено всі сеанси", t["name"])
+    flash(request, "Усі сеанси користувача завершено, увійти доведеться заново")
+    if uid == u["id"]:
+        request.session.clear()
+        return RedirectResponse("/login", status_code=303)
+    return RedirectResponse("/users", status_code=303)
+
+
+@app.get("/password", response_class=HTMLResponse)
+def password_page(request: Request, u=Depends(current_user)):
+    return render(request, "password.html", u)
+
+
 @app.post("/password")
 def change_password(request: Request, old: str = Form(...), new: str = Form(...), u=Depends(current_user)):
-    if not verify_password(old, u["pw_hash"]) or len(new) < 8:
-        flash(request, "Невірний поточний пароль або новий занадто короткий")
-    else:
-        get_con().execute("UPDATE users SET pw_hash=? WHERE id=?", (hash_password(new), u["id"]))
-        get_con().commit()
-        flash(request, "Пароль змінено")
+    if not verify_password(old, u["pw_hash"]) or len(new) < 8 or new == old:
+        flash(request, "Невірний поточний пароль, або новий коротший за 8 символів чи збігається зі старим")
+        return RedirectResponse("/password", status_code=303)
+    get_con().execute("UPDATE users SET pw_hash=?, must_change=0 WHERE id=?", (hash_password(new), u["id"]))
+    get_con().commit()
+    log_act(request, u, "змінено власний пароль")
+    flash(request, "Пароль змінено")
     return RedirectResponse("/", status_code=303)
+
+
+# ---------- activity log (owner) ----------
+def _tx_diff(before: dict, after: dict, accn: dict, catn: dict) -> str:
+    names = {"amount": "сума", "occurred_at": "дата", "description": "опис", "counterparty": "контрагент", "category_id": "категорія",
+             "account_id": "рахунок", "to_account_id": "на рахунок", "kind": "тип", "deleted_at": "видалено"}
+    out = []
+    for k, label in names.items():
+        b, a = before.get(k), after.get(k)
+        if b == a:
+            continue
+        f = (lambda v: money(v) if v is not None else "—") if k == "amount" else \
+            (lambda v: catn.get(v, "—")) if k == "category_id" else \
+            (lambda v: accn.get(v, "—")) if k in ("account_id", "to_account_id") else \
+            (lambda v: KINDS.get(v, v)) if k == "kind" else (lambda v: (str(v)[:40] if v else "—"))
+        out.append(f"{label}: {f(b)} → {f(a)}")
+    return "; ".join(out)
+
+
+@app.get("/activity", response_class=HTMLResponse)
+def activity_page(request: Request, u=Depends(owner_only)):
+    import json as _json
+    c = get_con()
+    q = request.query_params
+    today = datetime.now(config.KYIV).date()
+    d_from = q.get("date_from") or (today - timedelta(days=7)).isoformat()
+    d_to = q.get("date_to") or today.isoformat()
+    who = int(q["user"]) if (q.get("user") or "").isdigit() else None
+    kind = q.get("kind") or ""
+    accn = {r["id"]: r["name"] for r in c.execute("SELECT id,name FROM accounts")}
+    catn = {r["id"]: r["name"] for r in c.execute("SELECT id,name FROM categories")}
+    lo, hi = d_from + "T00:00:00", d_to + "T23:59:59"
+    events = []
+    if kind in ("", "tx"):
+        sql = ("SELECT a.*, COALESCE(u.name,'система') uname, t.description tdesc, t.amount tamount, t.account_id tacc, t.kind tkind "
+               "FROM audit a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN transactions t ON t.id=a.tx_id WHERE a.at BETWEEN ? AND ?")
+        args = [lo, hi]
+        if who:
+            sql += " AND a.user_id=?"; args.append(who)
+        else:
+            sql += " AND a.user_id IS NOT NULL"      # imports by the system (bank/Alteg) are not user actions
+        for r in c.execute(sql + " ORDER BY a.id DESC LIMIT 2000", args):
+            ac = {"create": "додав операцію", "update": "змінив операцію", "delete": "видалив операцію", "restore": "відновив операцію"}.get(r["action"], r["action"])
+            det = f"{KINDS.get(r['tkind'], '')} {money(r['tamount'])} · {accn.get(r['tacc'], '')} · {(r['tdesc'] or '')[:50]}"
+            if r["action"] == "update":
+                try:
+                    det += " | " + _tx_diff(_json.loads(r["before_json"] or "{}"), _json.loads(r["after_json"] or "{}"), accn, catn)
+                except ValueError:
+                    pass
+            events.append(dict(at=r["at"], who=r["uname"], action=ac, details=det, ip="", kind="tx", link=f"/transactions/{r['tx_id']}"))
+    if kind in ("", "settings", "login"):
+        sql = "SELECT * FROM activity WHERE at BETWEEN ? AND ?"
+        args = [lo, hi]
+        if who:
+            sql += " AND user_id=?"; args.append(who)
+        if kind == "login":
+            sql += " AND (action LIKE 'вхід%' OR action='вихід')"
+        elif kind == "settings":
+            sql += " AND action NOT LIKE 'вхід%' AND action!='вихід'"
+        for r in c.execute(sql + " ORDER BY id DESC LIMIT 2000", args):
+            events.append(dict(at=r["at"], who=r["user_name"] or "—", action=r["action"], details=r["details"], ip=r["ip"],
+                               kind="login" if r["action"].startswith("вхід") or r["action"] == "вихід" else "settings", link=""))
+    events.sort(key=lambda e: e["at"], reverse=True)
+    users = c.execute("SELECT id,name FROM users ORDER BY name").fetchall()
+    return render(request, "activity.html", u, events=events[:500], users=users, d_from=d_from, d_to=d_to, who=who, kind=kind, total=len(events))
 
 
 # ---------- JSON API (session or X-API-Token) ----------

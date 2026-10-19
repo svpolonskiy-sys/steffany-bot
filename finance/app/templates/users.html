@@ -1,9 +1,32 @@
-{% extends "base.html" %}{% block title %}Користувачі{% endblock %}{% block body %}<h1>Користувачі</h1>
-<table><tr><th>Ім'я</th><th>Email</th><th>Роль / статус / новий пароль</th></tr>{% for x in users %}<tr class="{{ 'del' if not x.active }}"><td>{{ x.name }}</td><td>{{ x.email }}</td>
-<td><form method="post" action="/users/{{ x.id }}" class="row fit" style="margin:0"><select name="role" style="width:150px">{% for k,v in ROLES.items() %}<option value="{{ k }}" {{ 'selected' if x.role==k }}>{{ v }}</option>{% endfor %}</select>
-<select name="active" style="width:110px"><option value="1">Активний</option><option value="0" {{ 'selected' if not x.active }}>Вимкнений</option></select>
-<input type="password" name="password" placeholder="новий пароль" style="width:150px" autocomplete="new-password"><button class="sm">OK</button></form></td></tr>{% endfor %}</table>
-<h2>Додати користувача</h2><form method="post" action="/users" class="card"><div class="row"><div><label>Ім'я</label><input name="name" required></div><div><label>Email</label><input type="email" name="email" required></div>
-<div><label>Роль</label><select name="role">{% for k,v in ROLES.items() %}<option value="{{ k }}" {{ 'selected' if k=='admin' }}>{{ v }}</option>{% endfor %}</select></div>
-<div><label>Пароль (від 8 символів)</label><input type="password" name="password" required minlength="8" autocomplete="new-password"></div><div style="flex:0 0 auto"><button>Додати</button></div></div></form>
-<p class="mut">Зараз усі ролі можуть додавати, редагувати й видаляти операції та бачити всі рахунки; кожна зміна пишеться в історію. Рахунки, токени банку й користувачів змінює лише власник; категорії та правила — власник і бухгалтер.</p>{% endblock %}
+{% extends "base.html" %}{% block title %}Користувачі{% endblock %}{% block body %}<h1>Користувачі та доступ</h1>
+{% if temp %}<div class="tempbox"><b>Доступ для «{{ temp.name }}» готовий.</b> Передайте цій людині (пароль показується <u>один раз</u>, збережіть його):<br>
+Сайт: <b>{{ request.url.scheme }}://{{ request.url.netloc }}</b> &nbsp; Логін: <b>{{ temp.email }}</b> &nbsp; Тимчасовий пароль: <code>{{ temp.password }}</code>
+<div class="mut" style="margin-top:6px">При першому вході людина сама створить свій пароль. Ви його не знатимете.</div></div>{% endif %}
+
+<div class="card" style="margin-bottom:14px"><b>Як це працює.</b> Кожен працює за власним логіном (email + пароль), усі дії записуються: хто вніс, змінив чи видалив операцію (з історією «було → стало») та хто що змінював у налаштуваннях і коли заходив — див. розділ <a href="/activity">«Активність»</a>. Права за замовчуванням:
+<ul style="margin:6px 0 0 18px;padding:0" class="mut"><li><b>Адміністратор:</b> бачить баланси всіх рахунків, вносить, редагує й видаляє операції (історія зберігається), дивиться каси й звіти. Без P&amp;L, зарплати й кредитів.</li>
+<li><b>Керівник салону</b> — це адміністратор, якому ви вмикаєте потрібні додаткові права (наприклад, «P&amp;L, Зарплата, Кредити» або «категорії»).</li>
+<li><b>Бухгалтер:</b> усе те саме + P&amp;L, зарплата, кредити, категорії й правила.</li>
+<li><b>Власник:</b> усе, плюс користувачі, рахунки, токени банку та журнал активності.</li></ul></div>
+
+<table><tr><th>Користувач</th><th>Посада, роль, права</th><th class="hm">Останній вхід</th><th></th></tr>
+{% for x in users %}<tr class="urow {{ 'del' if not x.active }}"><td><b>{{ x.name }}</b><br><span class="mut">{{ x.email }}</span>{% if x.must_change %}<br><span class="tag auto">ще не змінив тимчасовий пароль</span>{% endif %}</td>
+<td><form method="post" action="/users/{{ x.id }}" class="row" style="margin:0;gap:8px">
+<div><label>Посада</label><input type="text" name="title" value="{{ x.title }}" placeholder="напр. Керівник салону" style="min-width:150px"></div>
+<div><label>Роль</label><select name="role">{% for k,v in ROLES.items() %}<option value="{{ k }}" {{ 'selected' if x.role==k }}>{{ v }}</option>{% endfor %}</select></div>
+<div><label>Статус</label><select name="active"><option value="1">Активний</option><option value="0" {{ 'selected' if not x.active }}>Вимкнений</option></select></div>
+<div style="flex:1 1 100%"><div class="permrow">{% for k,v in PERMS.items() %}<label><input type="checkbox" name="perm" value="{{ k }}" {{ 'checked' if x.role=='owner' or k in x.perms.split(',') }} {{ 'disabled' if x.role=='owner' }}> {{ v }}</label>{% endfor %}</div></div>
+<div style="flex:0 0 auto"><button class="sm">Зберегти</button></div></form></td>
+<td class="hm mut">{% if x.last_login %}{{ x.last_login|dt }}<br>{{ x.last_ip or '' }}{% else %}ще не заходив{% endif %}</td>
+<td style="white-space:nowrap"><form method="post" action="/users/{{ x.id }}/reset" style="display:inline" onsubmit="return confirm('Скинути пароль? Користувача буде розлогінено, а вам покажуть новий тимчасовий пароль.')"><button class="sm sec">Скинути пароль</button></form>
+<form method="post" action="/users/{{ x.id }}/logout-all" style="display:inline"><button class="sm sec">Вийти скрізь</button></form></td></tr>{% endfor %}</table>
+
+<h2>Додати користувача</h2>
+<form method="post" action="/users" class="card" id="nu"><div class="row"><div><label>Ім'я та прізвище</label><input name="name" required></div><div><label>Email (логін)</label><input type="email" name="email" required></div>
+<div><label>Посада</label><input name="title" placeholder="Адміністратор / Керівник салону / Бухгалтер"></div>
+<div><label>Роль</label><select name="role" id="role">{% for k,v in ROLES.items() %}<option value="{{ k }}" {{ 'selected' if k=='admin' }}>{{ v }}</option>{% endfor %}</select></div></div>
+<label>Додаткові права</label><div class="permrow"><input type="hidden" name="perms_set" value="1">{% for k,v in PERMS.items() %}<label><input type="checkbox" name="perm" value="{{ k }}" data-k="{{ k }}"> {{ v }}</label>{% endfor %}</div>
+<label>Пароль <span class="mut">(залиште порожнім — система створить тимчасовий, людина змінить його при першому вході)</span></label><input type="text" name="password" autocomplete="off" placeholder="згенерувати автоматично">
+<p><button>Створити доступ</button></p></form>
+<script>(function(){var D={{ defaults|tojson }};var r=document.getElementById('role');function sync(){var d=(D[r.value]||'').split(',');document.querySelectorAll('#nu input[name=perm]').forEach(function(c){c.checked=d.indexOf(c.dataset.k)>-1})}r.addEventListener('change',sync);sync()})();</script>
+{% endblock %}

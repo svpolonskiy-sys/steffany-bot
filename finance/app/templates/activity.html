@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Активність{% endblock %}{% block body %}<h1>Журнал активності</h1>
+<p class="mut">Хто що робив у системі. Зміни операцій записуються з варіантом «було → стало» і не можуть бути приховані (видалене можна відновити).</p>
+<form method="get" class="card"><div class="row"><div><label>Користувач</label><select name="user"><option value="">Усі</option>{% for x in users %}<option value="{{ x.id }}" {{ 'selected' if who==x.id }}>{{ x.name }}</option>{% endfor %}</select></div>
+<div><label>Що показати</label><select name="kind"><option value="">Усе</option><option value="tx" {{ 'selected' if kind=='tx' }}>Операції (додав, змінив, видалив)</option><option value="settings" {{ 'selected' if kind=='settings' }}>Налаштування й експорти</option><option value="login" {{ 'selected' if kind=='login' }}>Входи й виходи</option></select></div>
+<div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div><div style="flex:0 0 auto"><button>Показати</button></div></div></form>
+<p class="mut" style="margin-top:10px">Знайдено подій: {{ total }}{% if total>500 %} (показано останні 500){% endif %}</p>
+<table><tr><th>Час</th><th>Хто</th><th>Дія</th><th>Деталі</th><th class="hm">IP</th></tr>
+{% for e in events %}<tr><td class="num" style="white-space:nowrap">{{ e.at|dt }}</td><td><b>{{ e.who }}</b></td><td>{% if e.link %}<a href="{{ e.link }}">{{ e.action }}</a>{% else %}{{ e.action }}{% endif %}</td><td class="mut" style="word-break:break-word">{{ e.details }}</td><td class="hm mut">{{ e.ip }}</td></tr>
+{% else %}<tr><td colspan="5" class="mut">Немає подій за цей період</td></tr>{% endfor %}</table>{% endblock %}

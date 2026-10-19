@@ -10,7 +10,8 @@
 <label>Поточний залишок на зараз, ₴ — система сама вирахує початковий</label><input name="current" inputmode="decimal" placeholder="зараз {{ '%.2f'|format(bal[a.id]/100) }}">
 <label>Активний</label><select name="active"><option value="1">Так</option><option value="0" {{ 'selected' if not a.active }}>Ні (архів)</option></select><p><button>Зберегти</button></p></form>
 {% if a.source=='privat' %}<form method="post" action="/accounts/{{ a.id }}/test"><button class="sm sec">Перевірити з'єднання</button></form>{% endif %}</details></td>{% endif %}</tr>{% endfor %}</table>
-{% if is_owner %}<h2>Додати рахунок</h2><form method="post" action="/accounts" class="card"><div class="row"><div><label>Назва</label><input name="name" required></div>
+{% if is_owner %}{% if hidden_n and not show_all %}<p class="mut">Порожніх кредитних рахунків (нульовий борг, без руху за 30 днів) приховано: {{ hidden_n }}. <a href="?all=1">Показати</a>. Щойно на такому рахунку з'явиться борг чи рух, він повернеться в список.</p>{% elif show_all %}<p class="mut"><a href="/accounts">Приховати порожні</a></p>{% endif %}
+<h2>Додати рахунок</h2><form method="post" action="/accounts" class="card"><div class="row"><div><label>Назва</label><input name="name" required></div>
 <div><label>Тип</label><select name="kind">{% for k,v in ACC_KINDS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
 <div><label>Джерело</label><select name="source">{% for k,v in SRC.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div></div>
 <div class="row"><div><label>IBAN</label><input name="iban"></div><div><label>Токен Автоклієнта</label><input name="token" type="password" autocomplete="off"></div><div><label>Поточний залишок, ₴</label><input name="current" inputmode="decimal"></div></div>

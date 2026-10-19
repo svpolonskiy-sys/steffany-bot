@@ -5,10 +5,10 @@
 <td class="r num">{{ c.interest_accrued|money }} / {{ c.interest_paid|money }}</td><td class="r num out"><b>{{ c.debt|money }}</b></td></tr>{% endfor %}
 <tr><td><b>Разом</b></td><td class="r num"><b>{{ credit.total_taken|money }}</b></td><td class="r num in"><b>{{ credit.total_repaid|money }}</b></td><td class="r num out"><b>{{ (credit.total_taken-credit.total_repaid)|money }}</b></td><td></td><td class="r num out"><b>{{ credit.total_debt|money }}</b></td></tr></table>
 <h2>Кредитні лінії</h2><table><tr><th>Рахунок</th><th class="r">Борг зараз</th><th class="r">Погашено з 01.09</th><th class="r">Списано/видано</th><th>Останній платіж</th></tr>
-{% for k in credit.credits %}<tr><td>{{ k.name }}<br><span class="mut">{{ k.iban }}</span></td><td class="r num out">{{ k.debt|money }}</td>
+{% for k in credit.credits if k.active or show_all %}<tr><td>{{ k.name }}<br><span class="mut">{{ k.iban }}</span></td><td class="r num out">{{ k.debt|money }}</td>
 <td class="r num in">{{ k.repaid|money }} <span class="mut">({{ k.repaid_n }})</span></td><td class="r num">{{ k.charged|money }}</td><td>{{ (k.last_payment or '—')|dt }}</td></tr>
 {% else %}<tr><td colspan="5" class="mut">Кредитних рахунків не знайдено. Вони підтягуються автоматично разом з оновленням ФОП.</td></tr>{% endfor %}</table>
-<p class="mut">Борг — від'ємний залишок кредитного рахунку в банку. «Погашено» — зарахування на кредитний рахунок, «списано/видано» — списання з нього (видача, відсотки, комісії), так, як їх показує банк.</p>
+<p class="mut">{% if not show_all and credit.credits|rejectattr("active")|list %}Порожніх допоміжних рахунків (нульовий борг, без руху за 30 днів) приховано: {{ credit.credits|rejectattr("active")|list|length }}. <a href="?all=1">Показати</a>. {% endif %}Борг — від'ємний залишок кредитного рахунку в банку. «Погашено» — зарахування на кредитний рахунок, «списано/видано» — списання з нього (видача, відсотки, комісії), так, як їх показує банк.</p>
 <h2>Платежі з розрахункового рахунку (стаття «Кредит»)</h2><table><tr><th>Дата</th><th>Рахунок</th><th>Опис</th><th class="r">Сума</th></tr>
 {% for t in repay %}<tr><td class="num"><a href="/transactions/{{ t.id }}">{{ t.occurred_at|dt }}</a></td><td>{{ t.acc }}</td><td>{{ t.description[:100] }}</td><td class="r num out">{{ t.amount|money }}</td></tr>{% else %}<tr><td colspan="4" class="mut">Немає</td></tr>{% endfor %}</table>
 <h2>Операції по кредитних рахунках</h2><table><tr><th>Дата</th><th>Рахунок</th><th>Опис</th><th class="r">Сума</th></tr>

@@ -210,16 +210,60 @@ def test_window_and_reports(client):
     assert anon.get("/api/balances", follow_redirects=False).status_code == 303
 
 
-def test_roles(client):
-    client.post("/users", data={"email": "adm@x.ua", "name": "Адмін", "role": "admin", "password": "adminpass1"})
-    adm = TestClient(main.app)
-    adm.post("/login", data={"email": "adm@x.ua", "password": "adminpass1"})
-    assert adm.get("/users").status_code == 403
+def _login(email, pw):
+    c = TestClient(main.app, base_url="http://testserver")
+    r = c.post("/login", data={"email": email, "password": pw}, follow_redirects=False)
+    assert r.status_code == 303
+    return c
+
+
+def test_roles_permissions_and_audit(client):
+    # owner creates an administrator with a temporary password
+    r = client.post("/users", data={"email": "adm@x.ua", "name": "Адмін Оля", "role": "admin", "title": "Адміністратор", "password": "temp-pass-1"}, follow_redirects=True)
+    assert r.status_code == 200 and "temp-pass-1" in r.text and "Доступ для" in r.text      # shown once
+    assert "temp-pass-1" not in client.get("/users").text                                     # ...and only once
+    adm = _login("adm@x.ua", "temp-pass-1")
+    assert adm.get("/transactions", follow_redirects=False).headers["location"] == "/password"   # must choose own password first
+    assert adm.post("/password", data={"old": "temp-pass-1", "new": "temp-pass-1"}, follow_redirects=False).headers["location"] == "/password"  # same password refused
+    assert adm.post("/password", data={"old": "temp-pass-1", "new": "my-own-pass-2"}, follow_redirects=False).headers["location"] == "/"
+    assert adm.get("/transactions").status_code == 200
+    # administrator: operational pages yes, owner/analytics pages no
+    for u in ("/users", "/activity", "/pl", "/payroll", "/credits", "/pl/export.xlsx"):
+        assert adm.get(u, follow_redirects=False).status_code == 403, u
     assert adm.post("/accounts", data={"name": "x", "kind": "cash", "source": "manual"}).status_code == 403
     assert adm.post("/categories", data={"name": "x", "kind": "expense"}).status_code == 403
-    assert adm.get("/transactions/new").status_code == 200
-    bad = adm.post("/logout", headers={"origin": "http://evil.example"})
-    assert bad.status_code == 403
+    assert adm.get("/transactions/new").status_code == 200 and adm.get("/cash").status_code == 200
+    assert "P&amp;L" not in adm.get("/").text and "Користувачі" not in adm.get("/").text   # menu hides what is not allowed
+    # what the administrator does is attributed to them
+    cash = accid("Каса салон")
+    adm.post("/transactions/new", data={"kind": "expense", "account_id": cash, "amount": "123", "occurred_at": "2026-10-19T10:00", "description": "кава"})
+    tid = main.con.execute("SELECT id FROM transactions ORDER BY id DESC LIMIT 1").fetchone()["id"]
+    adm.post(f"/transactions/{tid}", data={"kind": "expense", "account_id": cash, "amount": "150", "occurred_at": "2026-10-19T10:00", "description": "кава"})
+    adm.post(f"/transactions/{tid}/delete")
+    act = client.get("/activity?date_from=2026-01-01&date_to=2099-01-01").text
+    assert "Адмін Оля" in act and "додав операцію" in act and "змінив операцію" in act and "видалив операцію" in act
+    assert "сума: 123,00 ₴ → 150,00 ₴" in act                                                  # before -> after
+    assert "вхід" in client.get("/activity?kind=login&date_from=2026-01-01&date_to=2099-01-01").text
+    # author is visible in the list and can be filtered
+    assert "Адмін Оля" in client.get("/transactions?show=deleted").text
+    uid = main.con.execute("SELECT id FROM users WHERE email='adm@x.ua'").fetchone()["id"]
+    assert "Знайдено операцій" in client.get(f"/transactions?author={uid}&author=system").text
+    # owner grants analytics -> rights apply at next login (old session is closed)
+    client.post(f"/users/{uid}", data={"role": "admin", "active": "1", "title": "Керівник салону", "perm": "analytics"})
+    assert adm.get("/pl", follow_redirects=False).headers["location"] == "/login"
+    adm2 = _login("adm@x.ua", "my-own-pass-2")
+    assert adm2.get("/pl").status_code == 200 and adm2.get("/payroll").status_code == 200 and adm2.get("/users", follow_redirects=False).status_code == 403
+    assert adm2.post("/categories", data={"name": "x", "kind": "expense"}).status_code == 403   # no 'categories' right granted
+    # 'log out everywhere' and password reset
+    client.post(f"/users/{uid}/logout-all")
+    assert adm2.get("/transactions", follow_redirects=False).headers["location"] == "/login"
+    r = client.post(f"/users/{uid}/reset", follow_redirects=True)
+    assert "Тимчасовий пароль" in r.text
+    # a deactivated user cannot log in
+    client.post(f"/users/{uid}", data={"role": "admin", "active": "0", "title": "", "perm": ""})
+    assert TestClient(main.app).post("/login", data={"email": "adm@x.ua", "password": "my-own-pass-2"}, follow_redirects=False).headers["location"] == "/login"
+    assert client.post("/logout", headers={"origin": "http://evil.example"}).status_code == 403
+
 
 
 def test_short_patterns_are_whole_words():
@@ -629,3 +673,36 @@ def test_favicon_and_titles(client):
     assert anon.get("/login").status_code == 200 and "favicon.svg" in anon.get("/login").text
     assert client.get("/favicon.ico").headers["content-type"] == "image/png"
     assert client.get("/static/favicon.svg").status_code == 200 and client.get("/static/manifest.webmanifest").status_code == 200
+
+
+def test_empty_credit_accounts_are_hidden(client):
+    mk = lambda name, bal: main.con.execute("INSERT INTO accounts(name,kind,source,iban,bank_balance) VALUES(?,?,?,?,?)", (name, "credit", "privat", name, bal)).lastrowid
+    empty, debt, moved = mk("ПУСТИЙ", 0), mk("БОРГ", -100000), mk("РУХ", 0)
+    old = "2026-01-01T10:00:00"
+    now = datetime.now(config.KYIV).strftime("%Y-%m-%dT%H:%M:%S")
+    for aid, at, ext in ((empty, old, "o1"), (moved, now, "n1")):
+        main.con.execute("INSERT INTO credit_ops(account_id,external_id,occurred_at,direction,amount,description) VALUES(?,?,?,?,?,?)", (aid, ext, at, "C", 100, "КД-1"))
+    main.con.commit()
+    page = client.get("/accounts").text
+    assert "БОРГ" in page and "РУХ" in page and "ПУСТИЙ" not in page and "приховано: 1" in page
+    assert "ПУСТИЙ" in client.get("/accounts?all=1").text
+    cr = client.get("/credits").text
+    assert "ПУСТИЙ" not in cr
+    # the account comes back as soon as a debt appears
+    main.con.execute("UPDATE accounts SET bank_balance=-500 WHERE id=?", (empty,))
+    main.con.commit()
+    assert "ПУСТИЙ" in client.get("/accounts").text
+
+
+def test_forms_accept_empty_selects_like_a_browser(client):
+    """Browsers send '' for unselected <select> fields (To-account, Auto category, merge target, account id)."""
+    cash = accid("Каса салон")
+    base = dict(kind="expense", account_id=cash, amount="10", occurred_at="2026-10-10T10:00", description="молоко", counterparty="")
+    assert client.post("/transactions/new", data={**base, "to_account_id": "", "category_id": ""}, follow_redirects=False).status_code == 303
+    tid = main.con.execute("SELECT id FROM transactions ORDER BY id DESC LIMIT 1").fetchone()["id"]
+    assert client.post(f"/transactions/{tid}", data={**base, "amount": "12", "to_account_id": "", "category_id": "", "make_rule": "", "rule_text": ""}, follow_redirects=False).status_code == 303
+    cid = main.con.execute("SELECT id FROM categories LIMIT 1").fetchone()["id"]
+    assert client.post(f"/categories/{cid}", data={"name": "Переіменована", "merge_into": ""}, follow_redirects=False).status_code == 303
+    assert client.post("/accounts", data={"id": "", "name": "Нова каса", "kind": "cash", "source": "manual", "active": "1", "current": ""}, follow_redirects=False).status_code == 303
+    safe = accid("Сейф")
+    assert client.post("/transactions/new", data={**base, "kind": "transfer", "account_id": cash, "to_account_id": safe, "category_id": ""}, follow_redirects=False).status_code == 303

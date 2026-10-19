@@ -4,10 +4,10 @@
 <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=2"><link rel="manifest" href="/static/manifest.webmanifest?v=2"><meta name="theme-color" content="#e8603f">
 <link rel="stylesheet" href="/static/style.css"></head><body>
 {% if user %}<nav><div class="nv"><a class="b" href="/">Steffany · Фінанси</a>
-{% for href,t in [('/','Огляд'),('/cash','Каса'),('/transactions','Операції'),('/reports','Звіти'),('/pl','P&L'),('/payroll','Зарплата'),('/credits','Кредити'),('/categories','Категорії'),('/accounts','Рахунки')] %}
-<a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}</a>{% endfor %}
-{% if user.role=='owner' %}<a class="l {{ 'on' if request.url.path=='/users' }}" href="/users">Користувачі</a>{% endif %}
-<span class="sp"></span><span class="who">{{ user.name }} · {{ ROLES[user.role] }}</span>
+{% for href,t,need in [('/','Огляд',''),('/cash','Каса',''),('/transactions','Операції',''),('/reports','Звіти',''),('/pl','P&L','analytics'),('/payroll','Зарплата','analytics'),('/credits','Кредити','analytics'),('/categories','Категорії',''),('/accounts','Рахунки','')] %}{% if not need or can[need] %}
+<a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}</a>{% endif %}{% endfor %}
+{% if user.role=='owner' %}<a class="l {{ 'on' if request.url.path=='/users' }}" href="/users">Користувачі</a><a class="l {{ 'on' if request.url.path=='/activity' }}" href="/activity">Активність</a>{% endif %}
+<span class="sp"></span><span class="who">{{ user.name }} · {{ user.title or ROLES[user.role] }}</span>
 <form method="post" action="/logout" style="margin:0"><button class="sec sm" style="margin-left:8px">Вийти</button></form></div></nav>{% endif %}
 <main>{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}{% block body %}{% endblock %}</main>
 {% if user %}<div class="add"><a class="btn red" href="/transactions/new?kind=expense">− Витрата</a><a class="btn grn" href="/transactions/new?kind=income">+ Надходження</a><a class="btn blu" href="/transactions/new?kind=transfer">⇄ Переказ</a></div>{% endif %}

@@ -10,7 +10,9 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS users(
   id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
   role TEXT NOT NULL CHECK(role IN ('owner','accountant','admin')),
-  pw_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1);
+  pw_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1,
+  title TEXT NOT NULL DEFAULT '', perms TEXT NOT NULL DEFAULT '', must_change INTEGER NOT NULL DEFAULT 0,
+  last_login TEXT, last_ip TEXT, sess_ver INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS accounts(
   id INTEGER PRIMARY KEY, name TEXT NOT NULL,
   kind TEXT NOT NULL CHECK(kind IN ('fop','cash','card','credit')),
@@ -75,6 +77,10 @@ CREATE TABLE IF NOT EXISTS payroll(
 CREATE TABLE IF NOT EXISTS pl_closed(
   month TEXT PRIMARY KEY, closed_at TEXT NOT NULL, revenue INTEGER, cogs INTEGER, gross INTEGER, labour INTEGER,
   opex INTEGER, ebitda INTEGER, interest INTEGER, tax INTEGER, net INTEGER);
+CREATE TABLE IF NOT EXISTS activity(
+  id INTEGER PRIMARY KEY, at TEXT NOT NULL, user_id INTEGER, user_name TEXT NOT NULL DEFAULT '',
+  action TEXT NOT NULL, details TEXT NOT NULL DEFAULT '', ip TEXT NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS ix_activity_at ON activity(at);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS sync_log(
   id INTEGER PRIMARY KEY, at TEXT NOT NULL, account_id INTEGER, ok INTEGER NOT NULL,
@@ -102,6 +108,11 @@ def connect(path: str | None = None) -> sqlite3.Connection:
     cols = {r[1] for r in con.execute("PRAGMA table_info(categories)")}
     if "exclude" not in cols:  # DBs created before the flag existed
         con.execute("ALTER TABLE categories ADD COLUMN exclude INTEGER NOT NULL DEFAULT 0")
+    ucols = {r[1] for r in con.execute("PRAGMA table_info(users)")}
+    for c_, d_ in (("title", "TEXT NOT NULL DEFAULT ''"), ("perms", "TEXT NOT NULL DEFAULT ''"), ("must_change", "INTEGER NOT NULL DEFAULT 0"),
+                   ("last_login", "TEXT"), ("last_ip", "TEXT"), ("sess_ver", "INTEGER NOT NULL DEFAULT 0")):
+        if c_ not in ucols:
+            con.execute(f"ALTER TABLE users ADD COLUMN {c_} {d_}")
     pcols = {r[1] for r in con.execute("PRAGMA table_info(payroll)")}
     for c_, t_ in (("hours", "REAL"), ("shifts", "REAL"), ("rate", "INTEGER"), ("retail", "INTEGER"), ("adv_card", "INTEGER"),
                    ("sal_card", "INTEGER"), ("adv_cash", "INTEGER"), ("to_pay", "INTEGER")):
