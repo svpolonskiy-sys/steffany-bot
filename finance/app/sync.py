@@ -138,9 +138,9 @@ def credit_summary(con) -> dict:
                           "ORDER BY occurred_at", (a["id"],)).fetchall()
         debt = max(-(a["bank_balance"] or 0), 0)
         total += debt
-        # "active" = there is a debt or anything moved in the last 30 days; empty zero accounts are hidden in the UI
+        # "active" = the account holds something (non-zero balance); empty zero accounts are hidden in the UI
         last_op = max((o["occurred_at"] for o in ops), default="")
-        active = bool(a["bank_balance"]) or (last_op >= (datetime.now(config.KYIV) - timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%S"))
+        active = bool(a["bank_balance"])
         cnt = {}
         repaid = charged = repaid_n = 0
         last = None

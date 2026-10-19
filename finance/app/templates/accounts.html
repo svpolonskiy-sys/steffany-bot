@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% block title %}Рахунки{% endblock %}{% block body %}<h1>Рахунки</h1>
 <table><tr><th>Назва</th><th>Тип</th><th>Джерело</th><th class="r">Баланс</th><th>Оновлення</th>{% if is_owner %}<th></th>{% endif %}</tr>
 {% for a in accs %}<tr class="{{ 'del' if not a.active }}"><td>{{ a.name }}</td><td>{{ ACC_KINDS[a.kind] }}</td><td>{{ SRC[a.source] }}{% if a.iban %}<br><span class="mut">{{ a.iban }}</span>{% endif %}</td>
-<td class="r num">{{ bal[a.id]|money }}</td><td class="mut">{{ (a.last_sync_at or '')|dt }}<br>{% if a.last_sync_status and a.last_sync_status!='ok' %}<span class="out">{{ a.last_sync_status[:90] }}</span>{% endif %}</td>
+<td class="r num">{% if a.kind=='credit' %}<span class="out">{{ (a.bank_balance or 0)|money }}</span>{% else %}{{ bal[a.id]|money }}{% endif %}</td><td class="mut">{{ (a.last_sync_at or '')|dt }}<br>{% if a.last_sync_status and a.last_sync_status!='ok' %}<span class="out">{{ a.last_sync_status[:90] }}</span>{% endif %}</td>
 {% if is_owner %}<td><details><summary class="btn sm sec">Змінити</summary><form method="post" action="/accounts" style="min-width:260px">
 <input type="hidden" name="id" value="{{ a.id }}"><label>Назва</label><input name="name" value="{{ a.name }}" required>
 <label>Тип</label><select name="kind">{% for k,v in ACC_KINDS.items() %}<option value="{{ k }}" {{ 'selected' if a.kind==k }}>{{ v }}</option>{% endfor %}</select>
@@ -10,7 +10,7 @@
 <label>Поточний залишок на зараз, ₴ — система сама вирахує початковий</label><input name="current" inputmode="decimal" placeholder="зараз {{ '%.2f'|format(bal[a.id]/100) }}">
 <label>Активний</label><select name="active"><option value="1">Так</option><option value="0" {{ 'selected' if not a.active }}>Ні (архів)</option></select><p><button>Зберегти</button></p></form>
 {% if a.source=='privat' %}<form method="post" action="/accounts/{{ a.id }}/test"><button class="sm sec">Перевірити з'єднання</button></form>{% endif %}</details></td>{% endif %}</tr>{% endfor %}</table>
-{% if is_owner %}{% if hidden_n and not show_all %}<p class="mut">Порожніх кредитних рахунків (нульовий борг, без руху за 30 днів) приховано: {{ hidden_n }}. <a href="?all=1">Показати</a>. Щойно на такому рахунку з'явиться борг чи рух, він повернеться в список.</p>{% elif show_all %}<p class="mut"><a href="/accounts">Приховати порожні</a></p>{% endif %}
+{% if is_owner %}{% if hidden_n and not show_all %}<p class="mut">Порожніх кредитних рахунків (нульовий залишок) приховано: {{ hidden_n }}. <a href="?all=1">Показати</a>. Щойно на такому рахунку з'явиться залишок, він повернеться в список.</p>{% elif show_all %}<p class="mut"><a href="/accounts">Приховати порожні</a></p>{% endif %}
 <h2>Додати рахунок</h2><form method="post" action="/accounts" class="card"><div class="row"><div><label>Назва</label><input name="name" required></div>
 <div><label>Тип</label><select name="kind">{% for k,v in ACC_KINDS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
 <div><label>Джерело</label><select name="source">{% for k,v in SRC.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div></div>

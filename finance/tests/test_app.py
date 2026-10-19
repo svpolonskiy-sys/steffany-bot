@@ -684,7 +684,7 @@ def test_empty_credit_accounts_are_hidden(client):
         main.con.execute("INSERT INTO credit_ops(account_id,external_id,occurred_at,direction,amount,description) VALUES(?,?,?,?,?,?)", (aid, ext, at, "C", 100, "КД-1"))
     main.con.commit()
     page = client.get("/accounts").text
-    assert "БОРГ" in page and "РУХ" in page and "ПУСТИЙ" not in page and "приховано: 1" in page
+    assert "БОРГ" in page and "РУХ" not in page and "ПУСТИЙ" not in page and "приховано: 2" in page   # zero balance = hidden, even with old operations
     assert "ПУСТИЙ" in client.get("/accounts?all=1").text
     cr = client.get("/credits").text
     assert "ПУСТИЙ" not in cr
