@@ -13,4 +13,9 @@ document.querySelectorAll('.big.num').forEach(function(el){var m=el.textContent.
 var target=parseFloat(m[2].replace(/[\s\u00a0]/g,'').replace(',','.'));if(!isFinite(target)||target===0)return;var t0=null,dur=650;
 function fmt(v){return v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,' ')}
 function step(ts){if(t0===null)t0=ts;var k=Math.min((ts-t0)/dur,1),e=1-Math.pow(1-k,3);el.textContent=m[1]+fmt(target*e)+m[3];if(k<1)requestAnimationFrame(step)}
-requestAnimationFrame(step)})})();</script></body></html>
+requestAnimationFrame(step)})})();</script><script>/* date fields: a click anywhere on the field opens the calendar (no need to hit the small icon or type) */
+document.querySelectorAll('input[type=date],input[type=datetime-local],input[type=month]').forEach(function(el){
+ el.style.cursor='pointer';
+ el.addEventListener('click',function(){try{el.showPicker&&el.showPicker()}catch(e){}});
+ el.addEventListener('keydown',function(e){if(e.key==='ArrowDown'&&e.altKey){try{el.showPicker()}catch(x){}}});
+});</script></body></html>

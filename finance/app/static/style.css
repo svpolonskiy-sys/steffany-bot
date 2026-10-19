@@ -107,3 +107,9 @@ table.pl td{padding-top:7px;padding-bottom:7px}
 .pl-grand td{font-weight:800;font-size:15.5px;background:color-mix(in srgb,var(--acc) 22%,transparent)}
 .split.big{height:20px;border-radius:10px;margin:2px 0 10px}.split.big>div{height:100%;transition:filter .15s}.split.big>div:hover{filter:brightness(1.2)}
 .legend2{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px}.legend2 b{font-weight:600}
+
+/* native calendar icon: visible on dark theme, easier to hit */
+input[type=date],input[type=datetime-local]{color-scheme:light dark;min-height:40px}
+input::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.75;padding:4px;border-radius:6px;transition:opacity .15s,background .15s}
+input::-webkit-calendar-picker-indicator:hover{opacity:1;background:color-mix(in srgb,var(--acc) 18%,transparent)}
+@media (prefers-color-scheme:dark){input::-webkit-calendar-picker-indicator{filter:invert(1)}}
