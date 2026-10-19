@@ -398,7 +398,12 @@ def test_alteg_client_retries_dropped_connections(monkeypatch):
             calls["n"] += 1
             if calls["n"] < 3:
                 raise rq.ConnectionError("Connection aborted")
-            return FakeResp({"success": True, "data": []})
+            class R:
+                status_code = 200
+
+                def json(self):
+                    return {"success": True, "data": []}
+            return R()
 
     c = alteg.AltegClient(session=Sess())
     c.user_token = "x"
