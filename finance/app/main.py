@@ -309,9 +309,19 @@ def _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, descript
 
 
 @app.get("/transactions/new", response_class=HTMLResponse)
-def tx_new(request: Request, kind: str = "expense", u=Depends(current_user)):
+def tx_new(request: Request, kind: str = "expense", from_acc: int | None = None, to_acc: int | None = None,
+           desc: str = "", u=Depends(current_user)):
     c = get_con()
-    return render(request, "tx_form.html", u, t=None, kind=kind, history=[],
+    ids = {r["name"]: r["id"] for r in c.execute("SELECT id,name FROM accounts WHERE active=1 AND kind!='credit'")}
+
+    def find(word):
+        return next((i for n, i in ids.items() if word in n.lower()), None)
+    presets = [(lbl, f, t, d) for lbl, f, t, d in (
+        ("Інкасація: каса → сейф", find("каса"), find("сейф"), "Інкасація"),
+        ("Поповнення карти: каса → робочі гроші", find("каса"), find("робочі"), "Поповнення карти через банкомат"))
+        if f and t]
+    return render(request, "tx_form.html", u, t=None, kind=kind, history=[], presets=presets,
+                  pre=dict(from_acc=from_acc, to_acc=to_acc, desc=desc),
                   default_dt=datetime.now(config.KYIV).strftime("%Y-%m-%dT%H:%M"), **lists(c))
 
 

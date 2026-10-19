@@ -7,5 +7,5 @@
 <span class="sp"></span><span class="who">{{ user.name }} · {{ ROLES[user.role] }}</span>
 <form method="post" action="/logout" style="margin:0"><button class="sec sm" style="margin-left:8px">Вийти</button></form></div></nav>{% endif %}
 <main>{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}{% block body %}{% endblock %}</main>
-{% if user %}<div class="add"><a class="btn red" href="/transactions/new?kind=expense">− Витрата</a><a class="btn" style="background:var(--in)" href="/transactions/new?kind=income">+ Надходження</a></div>{% endif %}
+{% if user %}<div class="add"><a class="btn red" href="/transactions/new?kind=expense">− Витрата</a><a class="btn grn" href="/transactions/new?kind=income">+ Надходження</a><a class="btn blu" href="/transactions/new?kind=transfer">⇄ Переказ</a></div>{% endif %}
 </body></html>

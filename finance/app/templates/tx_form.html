@@ -1,15 +1,16 @@
 {% extends "base.html" %}{% block body %}<h1>{{ 'Операція №' ~ t.id if t else 'Нова операція' }}</h1>
 {% if t and t.deleted_at %}<div class="flash">Видалено {{ t.deleted_at|dt }}. <form method="post" action="/transactions/{{ t.id }}/restore" style="display:inline"><button class="sm">Відновити</button></form></div>{% endif %}
+{% if not t and presets %}<p class="presets"><span class="mut">Швидкий переказ:</span><br>{% for lbl,f,to,d in presets %}<a class="btn sec sm" href="/transactions/new?kind=transfer&from_acc={{ f }}&to_acc={{ to }}&desc={{ d|urlencode }}">{{ lbl }}</a>{% endfor %}</p>{% endif %}
 <form method="post" class="card" style="max-width:640px" id="f">
 <label>Тип</label><select name="kind" id="kind" onchange="sync()">{% for k,v in KINDS.items() %}<option value="{{ k }}" {{ 'selected' if kind==k }}>{{ v }}</option>{% endfor %}</select>
-<div class="row"><div><label id="l1">Рахунок</label><select name="account_id" required>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if t and t.account_id==a.id }}>{{ a.name }}</option>{% endfor %}</select></div>
-<div id="to" style="display:none"><label>На рахунок</label><select name="to_account_id"><option value="">—</option>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if t and t.to_account_id==a.id }}>{{ a.name }}</option>{% endfor %}</select></div></div>
+<div class="row"><div><label id="l1">Рахунок</label><select name="account_id" required>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if (t and t.account_id==a.id) or (not t and pre and pre.from_acc==a.id) }}>{{ a.name }}</option>{% endfor %}</select></div>
+<div id="to" style="display:none"><label>На рахунок</label><select name="to_account_id"><option value="">—</option>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if (t and t.to_account_id==a.id) or (not t and pre and pre.to_acc==a.id) }}>{{ a.name }}</option>{% endfor %}</select></div></div>
 <div class="row"><div><label>Сума, ₴</label><input name="amount" inputmode="decimal" required value="{{ '%.2f'|format(t.amount/100) if t else '' }}"></div>
 <div><label>Дата й час</label><input type="datetime-local" name="occurred_at" required value="{{ default_dt }}"></div></div>
 <div id="catbox"><label>Категорія <span class="mut">(порожньо — підберу автоматично)</span></label><select name="category_id"><option value="">Автоматично</option>
 {% for c in categories %}<option value="{{ c.id }}" data-k="{{ c.kind }}" {{ 'selected' if t and t.category_id==c.id }}>{{ c.name }} ({{ 'дохід' if c.kind=='income' else 'витрата' }})</option>{% endfor %}</select></div>
 <label>Контрагент</label><input name="counterparty" value="{{ t.counterparty if t else '' }}">
-<label>Опис</label><textarea name="description" rows="2">{{ t.description if t else '' }}</textarea>
+<label>Опис</label><textarea name="description" rows="2">{{ t.description if t else (pre.desc if pre else '') }}</textarea>
 {% if t %}<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="make_rule" value="1" style="width:auto"> Завжди відносити до цієї категорії операції, що містять:</label>
 <input name="rule_text" placeholder="напр. «Нова пошта»" value="{{ t.counterparty or '' }}">{% endif %}
 <p><button>Зберегти</button> <a class="btn sec" href="/transactions">Скасувати</a></p></form>

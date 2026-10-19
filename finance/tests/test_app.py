@@ -323,3 +323,12 @@ def test_inline_category_change_creates_rule_for_future(client):
     inc = cat.get_or_create_category(main.con, "Оплата послуг", "income")
     assert client.post(f"/transactions/{ids[0]}/category", data={"category_id": inc}).status_code == 400
     assert "catsel" in client.get("/transactions").text
+
+
+def test_transfer_button_and_presets(client):
+    assert "⇄ Переказ" in client.get("/").text
+    page = client.get("/transactions/new?kind=transfer").text
+    assert "Інкасація: каса → сейф" in page
+    cash, safe = accid("Каса салон"), accid("Сейф")
+    page = client.get(f"/transactions/new?kind=transfer&from_acc={cash}&to_acc={safe}&desc=Інкасація").text
+    assert f'<option value="{cash}" selected>' in page and f'<option value="{safe}" selected>' in page
