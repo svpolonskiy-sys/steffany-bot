@@ -1,17 +1,23 @@
 {% extends "base.html" %}{% block body %}<h1>Каса по днях</h1>
-<div class="pills">{% for k,t in [('7','7 днів'),('30','30 днів'),('month','Цей місяць'),('prev_month','Минулий місяць')] %}<a class="{{ 'on' if preset==k }}" href="?preset={{ k }}">{{ t }}</a>{% endfor %}</div>
+<div class="pills">{% for k,t in [('today','Сьогодні'),('yesterday','Вчора'),('7','7 днів'),('30','30 днів'),('month','Цей місяць'),('prev_month','Минулий місяць')] %}<a class="{{ 'on' if preset==k }}" href="?preset={{ k }}">{{ t }}</a>{% endfor %}</div>
 <form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
 <div style="flex:0 0 auto"><button>Показати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/cash/export.xlsx?date_from={{ d_from }}&date_to={{ d_to }}">Excel ↓</a></div></div></form>
-<div class="grid" style="margin-top:12px">
-<div class="card"><div class="lbl">Каса за період (продажі)</div><div class="big num">{{ cash.totals.total|money }}</div><div class="lbl">у середньому {{ cash.avg_total|money }} на день</div></div>
-<div class="card"><div class="lbl">Готівка / безготівка</div><div class="num"><b>{{ cash.totals.cash|money }}</b></div><div class="num">{{ cash.totals.cashless|money }}</div></div>
-<div class="card"><div class="lbl">Витрати з каси · інкасація</div><div class="num out"><b>{{ cash.totals.expense|money }}</b></div><div class="num">{{ cash.totals.incasso|money }}</div></div>
-<div class="card"><div class="lbl">Залишок каси: початок → кінець</div><div class="num">{{ cash.opening|money }} →</div><div class="num"><b>{{ cash.closing|money }}</b></div></div></div>
+<div class="stats" style="margin-top:12px">
+<div class="card stat"><div class="k">Каса за період (продажі)</div><div class="v">{{ cash.totals.total|money }}</div><div class="s">у середньому {{ cash.avg_total|money }} на день</div></div>
+<div class="card stat"><div class="k">Структура каси</div><div class="kv"><span>готівка</span><b>{{ cash.totals.cash|money }}</b></div><div class="kv"><span>безготівка</span><b>{{ cash.totals.cashless|money }}</b></div></div>
+<div class="card stat"><div class="k">Рух готівки в касі</div><div class="kv"><span>витрати з каси</span><b class="out">{{ cash.totals.expense|money }}</b></div><div class="kv"><span>інкасація</span><b>{{ cash.totals.incasso|money }}</b></div></div>
+<div class="card stat"><div class="k">Залишок каси</div><div class="kv"><span>на початок</span><b>{{ cash.opening|money }}</b></div><div class="kv last"><span>на кінець</span><b>{{ cash.closing|money }}</b></div></div></div>
 {% set mx = (cash.days|map(attribute='total')|max) if cash.days else 0 %}
-<h2>Виручка по днях</h2><div class="card" style="padding:12px 12px 4px"><div style="display:flex;align-items:flex-end;gap:3px;height:140px">
-{% for d in cash.days|reverse %}<div title="{{ d.date }}: готівка {{ d.cash|money }}, безготівка {{ d.cashless|money }}" style="flex:1;min-width:3px;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
-{% if mx %}<div style="height:{{ (d.cashless*100/mx)|round(1) }}%;background:#8a5a44;border-radius:2px 2px 0 0;min-height:{{ 1 if d.cashless else 0 }}px"></div><div style="height:{{ (d.cash*100/mx)|round(1) }}%;background:var(--in);min-height:{{ 1 if d.cash else 0 }}px"></div>{% endif %}</div>{% endfor %}</div>
-<p class="lbl" style="margin:8px 0"><span style="color:var(--in)">■</span> готівка (каса) &nbsp; <span style="color:#8a5a44">■</span> безготівка (ФОП) &nbsp; · {{ cash.days|last|attr('date') if cash.days }} — {{ cash.days|first|attr('date') if cash.days }}</p></div>
+<h2>Каса по днях</h2><div class="card chart" style="padding:14px 14px 6px"><div class="bars" id="bars">
+{% for d in cash.days|reverse %}<div class="col" style="--i:{{ loop.index0 }}" data-date="{{ d.date }}" data-total="{{ d.total|money }}" data-cash="{{ d.cash|money }}" data-cashless="{{ d.cashless|money }}" data-exp="{{ d.expense|money }}">
+{% if mx %}<div class="seg bk" style="height:{{ (d.cashless*100/mx)|round(1) }}%;min-height:{{ 1 if d.cashless else 0 }}px"></div><div class="seg gr" style="height:{{ (d.cash*100/mx)|round(1) }}%;min-height:{{ 1 if d.cash else 0 }}px"></div>{% endif %}</div>{% endfor %}</div>
+<p class="lbl" style="margin:8px 0"><span style="color:var(--in)">■</span> готівка &nbsp; <span style="color:#a06b50">■</span> безготівка &nbsp;·&nbsp; {{ d_from }} — {{ d_to }} &nbsp;·&nbsp; найбільша каса {{ mx|money }}</p></div>
+<div id="tip" class="tip"></div>
+<script>(function(){var tip=document.getElementById('tip'),bars=document.getElementById('bars');if(!bars)return;
+function show(c,x,y){tip.innerHTML='<div class="td">'+c.dataset.date+'</div><div class="tv">'+c.dataset.total+'</div><div class="ts">готівка '+c.dataset.cash+'<br>безготівка '+c.dataset.cashless+'<br>витрати з каси '+c.dataset.exp+'</div>';
+tip.style.display='block';var w=tip.offsetWidth,h=tip.offsetHeight;var L=Math.min(Math.max(8,x-w/2),window.innerWidth-w-8);tip.style.left=L+'px';tip.style.top=Math.max(8,y-h-14)+'px'}
+bars.querySelectorAll('.col').forEach(function(c){c.addEventListener('mousemove',function(e){show(c,e.clientX,e.clientY)});c.addEventListener('mouseenter',function(){c.classList.add('hot')});
+c.addEventListener('mouseleave',function(){c.classList.remove('hot');tip.style.display='none'});c.addEventListener('click',function(e){show(c,e.clientX,e.clientY)})})})();</script>
 <h2>По днях</h2>
 <table><tr><th>Дата</th><th class="r">Готівка</th><th class="r">Безготівка</th><th class="r">Каса за день</th><th class="r">Витрати з каси</th><th class="r">Інкасація</th><th class="r">Залишок каси</th><th class="r mut">Зараховано банком</th></tr>
 {% for d in cash.days %}<tr class="{{ '' if d.total or d.expense or d.incasso else 'mut' }}"><td class="num">{{ d.date }}</td><td class="r num">{{ d.cash|money if d.cash else '—' }}</td><td class="r num">{{ d.cashless|money if d.cashless else '—' }}</td>

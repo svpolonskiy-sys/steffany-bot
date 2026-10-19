@@ -428,7 +428,8 @@ def _cash_period(request):
     pr = q.get("preset")
     first = today.replace(day=1)
     prev_last = first - timedelta(days=1)
-    presets = {"7": (today - timedelta(days=6), today), "30": (today - timedelta(days=29), today),
+    presets = {"today": (today, today), "yesterday": (today - timedelta(days=1),) * 2,
+               "7": (today - timedelta(days=6), today), "30": (today - timedelta(days=29), today),
                "month": (first, today), "prev_month": (prev_last.replace(day=1), prev_last)}
     if pr in presets:
         a, b = presets[pr]

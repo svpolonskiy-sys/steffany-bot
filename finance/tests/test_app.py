@@ -361,5 +361,7 @@ def test_cash_by_day(client):
     assert r["closing"] == 110000 and d["2026-10-18"]["closing"] == 110000 + 10000 + 30000
     assert d["2026-10-17"]["closing"] == d["2026-10-18"]["closing"] - 50000
     assert client.get("/cash").status_code == 200 and client.get("/cash?preset=7").status_code == 200
+    t = client.get("/cash?preset=today").text
+    assert "Сьогодні" in t and "Вчора" in t and client.get("/cash?preset=yesterday").status_code == 200
     assert client.get("/cash/export.xlsx?date_from=2026-10-01&date_to=2026-10-19").content[:2] == b"PK"
     assert client.get("/cash?date_from=2026-10-19&date_to=2026-10-01").status_code == 400

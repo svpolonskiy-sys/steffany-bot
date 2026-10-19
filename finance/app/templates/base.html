@@ -8,4 +8,9 @@
 <form method="post" action="/logout" style="margin:0"><button class="sec sm" style="margin-left:8px">Вийти</button></form></div></nav>{% endif %}
 <main>{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}{% block body %}{% endblock %}</main>
 {% if user %}<div class="add"><a class="btn red" href="/transactions/new?kind=expense">− Витрата</a><a class="btn grn" href="/transactions/new?kind=income">+ Надходження</a><a class="btn blu" href="/transactions/new?kind=transfer">⇄ Переказ</a></div>{% endif %}
-</body></html>
+<script>(function(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+document.querySelectorAll('.big.num').forEach(function(el){var m=el.textContent.trim().match(/^([+\-−]?)([\d\s\u00a0]+(?:,\d+)?)(\s*₴.*)$/);if(!m)return;
+var target=parseFloat(m[2].replace(/[\s\u00a0]/g,'').replace(',','.'));if(!isFinite(target)||target===0)return;var t0=null,dur=650;
+function fmt(v){return v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,' ')}
+function step(ts){if(t0===null)t0=ts;var k=Math.min((ts-t0)/dur,1),e=1-Math.pow(1-k,3);el.textContent=m[1]+fmt(target*e)+m[3];if(k<1)requestAnimationFrame(step)}
+requestAnimationFrame(step)})})();</script></body></html>
