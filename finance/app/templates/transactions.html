@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block body %}<h1>Операції</h1>
+<form method="get" class="card"><div class="row">
+<div><label>З</label><input type="date" name="date_from" value="{{ p.date_from or '' }}"></div>
+<div><label>По</label><input type="date" name="date_to" value="{{ p.date_to or '' }}"></div>
+<div><label>Рахунок</label><select name="account"><option value="">Усі</option>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if p.account==a.id|string }}>{{ a.name }}</option>{% endfor %}</select></div>
+<div><label>Категорія</label><select name="category"><option value="">Усі</option>{% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if p.category==c.id|string }}>{{ c.name }}</option>{% endfor %}</select></div>
+<div><label>Тип</label><select name="kind"><option value="">Усі</option>{% for k,v in KINDS.items() %}<option value="{{ k }}" {{ 'selected' if p.kind==k }}>{{ v }}</option>{% endfor %}</select></div>
+<div><label>Пошук</label><input name="q" value="{{ p.q or '' }}" placeholder="опис або контрагент"></div>
+<div><label>Показати</label><select name="show"><option value="">Активні</option><option value="deleted" {{ 'selected' if p.show=='deleted' }}>Видалені</option></select></div>
+<div style="flex:0 0 auto"><button>Знайти</button></div></div></form>
+<p class="mut">Знайдено: {{ total }} · надходження <b class="in">{{ (sums.income or 0)|money }}</b> · витрати <b class="out">{{ (sums.expense or 0)|money }}</b> ·
+<a href="/transactions/export.csv?{{ qs }}">CSV ↓</a></p>
+{% set recent = None %}{% include "tx_table.html" %}
+<p>{% if page>1 %}<a href="?{{ qs }}&page={{ page-1 }}">← Новіші</a>{% endif %} {% if total>page*100 %}<a href="?{{ qs }}&page={{ page+1 }}">Старіші →</a>{% endif %}</p>{% endblock %}

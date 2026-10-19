@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block body %}
+<div class="grid"><div class="card total" style="grid-column:1/-1"><div class="lbl">Всього грошей у компанії</div><div class="big num">{{ bal.total|money }}</div>
+<div class="lbl">{% if last_sync %}Банки й Alteg оновлено: {{ last_sync|dt }}{% else %}Ще не оновлювалось{% endif %}
+{% if not in_window %} · нічний режим (21:00–08:00 без оновлень){% endif %}</div></div>
+{% for a in bal.accounts %}<div class="card"><div class="lbl">{{ a.name }} <span class="tag">{{ ACC_KINDS[a.kind] }}</span></div>
+<div class="big num {{ 'out' if a.balance<0 }}">{{ a.balance|money }}</div>
+<div class="lbl">{% if a.status and a.status!='ok' %}<span class="out">⚠ {{ a.status[:60] }}</span>{% elif a.synced_at %}оновл. {{ a.synced_at|dt }}{% else %}{{ SRC[a.source] }}{% endif %}
+{% if a.bank_balance is not none and a.bank_balance!=a.balance %}<br><span class="warn">банк: {{ a.bank_balance|money }}</span>{% endif %}</div></div>{% endfor %}</div>
+<form method="post" action="/sync" style="margin:10px 0"><button class="sec sm">↻ Оновити зараз</button></form>
+{% if review %}<div class="flash">Автоматично розподілено {{ review }} операцій — <a href="/transactions?kind=expense">перевірте категорії</a> та за потреби створіть правила в розділі «Категорії».</div>{% endif %}
+<div class="grid"><div class="card"><div class="lbl">Сьогодні</div><div class="num in">+ {{ day.income|money }}</div><div class="num out">− {{ day.expense|money }}</div></div>
+<div class="card"><div class="lbl">Цей місяць</div><div class="num in">+ {{ month.income|money }}</div><div class="num out">− {{ month.expense|money }}</div><div class="num"><b>Результат: {{ month.net|money(true) }}</b></div></div></div>
+<h2>Останні операції</h2>{% include "tx_table.html" %}
+<p><a href="/transactions">Усі операції →</a></p>{% endblock %}

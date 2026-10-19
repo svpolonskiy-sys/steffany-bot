@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block body %}<h1>Користувачі</h1>
+<table><tr><th>Ім'я</th><th>Email</th><th>Роль / статус / новий пароль</th></tr>{% for x in users %}<tr class="{{ 'del' if not x.active }}"><td>{{ x.name }}</td><td>{{ x.email }}</td>
+<td><form method="post" action="/users/{{ x.id }}" class="row fit" style="margin:0"><select name="role" style="width:150px">{% for k,v in ROLES.items() %}<option value="{{ k }}" {{ 'selected' if x.role==k }}>{{ v }}</option>{% endfor %}</select>
+<select name="active" style="width:110px"><option value="1">Активний</option><option value="0" {{ 'selected' if not x.active }}>Вимкнений</option></select>
+<input type="password" name="password" placeholder="новий пароль" style="width:150px" autocomplete="new-password"><button class="sm">OK</button></form></td></tr>{% endfor %}</table>
+<h2>Додати користувача</h2><form method="post" action="/users" class="card"><div class="row"><div><label>Ім'я</label><input name="name" required></div><div><label>Email</label><input type="email" name="email" required></div>
+<div><label>Роль</label><select name="role">{% for k,v in ROLES.items() %}<option value="{{ k }}" {{ 'selected' if k=='admin' }}>{{ v }}</option>{% endfor %}</select></div>
+<div><label>Пароль (від 8 символів)</label><input type="password" name="password" required minlength="8" autocomplete="new-password"></div><div style="flex:0 0 auto"><button>Додати</button></div></div></form>
+<p class="mut">Зараз усі ролі можуть додавати, редагувати й видаляти операції та бачити всі рахунки; кожна зміна пишеться в історію. Рахунки, токени банку й користувачів змінює лише власник; категорії та правила — власник і бухгалтер.</p>{% endblock %}

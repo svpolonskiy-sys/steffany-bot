@@ -1,0 +1,11 @@
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Фінанси{% endblock %} · Steffany</title><link rel="stylesheet" href="/static/style.css"></head><body>
+{% if user %}<nav><div class="nv"><a class="b" href="/">Steffany · Фінанси</a>
+{% for href,t in [('/','Огляд'),('/transactions','Операції'),('/reports','Звіти'),('/categories','Категорії'),('/accounts','Рахунки')] %}
+<a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}</a>{% endfor %}
+{% if user.role=='owner' %}<a class="l {{ 'on' if request.url.path=='/users' }}" href="/users">Користувачі</a>{% endif %}
+<span class="sp"></span><span class="who">{{ user.name }} · {{ ROLES[user.role] }}</span>
+<form method="post" action="/logout" style="margin:0"><button class="sec sm" style="margin-left:8px">Вийти</button></form></div></nav>{% endif %}
+<main>{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}{% block body %}{% endblock %}</main>
+{% if user %}<div class="add"><a class="btn red" href="/transactions/new?kind=expense">− Витрата</a><a class="btn" style="background:var(--in)" href="/transactions/new?kind=income">+ Надходження</a></div>{% endif %}
+</body></html>

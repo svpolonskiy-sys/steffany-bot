@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block body %}<h1>Звіти</h1>
+<div class="pills">{% for k,t in [('today','Сьогодні'),('yesterday','Вчора'),('week','Тиждень'),('month','Цей місяць'),('prev_month','Минулий місяць')] %}<a class="{{ 'on' if preset==k }}" href="?preset={{ k }}&account={{ acc or '' }}">{{ t }}</a>{% endfor %}</div>
+<form method="get" class="card"><div class="row"><div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
+<div><label>Рахунок</label><select name="account"><option value="">Усі</option>{% for a in accounts %}<option value="{{ a.id }}" {{ 'selected' if acc==a.id }}>{{ a.name }}</option>{% endfor %}</select></div>
+<div style="flex:0 0 auto"><button>Показати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/reports/export.xlsx?date_from={{ d_from }}&date_to={{ d_to }}&account={{ acc or '' }}">Excel ↓</a></div></div></form>
+<div class="grid" style="margin-top:12px"><div class="card"><div class="lbl">Надходження</div><div class="big in num">{{ rep.income|money }}</div></div>
+<div class="card"><div class="lbl">Витрати</div><div class="big out num">{{ rep.expense|money }}</div></div>
+<div class="card"><div class="lbl">Результат</div><div class="big num">{{ rep.net|money(true) }}</div></div>
+<div class="card"><div class="lbl">Перекази між касами</div><div class="big mut num">{{ rep.transfers_total|money }}</div><div class="lbl">не входять у доходи/витрати</div></div></div>
+{% for kind,title in [('income','Надходження за категоріями'),('expense','Витрати за категоріями')] %}<h2>{{ title }}</h2>
+<table><tr><th>Категорія</th><th class="r">К-сть</th><th class="r">Сума</th><th class="r">%</th></tr>
+{% set tot = rep.income if kind=='income' else rep.expense %}{% for c in rep.by_category if c.kind==kind %}
+<tr><td>{{ c.category }}</td><td class="r">{{ c.count }}</td><td class="r num">{{ c.sum|money }}</td><td class="r mut">{{ (c.sum*100/tot)|round(1) if tot else 0 }}%</td></tr>{% else %}<tr><td colspan="4" class="mut">Немає даних</td></tr>{% endfor %}</table>{% endfor %}
+<h2>По рахунках</h2><table><tr><th>Рахунок</th><th class="r">Надходження</th><th class="r">Витрати</th><th class="r">Перекази (нетто)</th></tr>
+{% for a in rep.by_account %}<tr><td>{{ a.account }}</td><td class="r num in">{{ a.income|money }}</td><td class="r num out">{{ a.expense|money }}</td><td class="r num mut">{{ a.transfers_net|money(true) }}</td></tr>{% endfor %}</table>
+<h2>По днях</h2><table><tr><th>Дата</th><th class="r">Надходження</th><th class="r">Витрати</th></tr>
+{% for d in rep.by_day %}<tr><td>{{ d.date }}</td><td class="r num in">{{ d.income|money }}</td><td class="r num out">{{ d.expense|money }}</td></tr>{% endfor %}</table>{% endblock %}

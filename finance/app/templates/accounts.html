@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block body %}<h1>Рахунки</h1>
+<table><tr><th>Назва</th><th>Тип</th><th>Джерело</th><th class="r">Баланс</th><th>Оновлення</th>{% if is_owner %}<th></th>{% endif %}</tr>
+{% for a in accs %}<tr class="{{ 'del' if not a.active }}"><td>{{ a.name }}</td><td>{{ ACC_KINDS[a.kind] }}</td><td>{{ SRC[a.source] }}{% if a.iban %}<br><span class="mut">{{ a.iban }}</span>{% endif %}</td>
+<td class="r num">{{ bal[a.id]|money }}</td><td class="mut">{{ (a.last_sync_at or '')|dt }}<br>{% if a.last_sync_status and a.last_sync_status!='ok' %}<span class="out">{{ a.last_sync_status[:90] }}</span>{% endif %}</td>
+{% if is_owner %}<td><details><summary class="btn sm sec">Змінити</summary><form method="post" action="/accounts" style="min-width:260px">
+<input type="hidden" name="id" value="{{ a.id }}"><label>Назва</label><input name="name" value="{{ a.name }}" required>
+<label>Тип</label><select name="kind">{% for k,v in ACC_KINDS.items() %}<option value="{{ k }}" {{ 'selected' if a.kind==k }}>{{ v }}</option>{% endfor %}</select>
+<label>Джерело даних</label><select name="source">{% for k,v in SRC.items() %}<option value="{{ k }}" {{ 'selected' if a.source==k }}>{{ v }}</option>{% endfor %}</select>
+<label>IBAN (для Приватбанку)</label><input name="iban" value="{{ a.iban }}"><label>Токен Автоклієнта {% if a.token_enc %}(збережено, залиште порожнім щоб не міняти){% endif %}</label><input name="token" type="password" autocomplete="off">
+<label>Залишок на початок (1 вересня), ₴ — необов'язково</label><input name="opening" placeholder="{{ '%.2f'|format(a.opening_balance/100) }}">
+<label>Активний</label><select name="active"><option value="1">Так</option><option value="0" {{ 'selected' if not a.active }}>Ні (архів)</option></select><p><button>Зберегти</button></p></form>
+{% if a.source=='privat' %}<form method="post" action="/accounts/{{ a.id }}/test"><button class="sm sec">Перевірити з'єднання</button></form>{% endif %}</details></td>{% endif %}</tr>{% endfor %}</table>
+{% if is_owner %}<h2>Додати рахунок</h2><form method="post" action="/accounts" class="card"><div class="row"><div><label>Назва</label><input name="name" required></div>
+<div><label>Тип</label><select name="kind">{% for k,v in ACC_KINDS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+<div><label>Джерело</label><select name="source">{% for k,v in SRC.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div></div>
+<div class="row"><div><label>IBAN</label><input name="iban"></div><div><label>Токен Автоклієнта</label><input name="token" type="password" autocomplete="off"></div><div><label>Початковий залишок, ₴</label><input name="opening"></div></div>
+<input type="hidden" name="active" value="1"><p><button>Додати</button></p></form>{% endif %}
+<h2>Журнал оновлень</h2><p class="mut">Автооновлення щогодини з 08:00 до 21:00 (Київ).</p><table><tr><th>Час</th><th>Рахунок</th><th>Результат</th></tr>
+{% for l in logs %}<tr><td class="num">{{ l.at|dt }}</td><td>{{ l.aname }}</td><td>{% if l.ok %}<span class="in">ок</span> +{{ l.added }} нових, {{ l.updated }} змін{% else %}<span class="out">{{ l.message[:140] }}</span>{% endif %}</td></tr>{% endfor %}</table>
+<h2>Мій пароль</h2><form method="post" action="/password" class="card" style="max-width:360px"><label>Поточний</label><input type="password" name="old" required><label>Новий (від 8 символів)</label><input type="password" name="new" required minlength="8"><p><button>Змінити</button></p></form>{% endblock %}

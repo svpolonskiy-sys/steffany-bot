@@ -1,0 +1,192 @@
+import json
+from datetime import date, datetime
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app import alteg, categorize as cat, config, main, privat, reports, sync
+from app.db import account_balances, connect
+from app.security import encrypt
+
+
+@pytest.fixture()
+def client():
+    main.con = connect(":memory:")
+    c = TestClient(main.app, base_url="http://testserver")
+    with c:
+        pass
+    main.bootstrap(main.con)
+    r = c.post("/login", data={"email": "owner@x.ua", "password": "ownerpass1"}, follow_redirects=False)
+    assert r.status_code == 303
+    return c
+
+
+def accid(name):
+    return main.con.execute("SELECT id FROM accounts WHERE name=?", (name,)).fetchone()["id"]
+
+
+def test_login_required():
+    c = TestClient(main.app)
+    main.con = connect(":memory:")
+    main.bootstrap(main.con)
+    r = c.get("/", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/login"
+
+
+def test_manual_tx_balance_and_transfer(client):
+    cash, safe = accid("Каса салон"), accid("Сейф")
+    client.post("/accounts", data={"id": cash, "name": "Каса салон", "kind": "cash", "source": "alteg",
+                                   "opening": "1000", "active": "1"})
+    client.post("/transactions/new", data={"kind": "income", "account_id": cash, "amount": "500,50",
+                                           "occurred_at": "2026-10-19T10:00", "description": "Послуга"})
+    client.post("/transactions/new", data={"kind": "expense", "account_id": cash, "amount": "100",
+                                           "occurred_at": "2026-10-19T11:00", "description": "молоко"})
+    client.post("/transactions/new", data={"kind": "transfer", "account_id": cash, "to_account_id": safe,
+                                           "amount": "300", "occurred_at": "2026-10-19T19:00", "description": "інкасація"})
+    b = account_balances(main.con)
+    assert b[cash] == 100000 + 50050 - 10000 - 30000 and b[safe] == 30000
+    r = client.get("/").text
+    assert "1 100,50 ₴" in r or "1 100,50" in r
+    exp = main.con.execute("SELECT c.name FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.description='молоко'").fetchone()
+    assert exp["name"] == "Господарські витрати"
+
+
+def test_edit_delete_keeps_history(client):
+    a = accid("Робочі гроші")
+    client.post("/transactions/new", data={"kind": "expense", "account_id": a, "amount": "50",
+                                           "occurred_at": "2026-10-19T10:00", "description": "кава"})
+    tid = main.con.execute("SELECT id FROM transactions").fetchone()["id"]
+    client.post(f"/transactions/{tid}", data={"kind": "expense", "account_id": a, "amount": "70",
+                                              "occurred_at": "2026-10-19T10:00", "description": "кава"})
+    client.post(f"/transactions/{tid}/delete")
+    assert account_balances(main.con)[a] == 0
+    acts = [r["action"] for r in main.con.execute("SELECT action FROM audit WHERE tx_id=? ORDER BY id", (tid,))]
+    assert acts == ["create", "update", "delete"]
+    client.post(f"/transactions/{tid}/restore")
+    assert account_balances(main.con)[a] == -7000
+    assert client.get(f"/transactions/{tid}").status_code == 200
+
+
+def test_rule_applies_to_existing_auto(client):
+    a = accid("ФОП 1")
+    cid = cat.get_or_create_category(main.con, "Косметика ТОВ Ромашка", "expense", auto=True)
+    from app.db import insert_tx
+    insert_tx(main.con, account_id=a, kind="expense", amount=1000, occurred_at="2026-10-01T10:00:00",
+              description="Оплата за товар", counterparty="ТОВ Ромашка", category_id=cid, source="privat",
+              external_id="p1")
+    main.con.commit()
+    mat = cat.get_or_create_category(main.con, "Матеріали та косметика", "expense")
+    client.post("/rules", data={"pattern": "ромашка", "category_id": mat, "direction": "expense", "apply": "1"})
+    assert main.con.execute("SELECT category_id FROM transactions").fetchone()[0] == mat
+
+
+def test_auto_category_creation():
+    con = connect(":memory:")
+    cat.seed(con)
+    c1 = cat.categorize(con, "expense", "Оплата за послуги", "ТОВ \"Ромашка\"")
+    assert con.execute("SELECT name,auto FROM categories WHERE id=?", (c1,)).fetchone()["name"] == "ТОВ Ромашка"
+    c2 = cat.categorize(con, "income", "Зарахування торгової виручки по терміналу 123", "")
+    assert con.execute("SELECT name FROM categories WHERE id=?", (c2,)).fetchone()["name"] == "Виручка (термінали)"
+    c3 = cat.categorize(con, "income", "Переказ від Іванов", "Іванов Іван")
+    assert con.execute("SELECT name FROM categories WHERE id=?", (c3,)).fetchone()["name"] == "Інші надходження"
+
+
+PRIVAT_TX = [
+    {"ID": "1", "TRANTYPE": "C", "SUM": "1500.50", "CCY": "UAH", "OSND": "Зарахування торгової виручки по терміналу 777",
+     "AUT_CNTR_NAM": "АТ КБ ПРИВАТБАНК", "DATE_TIME_DAT_OD_TIM_P": "15.09.2026 13:05:00"},
+    {"ID": "2", "TRANTYPE": "D", "SUM": "200.00", "CCY": "UAH", "OSND": "Комісія за переказ", "AUT_CNTR_NAM": "",
+     "DAT_OD": "16.09.2026", "TIM_P": "10:00"},
+    {"ID": "3", "TRANTYPE": "D", "SUM": "5.00", "CCY": "USD", "OSND": "x", "DAT_OD": "16.09.2026", "TIM_P": "10:00"},
+]
+
+
+class FakeResp:
+    def __init__(self, data, code=200):
+        self.content = json.dumps(data, ensure_ascii=False).encode()
+        self.status_code = code
+
+
+class FakePrivat:
+    def get(self, url, **kw):
+        if url.endswith("/balance"):
+            return FakeResp({"status": "SUCCESS", "balances": [{"acc": "UA1", "balanceOut": "1300.50"}]})
+        return FakeResp({"status": "SUCCESS", "transactions": PRIVAT_TX, "exist_next_page": False})
+
+
+def test_privat_sync_idempotent_and_opening(client):
+    a = main.con.execute("SELECT * FROM accounts WHERE name='ФОП 1'").fetchone()
+    main.con.execute("UPDATE accounts SET iban='UA1', token_enc=? WHERE id=?", (encrypt("tok"), a["id"]))
+    main.con.commit()
+    a = main.con.execute("SELECT * FROM accounts WHERE id=?", (a["id"],)).fetchone()
+    assert sync.sync_privat(main.con, a, session=FakePrivat()) == (2, 0)
+    a = main.con.execute("SELECT * FROM accounts WHERE id=?", (a["id"],)).fetchone()
+    assert account_balances(main.con)[a["id"]] == 130050  # equals bank balance
+    main.con.execute("UPDATE accounts SET last_sync_at='2026-10-19T09:00:00', last_sync_status='ok' WHERE id=?", (a["id"],))
+    a = main.con.execute("SELECT * FROM accounts WHERE id=?", (a["id"],)).fetchone()
+    assert sync.sync_privat(main.con, a, session=FakePrivat()) == (0, 0)
+
+
+ALTEG_ROWS = [
+    {"id": 1, "date": "2026-10-19T15:30:00+0400", "amount": 600, "comment": "", "expense": {"title": "Services rendered"}},
+    {"id": 2, "date": "2026-10-19T14:18:00+0400", "amount": 284, "comment": "Соловко", "expense": {"title": "Product sales"}},
+    {"id": 3, "date": "2026-10-18T19:05:47+0400", "amount": -3360, "comment": "Зп прибиральниці", "expense": {"title": ""}},
+    {"id": 4, "date": "2026-10-15T16:38:24+0400", "amount": -61000, "comment": "інкасація", "expense": {"title": ""}},
+]
+
+
+class FakeAlteg:
+    def __init__(self, rows):
+        self.rows = rows
+
+    def cash_transactions(self, s, e):
+        return self.rows
+
+
+def test_alteg_sync_mapping_and_removal(client):
+    acc = main.con.execute("SELECT * FROM accounts WHERE name='Каса салон'").fetchone()
+    assert sync.sync_alteg(main.con, acc, client=FakeAlteg(ALTEG_ROWS)) == (4, 0)
+    safe = accid("Сейф")
+    b = account_balances(main.con)
+    assert b[acc["id"]] == 60000 + 28400 - 336000 - 6100000 and b[safe] == 6100000
+    cats = {r["description"]: r["name"] for r in main.con.execute(
+        "SELECT t.description, c.name FROM transactions t LEFT JOIN categories c ON c.id=t.category_id")}
+    assert cats["Соловко"] == "Продаж товарів" and cats["Зп прибиральниці"] == "Зарплата"
+    acc = main.con.execute("SELECT * FROM accounts WHERE id=?", (acc["id"],)).fetchone()
+    # second run: a row vanished in Alteg, one amount changed
+    rows = [dict(ALTEG_ROWS[0], amount=650)] + ALTEG_ROWS[2:]
+    main.con.execute("UPDATE accounts SET last_sync_at='2026-10-19T09:00:00', last_sync_status='ok'")
+    acc = main.con.execute("SELECT * FROM accounts WHERE id=?", (acc["id"],)).fetchone()
+    a, u = sync.sync_alteg(main.con, acc, client=FakeAlteg(rows))
+    assert a == 0 and u == 2
+    assert account_balances(main.con)[acc["id"]] == 65000 - 336000 - 6100000
+
+
+def test_window_and_reports(client):
+    assert sync.in_work_window(datetime(2026, 10, 19, 12, tzinfo=config.KYIV))
+    assert not sync.in_work_window(datetime(2026, 10, 19, 21, 0, tzinfo=config.KYIV))
+    assert not sync.in_work_window(datetime(2026, 10, 19, 7, 59, tzinfo=config.KYIV))
+    cash = accid("Каса салон")
+    client.post("/transactions/new", data={"kind": "income", "account_id": cash, "amount": "1000",
+                                           "occurred_at": "2026-10-19T10:00", "description": "x"})
+    for u in ("/reports?preset=month", "/reports?date_from=2026-10-01&date_to=2026-10-31", "/transactions",
+              "/categories", "/accounts", "/users", "/transactions/new", "/transactions/export.csv"):
+        assert client.get(u).status_code == 200, u
+    x = client.get("/reports/export.xlsx?date_from=2026-10-01&date_to=2026-10-31")
+    assert x.status_code == 200 and x.content[:2] == b"PK"
+    r = client.get("/api/report?date_from=2026-10-19&date_to=2026-10-19").json()
+    assert r["income"] == 100000
+    anon = TestClient(main.app)
+    assert anon.get("/api/balances", headers={"x-api-token": "tok123"}).status_code == 200
+    assert anon.get("/api/balances", follow_redirects=False).status_code == 303
+
+
+def test_roles(client):
+    client.post("/users", data={"email": "adm@x.ua", "name": "Адмін", "role": "admin", "password": "adminpass1"})
+    adm = TestClient(main.app)
+    adm.post("/login", data={"email": "adm@x.ua", "password": "adminpass1"})
+    assert adm.get("/users").status_code == 403
+    assert adm.post("/accounts", data={"name": "x", "kind": "cash", "source": "manual"}).status_code == 403
+    assert adm.post("/categories", data={"name": "x", "kind": "expense"}).status_code == 403
+    assert adm.get("/transactions/new").status_code == 200
+    bad = adm.post("/logout", headers={"origin": "http://evil.example"})
+    assert bad.status_code == 403

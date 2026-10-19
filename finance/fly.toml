@@ -1,0 +1,26 @@
+app = "steffany-finance"          # змініть на унікальну назву
+primary_region = "waw"            # Варшава - найближче до України
+
+[build]
+
+[env]
+  COOKIE_SECURE = "1"
+  DB_PATH = "/data/finance.db"
+  HISTORY_START = "2026-09-01"
+  ALTEG_LOCATION = "751396"
+  ALTEG_CASH_ACCOUNT = "1526207"
+
+[mounts]
+  source = "data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"      # має працювати постійно: оновлення раз на годину
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
