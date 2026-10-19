@@ -72,6 +72,21 @@ def accrual_date(description: str, paid: date) -> date:
     return date(year, month, 15)
 
 
+def _group_sum(con, group: str, lo: date, hi: date) -> int:
+    """Ledger expenses of a P&L group accrued (month named in the payment text) inside [lo, hi]."""
+    q = ("SELECT t.amount, t.occurred_at, t.description, COALESCE(c.name,'') cname, COALESCE(c.exclude,0) ex, COALESCE(c.pl_group,'') pg "
+         "FROM transactions t LEFT JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL AND t.kind='expense' "
+         "AND t.occurred_at BETWEEN ? AND ?")
+    wide_lo, wide_hi = (lo - timedelta(days=75)).isoformat() + "T00:00:00", (hi + timedelta(days=75)).isoformat() + "T23:59:59"
+    tot = 0
+    for t in con.execute(q, (wide_lo, wide_hi)):
+        if group_of(t["cname"] or "Інші витрати", "expense", t["ex"], t["pg"]) != group:
+            continue
+        if lo <= accrual_date(t["description"], date.fromisoformat(t["occurred_at"][:10])) <= hi:
+            tot += t["amount"]
+    return tot
+
+
 def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     a, b = lo.isoformat() + "T00:00:00", hi.isoformat() + "T23:59:59"
     # ---- revenue from Alteg sales
@@ -134,6 +149,20 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
                 continue
             d = exp.setdefault(g, {})
             d[name] = d.get(name, 0) + amt
+    rent_est = 0
+    if accrual:  # rent not yet invoiced/paid for a running month: accrue like last month, pro-rated by days
+        hist = date.fromisoformat(config.HISTORY_START)
+        m = lo.replace(day=1)
+        while m <= hi:
+            nxt = (m.replace(day=28) + timedelta(days=4)).replace(day=1)
+            a_, b_ = max(m, lo, hist), min(nxt - timedelta(days=1), hi)
+            pm = (m - timedelta(days=1)).replace(day=1)
+            if b_ >= a_ and pm >= hist.replace(day=1) and _group_sum(con, "rent", a_, b_) == 0:
+                prev_rent = _group_sum(con, "rent", pm, m - timedelta(days=1))
+                rent_est += int(round(prev_rent * ((b_ - a_).days + 1) / (nxt - m).days))
+            m = nxt
+        if rent_est:
+            exp.setdefault("rent", {})["Оренда (оцінка за минулим місяцем)"] = rent_est
     interest = 0
     for r in con.execute("SELECT amount, description FROM credit_ops WHERE direction='D' AND occurred_at BETWEEN ? AND ?", (a, b)):
         t = norm(r["description"])
@@ -221,7 +250,7 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
         s, ps = sum(cur["exp"].get(g, {}).values()), sum(prev["exp"].get(g, {}).values())
         if s or ps:
             add(label, amount=s, pamount=ps, kind="item", indent=1)
-            cats(cur["exp"].get(g, {}), prev["exp"].get(g, {}), indent=2) if g in ("admin", "utilities", "marketing", "bank") else None
+            cats(cur["exp"].get(g, {}), prev["exp"].get(g, {}), indent=2) if g in ("admin", "utilities", "marketing", "bank", "rent") else None
     add("Разом операційні витрати", "opex", kind="sub")
     add("EBITDA (операційний прибуток)", "ebitda", kind="total")
 

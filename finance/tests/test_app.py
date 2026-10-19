@@ -504,3 +504,18 @@ def test_payroll_import_and_pl_uses_it(client, tmp_path):
     o = pl.compute(main.con, d(2026, 10, 1), d(2026, 10, 31))
     assert o["est_months"] == ["2026-10"] and o["pay"]["Перукарі"] == 400000 and o["pay"]["Інші працівники"] == 800000
     assert o["paid_payroll"] == 3000000 and o["esv"] == 0
+
+
+def test_rent_is_accrued_for_running_month(client):
+    from app import pl
+    d = __import__("datetime").date
+    fop = accid("ФОП 1")
+    rent = cat.get_or_create_category(main.con, "Оренда", "expense")
+    client.post("/transactions/new", data=dict(kind="expense", account_id=fop, amount="31000", occurred_at="2026-09-05T10:00",
+                                               category_id=rent, description="орендна плата за вересень"))
+    a = pl.compute(main.con, d(2026, 10, 1), d(2026, 10, 15), accrual=True)
+    assert sum(a["exp"]["rent"].values()) == 3100000 * 15 // 30 or abs(sum(a["exp"]["rent"].values()) - 3100000 * 15 / 31) < 2
+    b = pl.compute(main.con, d(2026, 10, 1), d(2026, 10, 15), accrual=False)
+    assert "rent" not in b["exp"]                     # no estimate when costs are shown by payment date
+    c = pl.compute(main.con, d(2026, 9, 1), d(2026, 9, 30), accrual=True)
+    assert sum(c["exp"]["rent"].values()) == 3100000  # real payment, no estimate on top
