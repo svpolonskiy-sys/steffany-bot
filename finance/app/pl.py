@@ -15,6 +15,7 @@ Expenses can be taken by payment date or by the month named in the payment text 
 import re
 from datetime import date, timedelta
 
+from . import config
 from .categorize import norm
 
 EXPENSE_GROUPS = [
@@ -155,12 +156,15 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
     days = (hi - lo).days + 1
     plo, phi = lo - timedelta(days=days), lo - timedelta(days=1)
     cur, prev = compute(con, lo, hi, accrual), compute(con, plo, phi, accrual)
+    prev_ok = plo >= date.fromisoformat(config.HISTORY_START)  # no ledger/Alteg data before that: nothing to compare
     rev = cur["revenue"]
     lines = []
 
     def add(label, key=None, amount=None, kind="item", indent=0, pamount=None, note=""):
         amount = cur[key] if key else amount
         pamount = prev[key] if (key and pamount is None) else pamount
+        if not prev_ok:
+            pamount = None
         lines.append(dict(label=label, amount=amount, prev=pamount, kind=kind, indent=indent, note=note,
                           pct=_pct(amount, rev), delta=_delta(amount, pamount or 0) if (pamount is not None and amount is not None) else None))
 
@@ -236,4 +240,4 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
         m = nxt
     return dict(from_=d_from, to=d_to, prev_from=plo.isoformat(), prev_to=phi.isoformat(), lines=lines, memo=memo, kpis=kpis,
                 split=split, months=months if len(months) > 1 else [], cur=cur, prev_net=prev["net"], prev_revenue=prev["revenue"],
-                accrual=accrual, empty=(rev == 0 and cur["cogs"] == 0 and cur["labour"] == 0 and cur["opex"] == 0))
+                accrual=accrual, prev_ok=prev_ok, empty=(rev == 0 and cur["cogs"] == 0 and cur["labour"] == 0 and cur["opex"] == 0))

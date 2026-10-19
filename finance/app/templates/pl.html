@@ -9,7 +9,7 @@
 
 {% if rep.empty %}<div class="card" style="margin-top:12px"><b>За цей період немає даних.</b><div class="mut">Облік у системі ведеться з 01.09.2026.</div></div>{% else %}
 <div class="stats" style="margin-top:12px">
-<div class="card stat hero"><div class="k">Чистий прибуток · {{ d_from }} — {{ d_to }}</div><div class="v {{ 'in' if rep.cur.net>=0 else 'out' }}">{{ rep.cur.net|money(true) }}</div><div class="s">маржа {{ k.net_margin if k.net_margin is not none else '—' }}% · було {{ rep.prev_net|money }}</div></div>
+<div class="card stat hero"><div class="k">Чистий прибуток · {{ d_from }} — {{ d_to }}</div><div class="v {{ 'in' if rep.cur.net>=0 else 'out' }}">{{ rep.cur.net|money(true) }}</div><div class="s">маржа {{ k.net_margin if k.net_margin is not none else '—' }}%{% if rep.prev_ok %} · було {{ rep.prev_net|money }}{% endif %}</div></div>
 <div class="card stat"><div class="k">Виручка</div><div class="v">{{ rep.cur.revenue|money }}</div><div class="s">{{ k.rev_per_day|money }} на день · сер. чек {{ k.avg_check|money }}</div></div>
 <div class="card stat"><div class="k">Валова маржа</div><div class="v">{{ k.gross_margin if k.gross_margin is not none else '—' }}%</div><div class="s">матеріали й товари {{ k.cogs_pct if k.cogs_pct is not none else '—' }}% виручки</div></div>
 <div class="card stat"><div class="k">Оплата праці / оренда</div><div class="kv"><span>оплата праці</span><b>{{ k.labour_pct if k.labour_pct is not none else '—' }}%</b></div><div class="kv"><span>оренда</span><b>{{ k.rent_pct if k.rent_pct is not none else '—' }}%</b></div><div class="kv"><span>EBITDA</span><b>{{ k.ebitda_margin if k.ebitda_margin is not none else '—' }}%</b></div></div></div>
@@ -19,10 +19,10 @@
 <div class="legend2">{% for p in rep.split %}<span><i class="dot" style="background:{{ p.color }}"></i>{{ p.label }} <b>{{ p.pct }}%</b></span>{% endfor %}</div></div>{% endif %}
 
 <h2>Звіт</h2>
-<table class="pl"><tr><th>Стаття</th><th class="r">Сума</th><th class="r">% виручки</th><th class="r hm">Попередній період</th><th class="r hm">Зміна</th></tr>
+<table class="pl"><tr><th>Стаття</th><th class="r">Сума</th><th class="r">% виручки</th>{% if rep.prev_ok %}<th class="r hm">Попередній період</th><th class="r hm">Зміна</th>{% endif %}</tr>
 {% for l in rep.lines %}<tr class="pl-{{ l.kind }}"><td style="padding-left:{{ 12 + l.indent*18 }}px">{{ l.label }}</td><td class="r num">{{ l.amount|money if l.amount is not none else '' }}</td><td class="r mut">{{ (l.pct ~ '%') if l.pct is not none else '' }}</td>
-<td class="r num mut hm">{{ l.prev|money if l.prev is not none else '' }}</td><td class="r hm {{ 'in' if l.delta and l.delta>0 else 'out' if l.delta and l.delta<0 else 'mut' }}">{{ ('%+.1f%%'|format(l.delta)) if l.delta is not none else '' }}</td></tr>{% endfor %}</table>
-<p class="mut" style="margin-top:6px">Попередній період: {{ rep.prev_from }} — {{ rep.prev_to }} (така сама тривалість). Для витрат «зміна» — це їх зростання, а не прибуток.</p>
+{% if rep.prev_ok %}<td class="r num mut hm">{{ l.prev|money if l.prev is not none else '' }}</td><td class="r hm {{ 'in' if l.delta and l.delta>0 else 'out' if l.delta and l.delta<0 else 'mut' }}">{{ ('%+.1f%%'|format(l.delta)) if l.delta is not none else '' }}</td>{% endif %}</tr>{% endfor %}</table>
+<p class="mut" style="margin-top:6px">{% if rep.prev_ok %}Попередній період: {{ rep.prev_from }} — {{ rep.prev_to }} (така сама тривалість). Для витрат «зміна» — це їх зростання, а не прибуток.{% else %}Порівняння з попереднім періодом недоступне: облік у системі ведеться з 01.09.2026.{% endif %}</p>
 
 {% if rep.months %}<h2>Динаміка по місяцях</h2>
 <table><tr><th>Місяць</th><th class="r">Виручка</th><th class="r hm">Матеріали</th><th class="r hm">Оплата праці</th><th class="r hm">Опер. витрати</th><th class="r">EBITDA</th><th class="r">Чистий прибуток</th></tr>
