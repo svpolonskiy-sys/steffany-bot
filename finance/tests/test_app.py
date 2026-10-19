@@ -48,7 +48,7 @@ def test_manual_tx_balance_and_transfer(client):
     r = client.get("/").text
     assert "1 100,50 ₴" in r or "1 100,50" in r
     exp = main.con.execute("SELECT c.name FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.description='молоко'").fetchone()
-    assert exp["name"] == "Господарські витрати"
+    assert exp["name"] == "Продукти для клієнтів"
 
 
 def test_edit_delete_keeps_history(client):
@@ -75,7 +75,7 @@ def test_rule_applies_to_existing_auto(client):
               description="Оплата за товар", counterparty="ТОВ Ромашка", category_id=cid, source="privat",
               external_id="p1")
     main.con.commit()
-    mat = cat.get_or_create_category(main.con, "Матеріали та косметика", "expense")
+    mat = cat.get_or_create_category(main.con, "Матеріал в роботу", "expense")
     client.post("/rules", data={"pattern": "ромашка", "category_id": mat, "direction": "expense", "apply": "1"})
     assert main.con.execute("SELECT category_id FROM transactions").fetchone()[0] == mat
 
@@ -86,9 +86,9 @@ def test_auto_category_creation():
     c1 = cat.categorize(con, "expense", "Оплата за послуги", "ТОВ \"Ромашка\"")
     assert con.execute("SELECT name,auto FROM categories WHERE id=?", (c1,)).fetchone()["name"] == "ТОВ Ромашка"
     c2 = cat.categorize(con, "income", "Зарахування торгової виручки по терміналу 123", "")
-    assert con.execute("SELECT name FROM categories WHERE id=?", (c2,)).fetchone()["name"] == "Виручка (термінали)"
+    assert con.execute("SELECT name FROM categories WHERE id=?", (c2,)).fetchone()["name"] == "Оплата послуг"
     c3 = cat.categorize(con, "income", "Переказ від Іванов", "Іванов Іван")
-    assert con.execute("SELECT name FROM categories WHERE id=?", (c3,)).fetchone()["name"] == "Інші надходження"
+    assert con.execute("SELECT name FROM categories WHERE id=?", (c3,)).fetchone()["name"] == "Інші доходи"
 
 
 PRIVAT_TX = [
@@ -150,7 +150,7 @@ def test_alteg_sync_mapping_and_removal(client):
     assert b[acc["id"]] == 60000 + 28400 - 336000 - 6100000 and b[safe] == 6100000
     cats = {r["description"]: r["name"] for r in main.con.execute(
         "SELECT t.description, c.name FROM transactions t LEFT JOIN categories c ON c.id=t.category_id")}
-    assert cats["Соловко"] == "Продаж товарів" and cats["Зп прибиральниці"] == "Зарплата"
+    assert cats["Соловко"] == "Продаж товарів" and cats["Зп прибиральниці"] == "Витрати на персонал"
     acc = main.con.execute("SELECT * FROM accounts WHERE id=?", (acc["id"],)).fetchone()
     # second run: a row vanished in Alteg, one amount changed
     rows = [dict(ALTEG_ROWS[0], amount=650)] + ALTEG_ROWS[2:]

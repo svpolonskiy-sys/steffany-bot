@@ -218,7 +218,7 @@ def dashboard(request: Request, u=Depends(current_user)):
         "WHERE t.deleted_at IS NULL ORDER BY t.occurred_at DESC, t.id DESC LIMIT 12").fetchall()
     uncategorised = c.execute(
         "SELECT COUNT(*) FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL "
-        "AND t.user_edited=0 AND (c.auto=1 OR c.name IN ('Інші надходження','Інші витрати'))").fetchone()[0]
+        "AND t.user_edited=0 AND (c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))").fetchone()[0]
     return render(request, "dashboard.html", u, bal=b, day=day, month=month, recent=recent,
                   last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
                   in_window=sync.in_work_window())

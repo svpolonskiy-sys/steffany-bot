@@ -76,7 +76,7 @@ def map_tx(t: dict):
 
 
 ALTEG_INCOME_CATEGORY = {
-    "services rendered": "Послуги",
+    "services rendered": "Оплата послуг",
     "product sales": "Продаж товарів",
-    "gift card sales": "Подарункові сертифікати",
+    "gift card sales": "Додаткові надходження",
 }

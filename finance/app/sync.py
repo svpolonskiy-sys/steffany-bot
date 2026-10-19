@@ -103,7 +103,7 @@ def sync_alteg(con, acc, client=None) -> tuple[int, int]:
                 updated += 1
             continue
         if m["kind"] == "income":
-            cname = alteg.ALTEG_INCOME_CATEGORY.get(title.lower(), "Послуги")
+            cname = alteg.ALTEG_INCOME_CATEGORY.get(title.lower(), "Оплата послуг")
             cat = get_or_create_category(con, cname, "income")
         else:
             cat = categorize(con, m["kind"], raw, "")
