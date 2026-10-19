@@ -41,6 +41,16 @@ def _clean(s: str) -> str:
     return re.sub(r"\s+", " ", s or "").strip()
 
 
+def matches(pattern: str, text: str) -> bool:
+    """Substring match; short patterns ('зп', 'чай') must be whole words ('безпечення' contains 'зп')."""
+    p = norm(pattern)
+    if not p:
+        return False
+    if len(p.strip()) <= 3:
+        return re.search(r"(?<!\w)" + re.escape(p.strip()) + r"(?!\w)", text) is not None
+    return p in text
+
+
 def norm(s: str) -> str:
     """Lower-case text for matching; banks write Ukrainian with a Latin 'i' ("Комiсiя")."""
     return _clean(s).translate(_LAT).lower()
@@ -65,10 +75,10 @@ def categorize(con, kind: str, description: str, counterparty: str = "", create:
             "SELECT r.* FROM rules r JOIN categories c ON c.id=r.category_id "
             "WHERE c.archived=0 AND r.direction IN ('any',?) ORDER BY r.priority DESC, length(r.pattern) DESC, r.id",
             (kind,)):
-        if norm(r["pattern"]) in text:
+        if matches(r["pattern"], text):
             return r["category_id"]
     for direction, sub, cat in HINTS:
-        if direction == kind and sub in text:
+        if direction == kind and matches(sub, text):
             return get_or_create_category(con, cat, kind)
     if not create:
         return None
@@ -104,7 +114,7 @@ def apply_rule_to_existing(con, category_id: int, pattern: str, kind: str | None
     for t in rows:
         if kind and t["kind"] != kind:
             continue
-        if p in norm(t["description"] + " " + t["counterparty"]) and t["category_id"] != category_id:
+        if matches(pattern, norm(t["description"] + " " + t["counterparty"])) and t["category_id"] != category_id:
             update_tx(con, t["id"], user_id, note=f"правило «{pattern}»", user_edit=False, category_id=category_id)
             n += 1
     return n

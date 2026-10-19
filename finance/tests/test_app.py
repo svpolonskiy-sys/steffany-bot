@@ -190,3 +190,12 @@ def test_roles(client):
     assert adm.get("/transactions/new").status_code == 200
     bad = adm.post("/logout", headers={"origin": "http://evil.example"})
     assert bad.status_code == 403
+
+
+def test_short_patterns_are_whole_words():
+    con = connect(":memory:")
+    cat.seed(con)
+    name = lambda i: con.execute("SELECT name FROM categories WHERE id=?", (i,)).fetchone()["name"]
+    assert name(cat.categorize(con, "expense", "Оплата грошові кошти забезпечення зг рах", "")) == "Інші витрати"
+    assert name(cat.categorize(con, "expense", "зп на карту Іванова", "")) == "Зарплата"
+    assert name(cat.categorize(con, "expense", "Комiсiя по еквайрингу за вересень", "")) == "Комісія банку"
