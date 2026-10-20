@@ -274,7 +274,8 @@ def dashboard(request: Request, u=Depends(current_user)):
     recent = c.execute(
         "SELECT t.*, a.name acc, a2.name acc2, c.name cat FROM transactions t JOIN accounts a ON a.id=t.account_id "
         "LEFT JOIN accounts a2 ON a2.id=t.to_account_id LEFT JOIN categories c ON c.id=t.category_id "
-        "WHERE t.deleted_at IS NULL ORDER BY t.occurred_at DESC, t.id DESC LIMIT 12").fetchall()
+        "WHERE t.deleted_at IS NULL AND t.occurred_at>=? AND t.occurred_at<? ORDER BY t.occurred_at DESC, t.id DESC LIMIT 300",
+        (today.isoformat() + "T00:00:00", (today + timedelta(days=1)).isoformat() + "T00:00:00")).fetchall()
     uncategorised = c.execute(
         "SELECT COUNT(*) FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL "
         "AND t.user_edited=0 AND (c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))").fetchone()[0]

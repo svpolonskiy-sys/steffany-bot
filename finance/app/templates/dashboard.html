@@ -13,5 +13,5 @@
 <div class="kv"><span>готівка</span><b>{{ takings.cash|money }}</b></div><div class="kv"><span>безготівка</span><b>{{ takings.cashless|money }}</b></div><div class="kv"><span>витрати з каси</span><b class="out">{{ takings.expense|money }}</b></div></div>
 <div class="card stat"><div class="k">Цей місяць (рух грошей на рахунках)</div><div class="v">{{ month.net|money(true) }}</div>
 <div class="kv"><span>надходження</span><b class="in">{{ month.income|money }}</b></div><div class="kv"><span>витрати</span><b class="out">{{ month.expense|money }}</b></div></div></div>
-<h2>Останні операції</h2>{% include "tx_table.html" %}
-<p><a href="/transactions">Усі операції →</a></p>{% endblock %}
+<h2>Операції за сьогодні</h2>{% if recent %}{% include "tx_table.html" %}{% else %}<div class="card mut">Сьогодні операцій ще немає.</div>{% endif %}
+<p><a class="btn sec" href="/transactions">Усі операції →</a></p>{% endblock %}

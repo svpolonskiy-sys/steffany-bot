@@ -766,3 +766,14 @@ def test_user_can_change_own_password_many_times(client):
     assert me.get("/account", follow_redirects=False).status_code == 200            # this device stays signed in
     assert other.get("/account", follow_redirects=False).status_code == 303          # the other device is signed out
     assert _login("kate@x.ua", "third-pass-333").get("/account").status_code == 200
+
+
+def test_dashboard_lists_only_todays_operations(client):
+    from datetime import datetime
+    today = datetime.now(main.config.KYIV).strftime("%Y-%m-%d")
+    fop = accid("ФОП 1")
+    client.post("/transactions/new", data=dict(kind="expense", account_id=fop, amount="111", occurred_at=f"{today}T09:00", description="сьогоднішня-витрата"))
+    client.post("/transactions/new", data=dict(kind="expense", account_id=fop, amount="222", occurred_at="2026-09-02T09:00", description="давня-витрата"))
+    page = client.get("/").text
+    assert "сьогоднішня-витрата" in page and "давня-витрата" not in page and "Операції за сьогодні" in page
+    assert 'href="/transactions"' in page
