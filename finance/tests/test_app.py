@@ -706,3 +706,11 @@ def test_forms_accept_empty_selects_like_a_browser(client):
     assert client.post("/accounts", data={"id": "", "name": "Нова каса", "kind": "cash", "source": "manual", "active": "1", "current": ""}, follow_redirects=False).status_code == 303
     safe = accid("Сейф")
     assert client.post("/transactions/new", data={**base, "kind": "transfer", "account_id": cash, "to_account_id": safe, "category_id": ""}, follow_redirects=False).status_code == 303
+
+
+def test_alteg_cash_for_payroll_is_an_expense_not_a_transfer():
+    base = {"id": 1, "date": "2026-10-07T15:39:00+0400", "amount": -21400, "expense": {"title": ""}}
+    assert alteg.map_tx(dict(base, comment="Інкасація на зп"))["kind"] == "expense"
+    assert alteg.map_tx(dict(base, comment="інкасація на зарплату"))["kind"] == "expense"
+    assert alteg.map_tx(dict(base, comment="Інкасація"))["kind"] == "transfer"
+    assert alteg.map_tx(dict(base, comment="інкасація"))["kind"] == "transfer"

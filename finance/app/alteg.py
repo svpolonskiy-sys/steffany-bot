@@ -1,4 +1,5 @@
 """Altegio (alteg.io) CRM: imports cash-desk operations of one location."""
+import re
 import time
 
 import requests
@@ -131,8 +132,10 @@ def map_tx(t: dict):
         title = (t.get("expense") or {}).get("title") or ""
         desc = comment or ALTEG_INCOME_CATEGORY.get(title.lower(), title)
         return dict(base, kind="income", description=desc, counterparty="", alteg_title=title, raw=comment)
-    if any(w in comment.lower() for w in INCASSO_WORDS):
+    low = comment.lower()
+    if any(w in low for w in INCASSO_WORDS) and not re.search(r"(на\s+з/?п|зарплат|на\s+зп)", low):
         return dict(base, kind="transfer", description=comment or "Інкасація", counterparty="", raw=comment)
+    # "Інкасація на зп" = cash taken out for payroll: it is a payout, not a transfer into the safe
     return dict(base, kind="expense", description=comment or "Витрата з каси", counterparty="", raw=comment)
 
 
