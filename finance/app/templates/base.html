@@ -2,7 +2,7 @@
 <title>₴ {% block title %}Фінанси{% endblock %} · Steffany</title>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png?v=2">
 <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=2"><link rel="manifest" href="/static/manifest.webmanifest?v=2"><meta name="theme-color" content="#6b2f6e">
-<link rel="stylesheet" href="/static/style.css"></head><body>
+<link rel="stylesheet" href="/static/style.css?v={{ asset_v }}"></head><body>
 {% if user %}<nav><div class="nv"><a class="b" href="/" title="Steffany · Фінанси">{% set compact=true %}{% include "_logo.html" %}<span class="fin">Фінанси</span></a>
 {% for href,t,need in [('/','Огляд',''),('/cash','Каса',''),('/transactions','Операції',''),('/reports','Звіти',''),('/pl','P&L','analytics'),('/payroll','Зарплата','analytics'),('/credits','Кредити','analytics'),('/control','Контроль','analytics'),('/categories','Категорії',''),('/accounts','Рахунки','')] %}{% if not need or can[need] %}
 <a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}{% if href=='/control' and ctl_open %} <span class="bdg">{{ ctl_open }}</span>{% endif %}</a>{% endif %}{% endfor %}

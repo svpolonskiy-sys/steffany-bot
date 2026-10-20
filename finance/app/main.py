@@ -1,4 +1,5 @@
 import asyncio
+import os
 import secrets
 import sqlite3
 import csv
@@ -105,6 +106,7 @@ def money(k, sign=False):
 
 
 tpl.env.filters["money"] = money
+tpl.env.globals["asset_v"] = str(int(os.path.getmtime(f"{BASE_DIR}/static/style.css")))
 tpl.env.filters["dt"] = lambda s: (s or "").replace("T", " ")[:16]
 tpl.env.globals.update(suggest_pattern=cat.suggest_pattern, pl_group_of=lambda c: pl.group_of(c["name"], c["kind"], c["exclude"], c["pl_group"]), PL_EXP=pl.EXPENSE_GROUPS, PL_INC=pl.INCOME_GROUPS, ROLES=ROLES, KINDS=KINDS, ACC_KINDS=ACC_KINDS, SRC=SRC)
 

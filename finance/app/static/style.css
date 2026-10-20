@@ -172,9 +172,6 @@ nav a.l:hover,nav a.l.on{color:var(--acc)}nav a.l:hover::after,nav a.l.on::after
 .card{box-shadow:var(--sh);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s;animation:fadeup .55s cubic-bezier(.2,.8,.2,1) both}
 .grid>.card:nth-child(2){animation-delay:.05s}.grid>.card:nth-child(3){animation-delay:.1s}.grid>.card:nth-child(4){animation-delay:.15s}.grid>.card:nth-child(5){animation-delay:.2s}.grid>.card:nth-child(6){animation-delay:.25s}.grid>.card:nth-child(7){animation-delay:.3s}
 .acc.card:hover,.stat.card:hover{transform:translateY(-3px);box-shadow:0 14px 32px -14px rgba(90,60,150,.35);border-color:color-mix(in srgb,var(--acc2) 70%,var(--line))}
-.total{position:relative;overflow:hidden;background-size:200% 200%;animation:fadeup .55s both,sheen 14s ease-in-out infinite alternate}
-.total::before,.total::after{content:"";position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.28),transparent 68%)}
-.total::before{width:240px;height:240px;right:-60px;top:-110px;animation:float 9s ease-in-out infinite alternate}.total::after{width:160px;height:160px;right:140px;bottom:-90px;animation:float 12s ease-in-out infinite alternate-reverse}
 .total .big{font-family:var(--fs);font-weight:400;font-size:clamp(34px,4.4vw,46px);letter-spacing:0;font-variant-numeric:lining-nums tabular-nums}
 @keyframes sheen{from{background-position:0 0}to{background-position:100% 100%}}@keyframes float{from{transform:translate(0,0)}to{transform:translate(-26px,22px)}}
 .btn,button{background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 70%,var(--acc2)));border-radius:11px;font-weight:500;box-shadow:0 4px 14px -6px color-mix(in srgb,var(--acc) 70%,transparent)}
@@ -219,3 +216,16 @@ nav .brand img{height:30px;width:auto;max-width:none}nav .brand{width:auto}.bran
 nav .brand{display:block}nav .brand .im{height:30px}
 .brand .im.wh{display:none}@media (prefers-color-scheme:dark){.brand .im.gr{display:none}.brand .im.wh{display:block}}
 .brand::before{left:10%;top:2%;width:20%;height:34%}
+
+/* living hero block: slow colour flow in brand colours */
+.total{position:relative;overflow:hidden;isolation:isolate;color:#fff;border:0;
+ background:linear-gradient(115deg,#5b2a66 0%,#6b3a8e 30%,#5a4a9e 55%,#6f3a86 78%,#4f2f78 100%);background-size:260% 260%;
+ animation:fadeup .55s both,flow 26s ease-in-out infinite alternate}
+.total::before,.total::after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(38px);pointer-events:none}
+.total::before{width:46%;height:190%;left:-8%;top:-45%;background:radial-gradient(closest-side,rgba(176,150,232,.55),transparent);animation:blobA 19s ease-in-out infinite alternate}
+.total::after{width:42%;height:170%;right:-6%;top:-30%;background:radial-gradient(closest-side,rgba(120,205,190,.34),rgba(228,130,175,.18) 55%,transparent);animation:blobB 23s ease-in-out infinite alternate}
+.total>*{position:relative;z-index:1}
+@keyframes flow{0%{background-position:0% 40%}100%{background-position:100% 60%}}
+@keyframes blobA{0%{transform:translate(0,0) scale(1)}50%{transform:translate(22%,12%) scale(1.15)}100%{transform:translate(48%,-6%) scale(.95)}}
+@keyframes blobB{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-30%,10%) scale(1.2)}100%{transform:translate(-62%,-8%) scale(1)}}
+@media (prefers-color-scheme:dark){.total{background:linear-gradient(115deg,#3f2150 0%,#53307a 32%,#40376f 58%,#58306e 80%,#33224f 100%);background-size:260% 260%}.total::before{background:radial-gradient(closest-side,rgba(150,120,210,.45),transparent)}.total::after{background:radial-gradient(closest-side,rgba(80,170,160,.28),rgba(200,100,150,.16) 55%,transparent)}}
