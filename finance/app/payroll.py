@@ -297,3 +297,19 @@ def payments_recorded(con, ym: str) -> dict:
         out[kind] += t["amount"]
         out["items"].append(dict(kind=kind, at=t["occurred_at"][:10], amount=t["amount"], account=t["aname"], text=t["description"][:60]))
     return out
+
+
+def control(con, today: date) -> list[dict]:
+    """Standing check: for every month with a sheet, each payment wave that is already due must match what was
+    actually paid in the ledger. Returns the waves that do not (plan - recorded, in kopecks)."""
+    out = []
+    for ym in covered_months(con):
+        y, m = map(int, ym.split("-"))
+        nxt = (date(y, m, 28) + timedelta(days=4)).replace(day=1)
+        plan, rec = payment_plan(con, ym), payments_recorded(con, ym)
+        for key, label, due in (("adv_card", "Аванс (Ф-1)", date(y, m, 20)),
+                                ("sal_card", "ЗП безготівка (Ф-1)", nxt.replace(day=4)),
+                                ("cash", "ЗП готівкою", nxt.replace(day=8))):
+            if today >= due and abs(plan[key] - rec[key]) >= 100:
+                out.append(dict(month=ym, wave=label, plan=plan[key], rec=rec[key], diff=plan[key] - rec[key]))
+    return out

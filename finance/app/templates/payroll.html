@@ -7,6 +7,7 @@
 <div class="card stat"><div class="k">Податки з майстрами</div><div class="kv"><span>компенсують майстри (ПДФО+ВЗ)</span><b>{{ plan.compensation|money }}</b></div><div class="kv"><span>ЄСВ платить компанія</span><b>{{ esv|money }}</b></div></div>
 <div class="card stat"><div class="k">Не записано в обліку (готівка)</div><div class="v {{ 'out' if unrecorded>0 else 'in' }}">{{ unrecorded|money }}</div><div class="s">готівкова частина за таблицею мінус записане з каси й сейфа</div></div></div>
 
+{% if plan.adv_card!=rec.adv_card or plan.sal_card!=rec.sal_card %}<div class="flash warn">Є різниця в безготівкових частинах. Банк проводить виплати реєстром без імен — звірте реєстр виплат у Приват24 з таблицею (хто отримав більше або не за своєю колонкою).</div>{% endif %}
 <h2>Три частини виплати за {{ month_name }}</h2>
 <table><tr><th>Частина</th><th>Коли</th><th>Звідки</th><th class="r">За таблицею</th><th class="r">Записано в обліку</th><th class="r">Різниця</th></tr>
 <tr><td><b>1. Аванс (Ф-1)</b></td><td>15–19 числа цього місяця</td><td>банк, безготівка</td><td class="r num">{{ plan.adv_card|money }}</td><td class="r num">{{ rec.adv_card|money }}</td><td class="r num {{ 'out' if plan.adv_card-rec.adv_card else 'mut' }}">{{ (plan.adv_card-rec.adv_card)|money(true) }}</td></tr>

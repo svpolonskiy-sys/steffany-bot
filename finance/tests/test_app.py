@@ -714,3 +714,17 @@ def test_alteg_cash_for_payroll_is_an_expense_not_a_transfer():
     assert alteg.map_tx(dict(base, comment="інкасація на зарплату"))["kind"] == "expense"
     assert alteg.map_tx(dict(base, comment="Інкасація"))["kind"] == "transfer"
     assert alteg.map_tx(dict(base, comment="інкасація"))["kind"] == "transfer"
+
+
+def test_payroll_control_flags_waves_that_do_not_match(client):
+    import datetime
+    from app import payroll
+    main.con.execute("INSERT INTO payroll(month,section,name,gross,adv_card,sal_card) VALUES('2026-09','Перукарі','А',4000000,500000,600000)")
+    main.con.commit()
+    d = datetime.date
+    assert payroll.control(main.con, d(2026, 9, 10)) == []           # nothing is due yet
+    late = payroll.control(main.con, d(2026, 10, 9))
+    assert {x["wave"] for x in late} == {"Аванс (Ф-1)", "ЗП безготівка (Ф-1)"}   # nothing was paid in the ledger
+    assert all(x["diff"] > 0 for x in late)
+    r = client.get("/")
+    assert r.status_code == 200

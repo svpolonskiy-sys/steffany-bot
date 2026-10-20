@@ -275,8 +275,9 @@ def dashboard(request: Request, u=Depends(current_user)):
     uncategorised = c.execute(
         "SELECT COUNT(*) FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL "
         "AND t.user_edited=0 AND (c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))").fetchone()[0]
+    pay_alerts = payroll.control(c, today) if has_perm(u, "analytics") else []
     return render(request, "dashboard.html", u, categories=lists(c)["categories"], bal=b, day=day, month=month, recent=recent,
-                  takings=takings, last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
+                  pay_alerts=pay_alerts, takings=takings, last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
                   in_window=sync.in_work_window())
 
 
