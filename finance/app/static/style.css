@@ -208,12 +208,12 @@ nav .nv{max-width:1320px}@media (max-width:1320px){nav .who{display:none}}
 .brand::before{content:"";position:absolute;left:19%;top:6%;width:22%;height:34%;border-radius:50%;background:radial-gradient(circle,rgba(230,110,150,.55),transparent 68%);opacity:0;animation:beat 2.8s ease-in-out 1.7s infinite;pointer-events:none}
 @keyframes wipe{to{clip-path:inset(0 0 0 0)}}@keyframes shine{0%,55%{-webkit-mask-position:100% 0;mask-position:100% 0}100%{-webkit-mask-position:0 0;mask-position:0 0}}
 @keyframes beat{0%,100%{opacity:0;transform:scale(.6)}18%{opacity:.9;transform:scale(1.15)}34%{opacity:.35;transform:scale(.85)}50%{opacity:.8;transform:scale(1.08)}70%{opacity:0}}
-nav .brand{height:30px}nav .brand .im{animation:wipe 1s cubic-bezier(.6,.05,.2,1) .05s forwards}
+nav .brand{height:35px}nav .brand .im{animation:wipe 1s cubic-bezier(.6,.05,.2,1) .05s forwards}
 .loginbox .brand{width:300px;max-width:84%;height:auto;margin:0 auto 14px}.loginbox .brand img{width:100%;height:auto}
 @media (prefers-reduced-motion:reduce){.brand .im{clip-path:none}.brand::before{display:none}}
 .brand .im{display:block;height:100%}
-nav .brand img{height:30px;width:auto;max-width:none}nav .brand{width:auto}.brand::before{pointer-events:none}
-nav .brand{display:block}nav .brand .im{height:30px}
+nav .brand img{height:35px;width:auto;max-width:none}nav .brand{width:auto}.brand::before{pointer-events:none}
+nav .brand{display:block}nav .brand .im{height:35px}
 .brand .im.wh{display:none}@media (prefers-color-scheme:dark){.brand .im.gr{display:none}.brand .im.wh{display:block}}
 .brand::before{left:10%;top:2%;width:20%;height:34%}
 
