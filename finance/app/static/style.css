@@ -229,3 +229,8 @@ nav .brand{display:block}nav .brand .im{height:30px}
 @keyframes blobA{0%{transform:translate(0,0) scale(1)}50%{transform:translate(22%,12%) scale(1.15)}100%{transform:translate(48%,-6%) scale(.95)}}
 @keyframes blobB{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-30%,10%) scale(1.2)}100%{transform:translate(-62%,-8%) scale(1)}}
 @media (prefers-color-scheme:dark){.total{background:linear-gradient(115deg,#3f2150 0%,#53307a 32%,#40376f 58%,#58306e 80%,#33224f 100%);background-size:260% 260%}.total::before{background:radial-gradient(closest-side,rgba(150,120,210,.45),transparent)}.total::after{background:radial-gradient(closest-side,rgba(80,170,160,.28),rgba(200,100,150,.16) 55%,transparent)}}
+/* the living total block is slow and soft, so it keeps moving even with "reduce motion" on */
+@media (prefers-reduced-motion:reduce){
+.total{animation:flow 26s ease-in-out infinite alternate!important}
+.total::before{animation:blobA 19s ease-in-out infinite alternate!important}
+.total::after{animation:blobB 23s ease-in-out infinite alternate!important}}
