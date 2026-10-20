@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% block title %}Мій кабінет{% endblock %}{% block body %}
+<h1>{{ 'Створіть свій пароль' if user.must_change else 'Мій кабінет' }}</h1>
+{% if user.must_change %}<div class="flash warn">Ви увійшли з тимчасовим паролем. Придумайте власний: його знатимете лише ви.</div>{% endif %}
+<div class="acct">
+<div class="card"><h2 style="margin-top:0">Про мене</h2>
+<div class="kv"><span>Ім'я</span><b>{{ user.name }}</b></div>
+<div class="kv"><span>Email для входу</span><b>{{ user.email }}</b></div>
+<div class="kv"><span>Роль</span><b>{{ user.title or ROLE }}</b></div>
+{% if user.last_login %}<div class="kv"><span>Останній вхід</span><b>{{ user.last_login|dt }}</b></div>{% endif %}
+<div class="kv"><span>Пароль востаннє змінено</span><b>{{ pw_changed.at|dt if pw_changed else 'ще не змінювали' }}</b></div></div>
+<div class="card"><h2 style="margin-top:0">Змінити пароль</h2>
+{% if error %}<div class="flash warn" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="/account/password" id="pwf" autocomplete="off">
+<label for="old">{{ 'Тимчасовий пароль' if user.must_change else 'Поточний пароль' }}</label>
+<div class="pw"><input id="old" type="password" name="old" required autocomplete="current-password"><button type="button" class="eye sec sm" data-for="old" aria-label="Показати пароль">показати</button></div>
+<label for="new">Новий пароль</label>
+<div class="pw"><input id="new" type="password" name="new" required minlength="8" autocomplete="new-password"><button type="button" class="eye sec sm" data-for="new" aria-label="Показати пароль">показати</button></div>
+<div class="meter"><i id="bar"></i></div><div class="mut" id="strength" style="font-size:12.5px;min-height:18px">Від 8 символів. Краще з літерами й цифрами.</div>
+<label for="new2">Повторіть новий пароль</label>
+<div class="pw"><input id="new2" type="password" name="new2" required autocomplete="new-password"><button type="button" class="eye sec sm" data-for="new2" aria-label="Показати пароль">показати</button></div>
+<div id="match" style="font-size:12.5px;min-height:18px"></div>
+{% if not user.must_change %}<label class="chk"><input type="checkbox" name="others" value="1" checked> Вийти з цього облікового запису на інших пристроях <span class="mut">(рекомендовано)</span></label>{% endif %}
+<p><button id="go">Зберегти новий пароль</button></p>
+<p class="mut" style="font-size:12.5px;margin:0">Пароль можна змінювати скільки завгодно разів. Старий пароль після зміни перестає діяти.</p></form></div></div>
+<script>(function(){var n=document.getElementById("new"),n2=document.getElementById("new2"),bar=document.getElementById("bar"),st=document.getElementById("strength"),m=document.getElementById("match");
+document.querySelectorAll(".eye").forEach(function(b){b.onclick=function(){var i=document.getElementById(b.dataset.for),s=i.type==="password";i.type=s?"text":"password";b.textContent=s?"сховати":"показати"}});
+function score(v){var s=0;if(v.length>=8)s++;if(v.length>=12)s++;if(/[a-zа-яіїєґ]/.test(v)&&/[A-ZА-ЯІЇЄҐ]/.test(v))s++;if(/\d/.test(v))s++;if(/[^\w\s]/.test(v))s++;return Math.min(s,4)}
+var L=["Дуже слабкий","Слабкий","Прийнятний","Добрий","Надійний"],C=["#d0405f","#d0405f","#e0a100","#1f9a85","#1f9a85"];
+function upd(){var v=n.value,s=v?score(v):0;bar.style.width=(v?(s+1)*20:0)+"%";bar.style.background=C[s];st.textContent=v?(v.length<8?"Ще "+(8-v.length)+" симв. до мінімуму":L[s]):"Від 8 символів. Краще з літерами й цифрами.";
+ if(n2.value){var ok=n2.value===v;m.textContent=ok?"✓ Паролі збігаються":"Паролі поки не збігаються";m.style.color=ok?"var(--in)":"var(--out)"}else m.textContent=""}
+n.oninput=n2.oninput=upd;document.getElementById("pwf").onsubmit=function(e){if(n.value!==n2.value){e.preventDefault();m.textContent="Паролі не збігаються";m.style.color="var(--out)";n2.focus()}}})();</script>
+{% endblock %}

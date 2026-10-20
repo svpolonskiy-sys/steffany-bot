@@ -224,7 +224,7 @@ def test_roles_permissions_and_audit(client):
     assert "temp-pass-1" not in client.get("/users").text                                     # ...and only once
     adm = _login("adm@x.ua", "temp-pass-1")
     assert adm.get("/transactions", follow_redirects=False).headers["location"] == "/password"   # must choose own password first
-    assert adm.post("/password", data={"old": "temp-pass-1", "new": "temp-pass-1"}, follow_redirects=False).headers["location"] == "/password"  # same password refused
+    assert adm.post("/password", data={"old": "temp-pass-1", "new": "temp-pass-1"}, follow_redirects=False).status_code == 400  # same password refused
     assert adm.post("/password", data={"old": "temp-pass-1", "new": "my-own-pass-2"}, follow_redirects=False).headers["location"] == "/"
     assert adm.get("/transactions").status_code == 200
     # administrator: operational pages yes, owner/analytics pages no
@@ -747,3 +747,22 @@ def test_control_centre_detects_duplicates_and_lets_you_close_findings(client):
     assert main.con.execute("SELECT status FROM findings WHERE id=?", (row["id"],)).fetchone()[0] == "ignored"
     assert "Можливий дубль" in client.get("/control?status=ignored").text
     assert "Контроль" in client.get("/").text and "Контроль ЗП" not in client.get("/").text
+
+
+def test_user_can_change_own_password_many_times(client):
+    client.post("/users", data={"email": "kate@x.ua", "name": "Катя", "role": "admin", "title": "Адмін", "password": "temp-pass-9"}, follow_redirects=True)
+    me = _login("kate@x.ua", "temp-pass-9")
+    other = _login("kate@x.ua", "temp-pass-9")              # a second device
+    me.post("/password", data={"old": "temp-pass-9", "new": "first-own-pass", "new2": "first-own-pass"})
+    page = me.get("/account")
+    assert page.status_code == 200 and "Змінити пароль" in page.text and "Катя" in page.text
+    bad = me.post("/account/password", data={"old": "wrong", "new": "second-pass-22", "new2": "second-pass-22"})
+    assert bad.status_code == 400 and "невірно" in bad.text
+    assert "не збігаються" in me.post("/account/password", data={"old": "first-own-pass", "new": "second-pass-22", "new2": "other-22-pass"}).text
+    assert "закороткий" in me.post("/account/password", data={"old": "first-own-pass", "new": "short", "new2": "short"}).text
+    for old, new in (("first-own-pass", "second-pass-22"), ("second-pass-22", "third-pass-333")):   # as often as needed
+        r = me.post("/account/password", data={"old": old, "new": new, "new2": new, "others": "1"}, follow_redirects=False)
+        assert r.status_code == 303 and r.headers["location"] == "/account"
+    assert me.get("/account", follow_redirects=False).status_code == 200            # this device stays signed in
+    assert other.get("/account", follow_redirects=False).status_code == 303          # the other device is signed out
+    assert _login("kate@x.ua", "third-pass-333").get("/account").status_code == 200

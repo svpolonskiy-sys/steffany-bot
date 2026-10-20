@@ -1152,21 +1152,48 @@ def user_logout_all(request: Request, uid: int, u=Depends(owner_only)):
     return RedirectResponse("/users", status_code=303)
 
 
+def _account_page(request, u, error="", status=200):
+    c = get_con()
+    last = c.execute("SELECT at, ip FROM activity WHERE user_id=? AND action LIKE '%змінено власний пароль%' ORDER BY id DESC LIMIT 1", (u["id"],)).fetchone()
+    resp = render(request, "account.html", u, error=error, pw_changed=last, ROLE=ROLES.get(u["role"], u["role"]))
+    resp.status_code = status
+    return resp
+
+
+@app.get("/account", response_class=HTMLResponse)
 @app.get("/password", response_class=HTMLResponse)
-def password_page(request: Request, u=Depends(current_user)):
-    return render(request, "password.html", u)
+def account_page(request: Request, u=Depends(current_user)):
+    return _account_page(request, u)
 
 
+@app.post("/account/password")
 @app.post("/password")
-def change_password(request: Request, old: str = Form(...), new: str = Form(...), u=Depends(current_user)):
-    if not verify_password(old, u["pw_hash"]) or len(new) < 8 or new == old:
-        flash(request, "Невірний поточний пароль, або новий коротший за 8 символів чи збігається зі старим")
-        return RedirectResponse("/password", status_code=303)
-    get_con().execute("UPDATE users SET pw_hash=?, must_change=0 WHERE id=?", (hash_password(new), u["id"]))
-    get_con().commit()
-    log_act(request, u, "змінено власний пароль")
-    flash(request, "Пароль змінено")
-    return RedirectResponse("/", status_code=303)
+def change_password(request: Request, old: str = Form(...), new: str = Form(...), new2: str = Form(""),
+                    others: str = Form(""), u=Depends(current_user)):
+    err = ""
+    if not verify_password(old, u["pw_hash"]):
+        err = "Поточний пароль введено невірно."
+    elif len(new) < 8:
+        err = "Новий пароль закороткий: потрібно щонайменше 8 символів."
+    elif new == old:
+        err = "Новий пароль збігається зі старим. Придумайте інший."
+    elif new2 and new != new2:
+        err = "Новий пароль і його повторення не збігаються."
+    elif len(set(new)) < 4 or new.lower() in (u["email"] or "").lower():
+        err = "Пароль надто простий. Додайте різні літери й цифри, не використовуйте email."
+    if err:
+        log_act(request, u, "невдала спроба змінити пароль", err)
+        return _account_page(request, u, err, 400)
+    c = get_con()
+    with lock():
+        c.execute("UPDATE users SET pw_hash=?, must_change=0 WHERE id=?", (hash_password(new), u["id"]))
+        if others:                                   # sign out every other device, keep this one
+            c.execute("UPDATE users SET sess_ver=sess_ver+1 WHERE id=?", (u["id"],))
+            request.session["ver"] = c.execute("SELECT sess_ver FROM users WHERE id=?", (u["id"],)).fetchone()[0]
+        c.commit()
+    log_act(request, u, "змінено власний пароль", "інші пристрої вимкнено" if others else "")
+    flash(request, "Готово: пароль змінено. Його можна змінити знову будь-коли." + (" На інших пристроях потрібно буде увійти заново." if others else ""))
+    return RedirectResponse("/" if u["must_change"] else "/account", status_code=303)
 
 
 # ---------- activity log (owner) ----------

@@ -8,7 +8,7 @@
 <a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}{% if href=='/control' and ctl_open %} <span class="bdg">{{ ctl_open }}</span>{% endif %}</a>{% endif %}{% endfor %}
 {% if user.role=='owner' %}<a class="l {{ 'on' if request.url.path=='/users' }}" href="/users">Користувачі</a><a class="l {{ 'on' if request.url.path=='/activity' }}" href="/activity">Активність</a>{% endif %}
 <span class="sp"></span><span class="who">{{ user.name }} · {{ user.title or ROLES[user.role] }}</span>
-<form method="post" action="/logout" style="margin:0"><button class="sec sm" style="margin-left:8px">Вийти</button></form></div></nav>{% endif %}
+<a class="l me {{ 'on' if request.url.path in ('/account','/password') }}" href="/account" title="Мій кабінет: змінити пароль">Кабінет</a><form method="post" action="/logout" style="margin:0"><button class="sec sm" style="margin-left:4px">Вийти</button></form></div></nav>{% endif %}
 <main>{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}{% block body %}{% endblock %}</main>
 {% if user %}<div class="add"><a class="btn red" href="/transactions/new?kind=expense">− Витрата</a><a class="btn grn" href="/transactions/new?kind=income">+ Надходження</a><a class="btn blu" href="/transactions/new?kind=transfer">⇄ Переказ</a></div>{% endif %}
 <script>(function(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
