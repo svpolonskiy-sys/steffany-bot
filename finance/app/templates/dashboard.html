@@ -1,5 +1,6 @@
 {% extends "base.html" %}{% block title %}Огляд{% endblock %}{% block body %}
-<div class="grid accs"><div class="card total" style="grid-column:1/-1"><div class="lbl">Всього грошей у компанії</div><div class="big num">{{ bal.total|money }}</div>
+<div class="grid accs"><div class="card total" style="grid-column:1/-1"><div class="fx" aria-hidden="true"><i class="sw"></i>{% for x,d,t,z in [(8,0,9,5),(22,3,12,3),(36,6,10,4),(52,1,13,3),(63,5,9,5),(74,8,11,4),(86,2,12,3),(94,7,10,5)] %}<i class="sp" style="--x:{{ x }}%;--d:-{{ d }}s;--t:{{ t }}s;--s:{{ z }}px"></i>{% endfor %}
+<div class="fly"><div class="spin">{% for i in range(10) %}<b style="--z:{{ i }}"></b>{% endfor %}</div></div></div><div class="lbl">Всього грошей у компанії</div><div class="big num">{{ bal.total|money }}</div>
 <div class="lbl">{% if last_sync %}Банки й Alteg оновлено: {{ last_sync|dt }}{% else %}Ще не оновлювалось{% endif %}
 {% if not in_window %} · нічний режим (21:00–08:00 без оновлень){% endif %}</div></div>
 {% for a in bal.accounts %}<div class="card acc"><div class="nm">{{ a.name }}</div><div class="tg"><span class="tag">{{ ACC_KINDS[a.kind] }}</span></div>
