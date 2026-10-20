@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% block title %}Вхід{% endblock %}{% block body %}<div class="loginbox card"><h1>Steffany · Фінанси</h1>
+{% extends "base.html" %}{% block title %}Вхід{% endblock %}{% block body %}<div class="loginbox card">{% set compact=false %}{% include "_logo.html" %}<h1 style="font-size:26px;margin:0 0 6px">Фінанси</h1><p class="mut" style="margin:0 0 14px">Облік грошей салону</p>
 <form method="post" action="/login"><label>Email</label><input name="email" type="email" required autofocus autocomplete="username">
 <label>Пароль</label><input name="password" type="password" required autocomplete="current-password">
 <p><button style="width:100%">Увійти</button></p></form></div>{% endblock %}
