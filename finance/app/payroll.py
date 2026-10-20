@@ -299,6 +299,9 @@ def payments_recorded(con, ym: str) -> dict:
     return out
 
 
+HISTORY_START = date(2026, 9, 1)   # the ledger starts here: waves paid earlier were never booked
+
+
 def control(con, today: date) -> list[dict]:
     """Standing check: for every month with a sheet, each payment wave that is already due must match what was
     actually paid in the ledger. Returns the waves that do not (plan - recorded, in kopecks)."""
@@ -310,6 +313,6 @@ def control(con, today: date) -> list[dict]:
         for key, label, due in (("adv_card", "Аванс (Ф-1)", date(y, m, 20)),
                                 ("sal_card", "ЗП безготівка (Ф-1)", nxt.replace(day=4)),
                                 ("cash", "ЗП готівкою", nxt.replace(day=8))):
-            if today >= due and abs(plan[key] - rec[key]) >= 100:
+            if today >= due and due >= HISTORY_START and abs(plan[key] - rec[key]) >= 100:
                 out.append(dict(month=ym, wave=label, plan=plan[key], rec=rec[key], diff=plan[key] - rec[key]))
     return out
