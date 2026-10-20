@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import categorize as cat, config, payroll, pl, privat, reports, sync
+from . import categorize as cat, config, control, payroll, pl, privat, reports, sync
 from .db import (account_balances, add_audit, connect, get_setting, insert_tx, lock, now_local, set_setting,
                  update_tx)
 from .security import encrypt, hash_password, verify_password
@@ -183,7 +183,8 @@ def api_user(request: Request):
 def render(request, name, user=None, **ctx):
     flash = request.session.pop("flash", None)
     can = {p_: (has_perm(user, p_) if user else False) for p_ in PERMS}
-    return tpl.TemplateResponse(request, name, {"user": user, "flash": flash, "now": now_local(), "can": can, **ctx})
+    ctl = control.open_count(get_con()) if user and can.get("analytics") else 0
+    return tpl.TemplateResponse(request, name, {"user": user, "flash": flash, "now": now_local(), "can": can, "ctl_open": ctl, **ctx})
 
 
 def flash(request, msg):
@@ -275,9 +276,8 @@ def dashboard(request: Request, u=Depends(current_user)):
     uncategorised = c.execute(
         "SELECT COUNT(*) FROM transactions t JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL "
         "AND t.user_edited=0 AND (c.auto=1 OR c.name IN ('Інші доходи','Інші витрати'))").fetchone()[0]
-    pay_alerts = payroll.control(c, today) if has_perm(u, "analytics") else []
     return render(request, "dashboard.html", u, categories=lists(c)["categories"], bal=b, day=day, month=month, recent=recent,
-                  pay_alerts=pay_alerts, takings=takings, last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
+                  takings=takings, last_sync=get_setting(c, "last_sync_all"), review=uncategorised,
                   in_window=sync.in_work_window())
 
 
@@ -1256,3 +1256,39 @@ def api_report(request: Request, _=Depends(api_user)):
                               description=t["description"], source=t["source"])
                          for t in r["transactions"]] if request.query_params.get("details") else []
     return JSONResponse(r)
+
+
+# ---------- control centre ----------
+@app.get("/control", response_class=HTMLResponse)
+def control_page(request: Request, u=Depends(need_analytics)):
+    c = get_con()
+    st = request.query_params.get("status", "open")
+    kind = request.query_params.get("kind", "")
+    if st not in ("open", "ignored", "resolved", "fixed"):
+        st = "open"
+    with lock():
+        control.run(c)
+    rows = c.execute("SELECT * FROM findings WHERE status=?" + (" AND kind=?" if kind in control.KINDS else "") +
+                     " ORDER BY CASE sev WHEN 'high' THEN 0 WHEN 'mid' THEN 1 ELSE 2 END, last_seen DESC, id DESC",
+                     (st, kind) if kind in control.KINDS else (st,)).fetchall()
+    counts = {r["status"]: r["n"] for r in c.execute("SELECT status, COUNT(*) n FROM findings GROUP BY status")}
+    kinds = {r["kind"]: r["n"] for r in c.execute("SELECT kind, COUNT(*) n FROM findings WHERE status='open' GROUP BY kind")}
+    return render(request, "control.html", u, rows=rows, st=st, kind=kind, counts=counts, kinds=kinds,
+                  KINDS_C=control.KINDS, SEV=control.SEV)
+
+
+@app.post("/control/{fid}")
+def control_decide(request: Request, fid: int, action: str = Form(...), note: str = Form(""), u=Depends(need_analytics)):
+    c = get_con()
+    f = c.execute("SELECT * FROM findings WHERE id=?", (fid,)).fetchone()
+    if not f or action not in ("ignored", "resolved", "open"):
+        raise HTTPException(404)
+    with lock():
+        if action == "open":
+            c.execute("UPDATE findings SET status='open', decided_at=NULL, decided_by='', note='' WHERE id=?", (fid,))
+        else:
+            c.execute("UPDATE findings SET status=?, decided_at=?, decided_by=?, note=? WHERE id=?",
+                      (action, now_local(), u["name"], note.strip()[:300], fid))
+        c.commit()
+    log_act(request, u, "Контроль: " + {"ignored": "ігноровано", "resolved": "вирішено", "open": "повернуто"}[action], f["title"])
+    return RedirectResponse(request.headers.get("referer") or "/control", status_code=303)

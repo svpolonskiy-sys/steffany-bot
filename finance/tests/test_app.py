@@ -728,3 +728,22 @@ def test_payroll_control_flags_waves_that_do_not_match(client):
     assert all(x["diff"] > 0 for x in late)
     r = client.get("/")
     assert r.status_code == 200
+
+
+def test_control_centre_detects_duplicates_and_lets_you_close_findings(client):
+    from app import control
+    fop = accid("ФОП 1")
+    for t in ("2026-09-10T10:00", "2026-09-11T10:00"):
+        client.post("/transactions/new", data=dict(kind="expense", account_id=fop, amount="12000", occurred_at=t,
+                                                    counterparty="ТОВ Постачальник", description="Оплата за товар"))
+    client.post("/transactions/new", data=dict(kind="expense", account_id=accid("Каса салон"), amount="9000",
+                                                occurred_at="2026-09-12T10:00", description="Витрата з каси"))
+    r = client.get("/control")
+    assert r.status_code == 200 and "Можливий дубль" in r.text and "Готівка з каси без пояснення" in r.text
+    row = main.con.execute("SELECT id FROM findings WHERE key LIKE 'dup:%'").fetchone()
+    client.post(f"/control/{row['id']}", data=dict(action="ignored", note="так і треба"))
+    assert "Можливий дубль" not in client.get("/control").text
+    control.run(main.con)    # an ignored finding stays ignored
+    assert main.con.execute("SELECT status FROM findings WHERE id=?", (row["id"],)).fetchone()[0] == "ignored"
+    assert "Можливий дубль" in client.get("/control?status=ignored").text
+    assert "Контроль" in client.get("/").text and "Контроль ЗП" not in client.get("/").text

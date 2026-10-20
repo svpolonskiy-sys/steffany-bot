@@ -142,3 +142,6 @@ nav a.l{padding:6px 9px;font-size:14px}nav .nv{gap:2px}
 .permrow{display:flex;gap:14px;flex-wrap:wrap}.permrow label{display:flex;gap:6px;align-items:center;margin:0;color:var(--ink);font-size:13px}.permrow input{width:auto}
 .urow td{vertical-align:top}.urow select,.urow input[type=text]{padding:5px 8px;font-size:13px}
 .tag.rl{background:color-mix(in srgb,var(--acc) 20%,transparent)}
+.bdg{display:inline-block;min-width:18px;padding:0 6px;border-radius:99px;background:var(--out);color:#fff;font-size:11px;line-height:18px;text-align:center;vertical-align:1px}
+.fnd{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}.fnd .tx{flex:1 1 360px;min-width:0}.fnd .ac{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.fnd .ac input{width:150px;padding:5px 8px;font-size:13px}.sv{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}.sv.high{background:#c0392b}.sv.mid{background:#e0a100}.sv.low{background:#8a8a8a}

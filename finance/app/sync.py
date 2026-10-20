@@ -331,6 +331,8 @@ def sync_all(con, force=False):
             payroll.maybe_sync(con)
             from . import pl as _pl
             _pl.close_months(con)
+            from . import control
+            control.run(con)
         except Exception:
             log.exception("payroll sync failed")
         set_setting(con, "last_sync_all", now_local())

@@ -4,8 +4,8 @@
 <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=2"><link rel="manifest" href="/static/manifest.webmanifest?v=2"><meta name="theme-color" content="#e8603f">
 <link rel="stylesheet" href="/static/style.css"></head><body>
 {% if user %}<nav><div class="nv"><a class="b" href="/">Steffany · Фінанси</a>
-{% for href,t,need in [('/','Огляд',''),('/cash','Каса',''),('/transactions','Операції',''),('/reports','Звіти',''),('/pl','P&L','analytics'),('/payroll','Зарплата','analytics'),('/credits','Кредити','analytics'),('/categories','Категорії',''),('/accounts','Рахунки','')] %}{% if not need or can[need] %}
-<a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}</a>{% endif %}{% endfor %}
+{% for href,t,need in [('/','Огляд',''),('/cash','Каса',''),('/transactions','Операції',''),('/reports','Звіти',''),('/pl','P&L','analytics'),('/payroll','Зарплата','analytics'),('/credits','Кредити','analytics'),('/control','Контроль','analytics'),('/categories','Категорії',''),('/accounts','Рахунки','')] %}{% if not need or can[need] %}
+<a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}{% if href=='/control' and ctl_open %} <span class="bdg">{{ ctl_open }}</span>{% endif %}</a>{% endif %}{% endfor %}
 {% if user.role=='owner' %}<a class="l {{ 'on' if request.url.path=='/users' }}" href="/users">Користувачі</a><a class="l {{ 'on' if request.url.path=='/activity' }}" href="/activity">Активність</a>{% endif %}
 <span class="sp"></span><span class="who">{{ user.name }} · {{ user.title or ROLES[user.role] }}</span>
 <form method="post" action="/logout" style="margin:0"><button class="sec sm" style="margin-left:8px">Вийти</button></form></div></nav>{% endif %}

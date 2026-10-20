@@ -7,7 +7,6 @@
 <div class="sub">{% if a.status and a.status!='ok' %}<span class="out">⚠ {{ a.status[:60] }}</span>{% elif a.synced_at %}оновл. {{ a.synced_at|dt }}{% else %}{{ SRC[a.source] }}{% endif %}
 {% if a.bank_balance is not none and a.bank_balance!=a.balance %}<br><span class="warn">банк: {{ a.bank_balance|money }}</span>{% endif %}</div></div>{% endfor %}</div>
 <form method="post" action="/sync" style="margin:10px 0"><button class="sec sm">↻ Оновити зараз</button></form>
-{% for a in pay_alerts %}<div class="flash warn">⚠ Контроль ЗП за {{ a.month }} · {{ a.wave }}: за таблицею {{ a.plan|money }}, виплачено {{ a.rec|money }}, різниця {{ a.diff|money(true) }} — <a href="/payroll?month={{ a.month }}">розібратися</a></div>{% endfor %}
 {% if review %}<div class="flash">Автоматично розподілено {{ review }} операцій — <a href="/transactions?kind=expense">перевірте категорії</a> та за потреби створіть правила в розділі «Категорії».</div>{% endif %}
 <div class="stats"><div class="card stat"><div class="k">Каса за сьогодні · <a href="/cash">по днях →</a> · <a href="/cash/detail">детально →</a></div><div class="v in">{{ takings.total|money }}</div>
 <div class="kv"><span>готівка</span><b>{{ takings.cash|money }}</b></div><div class="kv"><span>безготівка</span><b>{{ takings.cashless|money }}</b></div><div class="kv"><span>витрати з каси</span><b class="out">{{ takings.expense|money }}</b></div></div>
