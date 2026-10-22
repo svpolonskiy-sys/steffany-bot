@@ -1,4 +1,5 @@
 {% extends "base.html" %}{% block title %}Операція{% endblock %}{% block body %}<h1>{{ 'Операція №' ~ t.id if t else 'Нова операція' }}</h1>
+{% if t and not t.deleted_at and t.kind!='transfer' %}<p style="margin:0 0 12px"><a class="btn sec" href="/transactions/{{ t.id }}/split">⑂ Розділити платіж між категоріями</a> <span class="mut" style="font-size:13px">наприклад: частина на вітрину, частина в роботу</span></p>{% endif %}
 {% if t and t.deleted_at %}<div class="flash">Видалено {{ t.deleted_at|dt }}. <form method="post" action="/transactions/{{ t.id }}/restore" style="display:inline"><input name="reason" required minlength="5" placeholder="причина відновлення" style="width:220px;display:inline-block"> <button class="sm">Відновити</button></form></div>{% endif %}
 {% if t and parent %}<div class="flash">Це частина розділеного платежу. Головна частина: <a href="/transactions/{{ parent.id }}">№{{ parent.id }} ({{ parent.amount|money }})</a>.</div>{% endif %}
 {% if t and parts %}<div class="card" style="max-width:640px;margin-bottom:12px"><b>Платіж розділено на частини</b>
@@ -22,8 +23,7 @@
 <textarea name="reason" rows="2" required minlength="5" placeholder="Чому змінюєте? Напр.: помилково внесено іншу суму" style="margin-top:8px"></textarea></div>{% endif %}
 <div id="sum" class="flash" style="display:none"></div>
 <p><button>Зберегти</button> <a class="btn sec" href="/transactions">Скасувати</a></p></form>
-{% if t and not t.deleted_at %}<div class="row" style="align-items:flex-end;margin-top:10px">{% if t.kind!='transfer' %}<div style="flex:0 0 auto"><a class="btn sec" href="/transactions/{{ t.id }}/split">Розділити між категоріями</a></div>{% endif %}
-<form method="post" action="/transactions/{{ t.id }}/delete" class="row" style="margin:0" onsubmit="return confirm('Видалити операцію? Історія збережеться.')"><div><input name="reason" required minlength="5" placeholder="причина видалення" style="min-width:240px"></div><div style="flex:0 0 auto"><button class="red sm">Видалити</button></div></form></div>{% endif %}
+{% if t and not t.deleted_at %}<div class="row" style="align-items:flex-end;margin-top:10px"><form method="post" action="/transactions/{{ t.id }}/delete" class="row" style="margin:0" onsubmit="return confirm('Видалити операцію? Історія збережеться.')"><div><input name="reason" required minlength="5" placeholder="причина видалення" style="min-width:240px"></div><div style="flex:0 0 auto"><button class="red sm">Видалити</button></div></form></div>{% endif %}
 {% if history %}<h2>Історія змін</h2><table class="hist"><tr><th>Коли</th><th>Хто</th><th>Дія</th><th>Було → стало</th></tr>
 {% for h in history %}<tr><td class="num">{{ h.at|dt }}</td><td>{{ h.uname or 'система' }}</td><td>{{ {'create':'створено','update':'змінено','delete':'видалено','restore':'відновлено'}[h.action] }} {{ h.note }}</td>
 <td class="mut" style="word-break:break-all">{{ h.before_json or '' }}<br>→ {{ h.after_json or '' }}</td></tr>{% endfor %}</table>{% endif %}
