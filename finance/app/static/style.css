@@ -265,3 +265,8 @@ nav .brand{display:block}nav .brand .im{height:35px}
 .acct .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}.acct .kv:last-child{border:0}.acct .kv span{color:var(--mut)}.acct .kv b{text-align:right;word-break:break-word}
 .infocard .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}.infocard .kv:last-child{border:0}.infocard .kv span{color:var(--mut)}
 nav a.l{padding:7px 6px;font-size:13px}nav a.l::after{left:6px;right:6px}nav a.b{margin-right:8px}
+
+td.ac,th.ac{width:1%;white-space:nowrap;text-align:right}
+.ico{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;margin-left:4px;border:1px solid var(--line);border-radius:10px;color:var(--acc);background:var(--card);transition:background .15s,border-color .15s,transform .15s}
+.ico:hover{background:color-mix(in srgb,var(--acc2) 22%,var(--card));border-color:var(--acc2);transform:translateY(-1px)}
+main{padding-bottom:100px}
