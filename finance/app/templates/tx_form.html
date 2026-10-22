@@ -13,11 +13,17 @@
 <label>Опис</label><textarea name="description" rows="2">{{ t.description if t else (pre.desc if pre else '') }}</textarea>
 {% if t %}<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="make_rule" value="1" style="width:auto"> Завжди відносити до цієї категорії операції, що містять:</label>
 <input name="rule_text" placeholder="напр. «Нова пошта»" value="{{ t.counterparty or '' }}">{% endif %}
+<div id="sum" class="flash" style="display:none"></div>
 <p><button>Зберегти</button> <a class="btn sec" href="/transactions">Скасувати</a></p></form>
 {% if t and not t.deleted_at %}<form method="post" action="/transactions/{{ t.id }}/delete" onsubmit="return confirm('Видалити операцію? Історія збережеться.')"><button class="red sm">Видалити</button></form>{% endif %}
 {% if history %}<h2>Історія змін</h2><table class="hist"><tr><th>Коли</th><th>Хто</th><th>Дія</th><th>Було → стало</th></tr>
 {% for h in history %}<tr><td class="num">{{ h.at|dt }}</td><td>{{ h.uname or 'система' }}</td><td>{{ {'create':'створено','update':'змінено','delete':'видалено','restore':'відновлено'}[h.action] }} {{ h.note }}</td>
 <td class="mut" style="word-break:break-all">{{ h.before_json or '' }}<br>→ {{ h.after_json or '' }}</td></tr>{% endfor %}</table>{% endif %}
-<script>function sync(){var k=document.getElementById('kind').value;document.getElementById('to').style.display=k=='transfer'?'block':'none';
+<script>function summ(){var f=document.getElementById('f'),k=f.kind.value,b=document.getElementById('sum');if(k!='transfer'){b.style.display='none';return}
+var a=f.account_id,to=f.to_account_id,an=a.options[a.selectedIndex].text,tn=to.value?to.options[to.selectedIndex].text:'—',v=f.amount.value||'…';
+b.style.display='block';b.innerHTML=(a.value&&a.value==to.value)?'⚠ Рахунки однакові — оберіть різні.':'Переказ <b>'+v+' ₴</b>: <b>'+an+'</b> → <b>'+tn+'</b>'}
+document.addEventListener('DOMContentLoaded',function(){var f=document.getElementById('f');['kind','account_id','to_account_id','amount'].forEach(function(n){f[n].addEventListener('input',summ);f[n].addEventListener('change',summ)});summ();
+f.addEventListener('submit',function(e){if(f.kind.value=='transfer'&&(!f.to_account_id.value||f.to_account_id.value==f.account_id.value)){e.preventDefault();summ();alert('Оберіть різні рахунки: звідки і куди.')}})});
+function sync(){var k=document.getElementById('kind').value;document.getElementById('to').style.display=k=='transfer'?'block':'none';
 document.getElementById('catbox').style.display=k=='transfer'?'none':'block';document.getElementById('l1').textContent=k=='transfer'?'З рахунку':'Рахунок';
 document.querySelectorAll('#catbox option[data-k]').forEach(function(o){o.hidden=o.dataset.k!=k})}sync()</script>{% endblock %}

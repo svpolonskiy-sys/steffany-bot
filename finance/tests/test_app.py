@@ -777,3 +777,13 @@ def test_dashboard_lists_only_todays_operations(client):
     page = client.get("/").text
     assert "сьогоднішня-витрата" in page and "давня-витрата" not in page and "Операції за сьогодні" in page
     assert 'href="/transactions"' in page
+
+
+def test_transfer_form_defaults_to_cash_desk_and_confirms_balances(client):
+    page = client.get("/transactions/new?kind=transfer").text
+    import re
+    sel = re.search(r'<select name="account_id".*?</select>', page, re.S).group(0)
+    assert re.search(r'value="\d+" selected>Каса салон', sel)            # not the first bank account
+    r = client.post("/transactions/new", data=dict(kind="transfer", account_id=accid("Каса салон"), to_account_id=accid("Сейф"),
+                                                    amount="500", occurred_at="2026-10-22T10:00"), follow_redirects=True)
+    assert "Переказ 500,00 ₴: Каса салон → Сейф" in r.text

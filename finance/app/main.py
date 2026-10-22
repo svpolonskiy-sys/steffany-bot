@@ -535,6 +535,8 @@ def tx_new(request: Request, kind: str = "expense", from_acc: int | None = None,
         ("Інкасація: каса → сейф", find("каса"), find("сейф"), "Інкасація"),
         ("Поповнення карти: каса → робочі гроші", find("каса"), find("робочі"), "Поповнення карти через банкомат"))
         if f and t]
+    if kind == "transfer" and not from_acc:      # the usual transfer is cash desk -> safe, never the first bank account
+        from_acc, to_acc = find("каса салон") or find("каса"), to_acc or find("сейф")
     return render(request, "tx_form.html", u, t=None, kind=kind, history=[], presets=presets,
                   pre=dict(from_acc=from_acc, to_acc=to_acc, desc=desc),
                   default_dt=datetime.now(config.KYIV).strftime("%Y-%m-%dT%H:%M"), **lists(c))
@@ -550,7 +552,13 @@ def tx_create(request: Request, kind: str = Form(...), account_id: int = Form(..
     with lock():
         insert_tx(c, user_id=u["id"], source="manual", **d)
         c.commit()
-    flash(request, "Операцію додано")
+    if d["kind"] == "transfer":
+        bal = account_balances(c)
+        nm = {r["id"]: r["name"] for r in c.execute("SELECT id,name FROM accounts")}
+        flash(request, f"Переказ {money(d['amount'])}: {nm[d['account_id']]} → {nm[d['to_account_id']]}. "
+                       f"Тепер: {nm[d['account_id']]} {money(bal[d['account_id']])}, {nm[d['to_account_id']]} {money(bal[d['to_account_id']])}.")
+    else:
+        flash(request, "Операцію додано")
     return RedirectResponse("/transactions", status_code=303)
 
 
