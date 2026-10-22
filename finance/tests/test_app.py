@@ -57,12 +57,12 @@ def test_edit_delete_keeps_history(client):
                                            "occurred_at": "2026-10-19T10:00", "description": "кава"})
     tid = main.con.execute("SELECT id FROM transactions").fetchone()["id"]
     client.post(f"/transactions/{tid}", data={"kind": "expense", "account_id": a, "amount": "70",
-                                              "occurred_at": "2026-10-19T10:00", "description": "кава"})
-    client.post(f"/transactions/{tid}/delete")
+                                              "occurred_at": "2026-10-19T10:00", "description": "кава", "reason": "виправлення суми"})
+    client.post(f"/transactions/{tid}/delete", data={"reason": "внесено помилково"})
     assert account_balances(main.con)[a] == 0
     acts = [r["action"] for r in main.con.execute("SELECT action FROM audit WHERE tx_id=? ORDER BY id", (tid,))]
     assert acts == ["create", "update", "delete"]
-    client.post(f"/transactions/{tid}/restore")
+    client.post(f"/transactions/{tid}/restore", data={"reason": "видалили помилково"})
     assert account_balances(main.con)[a] == -7000
     assert client.get(f"/transactions/{tid}").status_code == 200
 
@@ -238,8 +238,8 @@ def test_roles_permissions_and_audit(client):
     cash = accid("Каса салон")
     adm.post("/transactions/new", data={"kind": "expense", "account_id": cash, "amount": "123", "occurred_at": "2026-10-19T10:00", "description": "кава"})
     tid = main.con.execute("SELECT id FROM transactions ORDER BY id DESC LIMIT 1").fetchone()["id"]
-    adm.post(f"/transactions/{tid}", data={"kind": "expense", "account_id": cash, "amount": "150", "occurred_at": "2026-10-19T10:00", "description": "кава"})
-    adm.post(f"/transactions/{tid}/delete")
+    adm.post(f"/transactions/{tid}", data={"kind": "expense", "account_id": cash, "amount": "150", "occurred_at": "2026-10-19T10:00", "description": "кава", "reason": "помилка в сумі"})
+    adm.post(f"/transactions/{tid}/delete", data={"reason": "дубль операції"})
     act = client.get("/activity?date_from=2026-01-01&date_to=2099-01-01").text
     assert "Адмін Оля" in act and "додав операцію" in act and "змінив операцію" in act and "видалив операцію" in act
     assert "сума: 123,00 ₴ → 150,00 ₴" in act                                                  # before -> after
@@ -787,3 +787,94 @@ def test_transfer_form_defaults_to_cash_desk_and_confirms_balances(client):
     r = client.post("/transactions/new", data=dict(kind="transfer", account_id=accid("Каса салон"), to_account_id=accid("Сейф"),
                                                     amount="500", occurred_at="2026-10-22T10:00"), follow_redirects=True)
     assert "Переказ 500,00 ₴: Каса салон → Сейф" in r.text
+
+
+def _mk(client, amount="1000", cat_kind="expense", **kw):
+    a = accid("ФОП 1")
+    client.post("/transactions/new", data=dict(kind="expense", account_id=a, amount=amount, occurred_at="2026-10-19T10:00",
+                                                description="Оплата за товар", counterparty="ТОВ Постачальник", **kw))
+    return main.con.execute("SELECT id FROM transactions ORDER BY id DESC").fetchone()["id"], a
+
+
+def test_edit_requires_a_reason_and_logs_it(client):
+    tid, a = _mk(client)
+    data = dict(kind="expense", account_id=a, amount="1200", occurred_at="2026-10-19T10:00", description="Оплата за товар",
+                counterparty="ТОВ Постачальник")
+    client.post(f"/transactions/{tid}", data=data)                                     # no reason -> refused
+    assert main.con.execute("SELECT amount FROM transactions WHERE id=?", (tid,)).fetchone()[0] == 100000
+    client.post(f"/transactions/{tid}", data={**data, "reason": "ok"})                  # too short -> refused
+    assert main.con.execute("SELECT amount FROM transactions WHERE id=?", (tid,)).fetchone()[0] == 100000
+    client.post(f"/transactions/{tid}", data={**data, "reason": "помилково внесли іншу суму"})
+    assert main.con.execute("SELECT amount FROM transactions WHERE id=?", (tid,)).fetchone()[0] == 120000
+    note = main.con.execute("SELECT note FROM audit WHERE tx_id=? AND action='update'", (tid,)).fetchone()[0]
+    assert "помилково внесли іншу суму" in note
+    page = client.get("/edits").text
+    assert "помилково внесли іншу суму" in page and "зміна суми" in page
+    d2 = {**data, "amount": "1200", "description": "Новий опис платежу", "reason": "уточнили призначення"}   # description edit
+    client.post(f"/transactions/{tid}", data=d2)
+    assert main.con.execute("SELECT description FROM transactions WHERE id=?", (tid,)).fetchone()[0] == "Новий опис платежу"
+    client.post(f"/transactions/{tid}/delete", data={})                                  # delete also needs a reason
+    assert main.con.execute("SELECT deleted_at FROM transactions WHERE id=?", (tid,)).fetchone()[0] is None
+
+
+def test_split_payment_between_categories(client):
+    tid, a = _mk(client, amount="1000")
+    vit = cat.get_or_create_category(main.con, "Товар на вітрину", "expense")
+    work = cat.get_or_create_category(main.con, "Матеріал в роботу", "expense")
+    before = account_balances(main.con)[a]
+    bad = client.post(f"/transactions/{tid}/split", data={"category_id": [vit, work], "amount": ["300", "600"], "reason": "товари й матеріали"}, follow_redirects=True)
+    assert "має дорівнювати" in bad.text and main.con.execute("SELECT COUNT(*) FROM transactions").fetchone()[0] == 1
+    client.post(f"/transactions/{tid}/split", data={"category_id": [vit, work], "amount": ["300", "700"]})   # no reason
+    assert main.con.execute("SELECT COUNT(*) FROM transactions").fetchone()[0] == 1
+    client.post(f"/transactions/{tid}/split", data={"category_id": [vit, work], "amount": ["300", "700"], "reason": "у рахунку товари й матеріали"})
+    rows = main.con.execute("SELECT id,amount,category_id,parent_id FROM transactions ORDER BY id").fetchall()
+    assert [(r["amount"], r["category_id"]) for r in rows] == [(30000, vit), (70000, work)] and rows[1]["parent_id"] == tid
+    assert account_balances(main.con)[a] == before                                       # total is untouched
+    assert "Платіж розділено" in client.get(f"/transactions/{tid}").text
+    assert "частина розділеного платежу" in client.get(f"/transactions/{rows[1]['id']}").text
+    client.post(f"/transactions/{tid}/unsplit", data={"reason": "розділили помилково"})
+    live = main.con.execute("SELECT amount FROM transactions WHERE deleted_at IS NULL").fetchall()
+    assert [r[0] for r in live] == [100000] and account_balances(main.con)[a] == before
+
+
+def test_split_pair_is_not_flagged_as_duplicate(client):
+    from app import control
+    tid, a = _mk(client, amount="1000")
+    vit = cat.get_or_create_category(main.con, "Товар на вітрину", "expense")
+    work = cat.get_or_create_category(main.con, "Матеріал в роботу", "expense")
+    client.post(f"/transactions/{tid}/split", data={"category_id": [vit, work], "amount": ["500", "500"], "reason": "порівну між статтями"})
+    assert not [f for f in control.detect(main.con) if f["kind"] == "dup"]
+
+
+def test_counterparty_directory_and_category_delete(client):
+    _mk(client)
+    page = client.get("/counterparties").text
+    assert "ТОВ Постачальник" in page                                                   # taken from existing payments
+    client.post("/counterparties", data={"name": "Нова пошта", "note": "доставка"})
+    cp = main.con.execute("SELECT id FROM counterparties WHERE name='Нова пошта'").fetchone()[0]
+    client.post(f"/counterparties/{cp}", data={"name": "Нова пошта Київ", "note": "доставка", "active": "1"})
+    assert main.con.execute("SELECT 1 FROM counterparties WHERE name='Нова пошта Київ'").fetchone()
+    client.post(f"/counterparties/{cp}/delete")
+    assert not main.con.execute("SELECT 1 FROM counterparties WHERE name='Нова пошта Київ'").fetchone()
+    used = main.con.execute("SELECT id FROM counterparties WHERE name='ТОВ Постачальник'").fetchone()[0]
+    client.post(f"/counterparties/{used}/delete")                                          # in use -> kept
+    assert main.con.execute("SELECT 1 FROM counterparties WHERE id=?", (used,)).fetchone()
+    new = client.post("/counterparties", data={"name": "ТОВ Ромашка"}) and main.con.execute("SELECT id FROM counterparties WHERE name='ТОВ Ромашка'").fetchone()[0]
+    client.post(f"/counterparties/{used}", data={"merge_into": str(new)})
+    assert main.con.execute("SELECT counterparty FROM transactions").fetchone()[0] == "ТОВ Ромашка"
+    # default category of a counterparty is applied to new payments without a chosen category
+    c1 = cat.get_or_create_category(main.con, "Госп товари", "expense")
+    client.post(f"/counterparties/{new}", data={"name": "ТОВ Ромашка", "default_category_id": str(c1), "active": "1"})
+    a = accid("ФОП 1")
+    client.post("/transactions/new", data=dict(kind="expense", account_id=a, amount="10", occurred_at="2026-10-19T10:00", description="щось", counterparty="ТОВ Ромашка"))
+    assert main.con.execute("SELECT category_id FROM transactions ORDER BY id DESC").fetchone()[0] == c1
+    # categories: unused one is deleted outright, used one needs a target
+    empty = cat.get_or_create_category(main.con, "Порожня", "expense")
+    client.post(f"/categories/{empty}/delete", data={})
+    assert not main.con.execute("SELECT 1 FROM categories WHERE id=?", (empty,)).fetchone()
+    client.post(f"/categories/{c1}/delete", data={})
+    assert main.con.execute("SELECT 1 FROM categories WHERE id=?", (c1,)).fetchone()
+    other = cat.get_or_create_category(main.con, "Інша витрата", "expense")
+    client.post(f"/categories/{c1}/delete", data={"move_to": str(other)})
+    assert not main.con.execute("SELECT 1 FROM categories WHERE id=?", (c1,)).fetchone()
+    assert main.con.execute("SELECT category_id FROM transactions ORDER BY id DESC").fetchone()[0] == other

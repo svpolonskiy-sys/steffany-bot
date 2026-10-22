@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import categorize as cat, config, control, payroll, pl, privat, reports, sync
+from . import categorize as cat, config, control, counterparties as cps, payroll, pl, privat, reports, sync
 from .db import (account_balances, add_audit, connect, get_setting, insert_tx, lock, now_local, set_setting,
                  update_tx)
 from .security import encrypt, hash_password, verify_password
@@ -415,7 +415,8 @@ tpl.env.globals["hl"] = hl
 
 def lists(c):
     return dict(accounts=c.execute("SELECT * FROM accounts WHERE active=1 AND kind!='credit' ORDER BY sort,id").fetchall(),
-                categories=c.execute("SELECT * FROM categories WHERE archived=0 ORDER BY kind DESC, name").fetchall())
+                categories=c.execute("SELECT * FROM categories WHERE archived=0 ORDER BY kind DESC, name").fetchall(),
+                cps=[r[0] for r in c.execute("SELECT name FROM counterparties WHERE active=1 ORDER BY name LIMIT 800")])
 
 
 def _tx_presets():
@@ -550,6 +551,7 @@ def tx_create(request: Request, kind: str = Form(...), account_id: int = Form(..
     c = get_con()
     d = _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, description, counterparty, category_id)
     with lock():
+        cps.ensure(c, d["counterparty"])
         insert_tx(c, user_id=u["id"], source="manual", **d)
         c.commit()
     if d["kind"] == "transfer":
@@ -570,29 +572,51 @@ def tx_edit_page(request: Request, tid: int, u=Depends(current_user)):
         raise HTTPException(404)
     hist = c.execute("SELECT a.*, u.name uname FROM audit a LEFT JOIN users u ON u.id=a.user_id "
                      "WHERE a.tx_id=? ORDER BY a.id DESC", (tid,)).fetchall()
-    return render(request, "tx_form.html", u, t=t, kind=t["kind"], history=hist,
+    parts, parent = _split_info(c, t)
+    return render(request, "tx_form.html", u, t=t, kind=t["kind"], history=hist, parts=parts, parent=parent,
                   default_dt=t["occurred_at"][:16], **lists(c))
+
+
+MIN_REASON = 5
+
+
+def _reason(v: str) -> str:
+    return (v or "").strip()
 
 
 @app.post("/transactions/{tid}")
 def tx_update(request: Request, tid: int, kind: str = Form(...), account_id: int = Form(...),
               to_account_id: str = Form(""), amount: str = Form(...), occurred_at: str = Form(...),
               description: str = Form(""), counterparty: str = Form(""), category_id: str = Form(""),
-              make_rule: str = Form(""), rule_text: str = Form(""), u=Depends(current_user)):
+              make_rule: str = Form(""), rule_text: str = Form(""), reason: str = Form(""), u=Depends(current_user)):
     c = get_con()
-    if not c.execute("SELECT 1 FROM transactions WHERE id=?", (tid,)).fetchone():
+    before = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
+    if not before:
         raise HTTPException(404)
     d = _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, description, counterparty, category_id)
+    if (before["category_id"] and not _oi(category_id)) and kind != "transfer":
+        d["category_id"] = before["category_id"]          # an empty category box on edit keeps the current one
+    changed = [k for k in ("account_id", "to_account_id", "kind", "amount", "description", "counterparty", "category_id")
+               if d.get(k) != before[k]] + (["occurred_at"] if d["occurred_at"][:16] != before["occurred_at"][:16] else [])
+    if not changed and not (make_rule and rule_text.strip()):
+        flash(request, "Нічого не змінено.")
+        return RedirectResponse(f"/transactions/{tid}", status_code=303)
+    reason = _reason(reason)
+    if changed and len(reason) < MIN_REASON:
+        flash(request, "Вкажіть причину зміни (щонайменше 5 символів): без пояснення операцію змінити не можна.")
+        return RedirectResponse(f"/transactions/{tid}", status_code=303)
     with lock():
-        update_tx(c, tid, u["id"], **d)
+        cps.ensure(c, d["counterparty"])
+        if changed:
+            update_tx(c, tid, u["id"], note="Причина: " + reason, **d)
         extra = ""
         if make_rule and rule_text.strip() and d.get("category_id"):
             cat.add_rule(c, d["category_id"], rule_text, kind if kind != "transfer" else "any", priority=10)
             n = cat.apply_rule_to_existing(c, d["category_id"], rule_text, kind, u["id"])
             extra = f" Правило «{rule_text.strip()}» створено, перерозподілено операцій: {n}."
         c.commit()
-    flash(request, "Збережено." + extra)
-    return RedirectResponse("/transactions", status_code=303)
+    flash(request, "Збережено, зміну записано в журнал." + extra)
+    return RedirectResponse(f"/transactions/{tid}", status_code=303)
 
 
 @app.post("/transactions/{tid}/category")
@@ -614,20 +638,112 @@ def tx_set_category(tid: int, category_id: int = Form(...), rule_text: str = For
 
 
 @app.post("/transactions/{tid}/delete")
-def tx_delete(request: Request, tid: int, u=Depends(current_user)):
+def tx_delete(request: Request, tid: int, reason: str = Form(""), u=Depends(current_user)):
+    reason = _reason(reason)
+    if len(reason) < MIN_REASON:
+        flash(request, "Вкажіть причину видалення (щонайменше 5 символів).")
+        return RedirectResponse(f"/transactions/{tid}", status_code=303)
     with lock():
-        update_tx(get_con(), tid, u["id"], deleted_at=now_local())
+        update_tx(get_con(), tid, u["id"], note="Причина: " + reason, deleted_at=now_local())
         get_con().commit()
     flash(request, "Видалено (історію збережено, можна відновити)")
     return RedirectResponse("/transactions", status_code=303)
 
 
 @app.post("/transactions/{tid}/restore")
-def tx_restore(request: Request, tid: int, u=Depends(current_user)):
+def tx_restore(request: Request, tid: int, reason: str = Form(""), u=Depends(current_user)):
+    reason = _reason(reason)
+    if len(reason) < MIN_REASON:
+        flash(request, "Вкажіть причину відновлення (щонайменше 5 символів).")
+        return RedirectResponse(f"/transactions/{tid}", status_code=303)
     with lock():
-        update_tx(get_con(), tid, u["id"], deleted_at=None)
+        update_tx(get_con(), tid, u["id"], note="Причина: " + reason, deleted_at=None)
         get_con().commit()
     flash(request, "Відновлено")
+    return RedirectResponse(f"/transactions/{tid}", status_code=303)
+
+
+# ---------- split a payment between categories ----------
+def _split_info(c, t):
+    parts = c.execute("SELECT * FROM transactions WHERE parent_id=? AND deleted_at IS NULL ORDER BY id", (t["id"],)).fetchall()
+    parent = c.execute("SELECT * FROM transactions WHERE id=?", (t["parent_id"],)).fetchone() if t["parent_id"] else None
+    return parts, parent
+
+
+@app.get("/transactions/{tid}/split", response_class=HTMLResponse)
+def tx_split_page(request: Request, tid: int, u=Depends(current_user)):
+    c = get_con()
+    t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
+    if not t or t["deleted_at"] or t["kind"] == "transfer":
+        raise HTTPException(404)
+    return render(request, "split.html", u, t=t, **lists(c))
+
+
+@app.post("/transactions/{tid}/split")
+async def tx_split(request: Request, tid: int, u=Depends(current_user)):
+    c = get_con()
+    t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
+    if not t or t["deleted_at"] or t["kind"] == "transfer":
+        raise HTTPException(404)
+    form = await request.form()
+    cats, amts = form.getlist("category_id"), form.getlist("amount")
+    parts = []
+    for ci, am in zip(cats, amts):
+        if not str(am).strip() and not str(ci).strip():
+            continue
+        parts.append((_oi(ci), parse_amount(am)))
+    reason = _reason(form.get("reason", ""))
+    kinds = {r["id"]: r["kind"] for r in c.execute("SELECT id,kind FROM categories")}
+    err = ""
+    if len(parts) < 2:
+        err = "Потрібно щонайменше дві частини."
+    elif any(not ci or kinds.get(ci) != t["kind"] for ci, _ in parts):
+        err = "Для кожної частини оберіть категорію того ж типу, що й платіж."
+    elif sum(a for _, a in parts) != t["amount"]:
+        err = f"Сума частин ({money(sum(a for _, a in parts))}) має дорівнювати сумі платежу ({money(t['amount'])})."
+    elif len(reason) < MIN_REASON:
+        err = "Вкажіть причину розділення (щонайменше 5 символів)."
+    if err:
+        flash(request, err)
+        return RedirectResponse(f"/transactions/{tid}/split", status_code=303)
+    root = t["parent_id"] or tid
+    with lock():
+        update_tx(c, tid, u["id"], note=f"Розділено на {len(parts)} частини(-н). Причина: {reason}", amount=parts[0][1], category_id=parts[0][0])
+        for ci, am in parts[1:]:
+            nid = insert_tx(c, account_id=t["account_id"], kind=t["kind"], amount=am, occurred_at=t["occurred_at"],
+                            description=t["description"], counterparty=t["counterparty"], category_id=ci,
+                            source=t["source"], user_id=u["id"], note=f"Частина платежу №{tid}. Причина: {reason}")
+            c.execute("UPDATE transactions SET parent_id=?, user_edited=1 WHERE id=?", (root, nid))
+        if not t["parent_id"]:
+            c.execute("UPDATE transactions SET user_edited=1 WHERE id=?", (tid,))
+        c.commit()
+    log_act(request, u, "платіж розділено", f"операція №{tid}: {len(parts)} частин, {money(t['amount'])}")
+    flash(request, f"Платіж розділено на {len(parts)} частини(-н). Загальна сума не змінилась.")
+    return RedirectResponse(f"/transactions/{tid}", status_code=303)
+
+
+@app.post("/transactions/{tid}/unsplit")
+def tx_unsplit(request: Request, tid: int, reason: str = Form(""), u=Depends(current_user)):
+    c = get_con()
+    t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
+    reason = _reason(reason)
+    if not t:
+        raise HTTPException(404)
+    parts = c.execute("SELECT * FROM transactions WHERE parent_id=? AND deleted_at IS NULL", (tid,)).fetchall()
+    if not parts:
+        flash(request, "У цього платежу немає частин.")
+        return RedirectResponse(f"/transactions/{tid}", status_code=303)
+    if len(reason) < MIN_REASON:
+        flash(request, "Вкажіть причину об'єднання (щонайменше 5 символів).")
+        return RedirectResponse(f"/transactions/{tid}", status_code=303)
+    total = t["amount"] + sum(p_["amount"] for p_ in parts)
+    with lock():
+        for p_ in parts:
+            update_tx(c, p_["id"], u["id"], note=f"Частину об'єднано назад у №{tid}. Причина: {reason}", deleted_at=now_local())
+        update_tx(c, tid, u["id"], note=f"Частини об'єднано назад. Причина: {reason}", amount=total)
+        c.commit()
+    log_act(request, u, "розділення скасовано", f"операція №{tid}: знову {money(total)}")
+    flash(request, "Частини об'єднано в один платіж.")
     return RedirectResponse(f"/transactions/{tid}", status_code=303)
 
 
@@ -976,6 +1092,34 @@ def category_edit(request: Request, cid: int, name: str = Form(""), merge_into: 
     return RedirectResponse("/categories", status_code=303)
 
 
+@app.post("/categories/{cid}/delete")
+def category_delete(request: Request, cid: int, move_to: str = Form(""), u=Depends(staff_cat)):
+    c = get_con()
+    row = c.execute("SELECT * FROM categories WHERE id=?", (cid,)).fetchone()
+    if not row:
+        raise HTTPException(404)
+    used = c.execute("SELECT COUNT(*) FROM transactions WHERE category_id=?", (cid,)).fetchone()[0]
+    move_to = _oi(move_to)
+    with lock():
+        if used and not move_to:
+            flash(request, f"Категорія використана в {used} операціях. Оберіть, куди їх перенести, і повторіть видалення.")
+            return RedirectResponse("/categories", status_code=303)
+        if used:
+            n = cat.merge_category(c, cid, move_to, u["id"])      # moves operations and rules, then removes the category
+            c.execute("UPDATE transactions SET category_id=? WHERE category_id=?", (move_to, cid))   # incl. already deleted ones
+            c.execute("UPDATE counterparties SET default_category_id=? WHERE default_category_id=?", (move_to, cid))
+            c.execute("DELETE FROM categories WHERE id=?", (cid,))
+        else:
+            c.execute("DELETE FROM rules WHERE category_id=?", (cid,))
+            c.execute("UPDATE counterparties SET default_category_id=NULL WHERE default_category_id=?", (cid,))
+            c.execute("DELETE FROM categories WHERE id=?", (cid,))
+            n = 0
+        c.commit()
+    log_act(request, u, "категорії: видалено", f"{row['name']} (операцій перенесено: {n})")
+    flash(request, f"Категорію «{row['name']}» видалено." + (f" Операцій перенесено: {n}." if n else ""))
+    return RedirectResponse("/categories", status_code=303)
+
+
 @app.post("/rules")
 def rule_add(request: Request, pattern: str = Form(...), category_id: int = Form(...), direction: str = Form("any"),
              apply: str = Form(""), u=Depends(staff_cat)):
@@ -998,6 +1142,129 @@ def rule_del(request: Request, rid: int, u=Depends(staff_cat)):
     get_con().commit()
     log_act(request, u, "правила: видалено", f"правило #{rid}")
     return RedirectResponse("/categories", status_code=303)
+
+
+# ---------- counterparties ----------
+@app.get("/counterparties", response_class=HTMLResponse)
+def counterparties_page(request: Request, u=Depends(current_user)):
+    c = get_con()
+    with lock():
+        cps.sync(c)
+        c.commit()
+    q = (request.query_params.get("q") or "").strip().lower()
+    show = request.query_params.get("show", "active")
+    rows = c.execute(
+        "SELECT p.*, k.name cname, COUNT(t.id) n, COALESCE(SUM(t.amount),0) total, MAX(t.occurred_at) last_at FROM counterparties p "
+        "LEFT JOIN categories k ON k.id=p.default_category_id "
+        "LEFT JOIN transactions t ON t.counterparty=p.name AND t.deleted_at IS NULL "
+        "WHERE (? OR p.active=1) GROUP BY p.id ORDER BY (COUNT(t.id)=0), p.name", (1 if show == "all" else 0,)).fetchall()
+    if q:
+        rows = [r for r in rows if q in r["name"].lower() or q in (r["note"] or "").lower()]
+    return render(request, "counterparties.html", u, rows=rows[:400], total=len(rows), q=q, show=show,
+                  can_edit=has_perm(u, "categories"), **lists(c))
+
+
+@app.post("/counterparties")
+def counterparty_add(request: Request, name: str = Form(...), note: str = Form(""), default_category_id: str = Form(""),
+                     u=Depends(staff_cat)):
+    c = get_con()
+    name = name.strip()
+    if not name:
+        raise HTTPException(400)
+    with lock():
+        if c.execute("SELECT 1 FROM counterparties WHERE name=?", (name,)).fetchone():
+            flash(request, "Такий контрагент уже є в списку.")
+            return RedirectResponse("/counterparties?q=" + name, status_code=303)
+        c.execute("INSERT INTO counterparties(name,note,default_category_id,created_at) VALUES(?,?,?,?)",
+                  (name, note.strip(), _oi(default_category_id), now_local()))
+        c.commit()
+    log_act(request, u, "контрагенти: додано", name)
+    flash(request, f"Контрагента «{name}» додано.")
+    return RedirectResponse("/counterparties?q=" + name, status_code=303)
+
+
+@app.post("/counterparties/{pid}")
+def counterparty_edit(request: Request, pid: int, name: str = Form(""), note: str = Form(""), default_category_id: str = Form(""),
+                      active: str = Form("1"), merge_into: str = Form(""), u=Depends(staff_cat)):
+    c = get_con()
+    row = c.execute("SELECT * FROM counterparties WHERE id=?", (pid,)).fetchone()
+    if not row:
+        raise HTTPException(404)
+    name, merge_into = name.strip(), _oi(merge_into)
+    with lock():
+        target = c.execute("SELECT * FROM counterparties WHERE id=?", (merge_into,)).fetchone() if merge_into else None
+        if target and target["id"] != pid:                       # merge: every payment moves to the other name
+            n = c.execute("UPDATE transactions SET counterparty=? WHERE counterparty=?", (target["name"], row["name"])).rowcount
+            c.execute("DELETE FROM counterparties WHERE id=?", (pid,))
+            log_act(request, u, "контрагенти: об'єднано", f"«{row['name']}» → «{target['name']}», операцій: {n}")
+            flash(request, f"Об'єднано з «{target['name']}», операцій перенесено: {n}.")
+        else:
+            if name and name != row["name"]:
+                clash = c.execute("SELECT * FROM counterparties WHERE name=? AND id!=?", (name, pid)).fetchone()
+                if clash:
+                    flash(request, "Контрагент з такою назвою вже існує — скористайтеся «Об'єднати з…».")
+                    return RedirectResponse("/counterparties?q=" + row["name"], status_code=303)
+                n = c.execute("UPDATE transactions SET counterparty=? WHERE counterparty=?", (name, row["name"])).rowcount
+                log_act(request, u, "контрагенти: перейменовано", f"«{row['name']}» → «{name}», операцій: {n}")
+            c.execute("UPDATE counterparties SET name=?, note=?, default_category_id=?, active=? WHERE id=?",
+                      (name or row["name"], note.strip(), _oi(default_category_id), 0 if active == "0" else 1, pid))
+            flash(request, "Збережено.")
+        c.commit()
+    return RedirectResponse("/counterparties?q=" + (name or row["name"]), status_code=303)
+
+
+@app.post("/counterparties/{pid}/delete")
+def counterparty_delete(request: Request, pid: int, u=Depends(staff_cat)):
+    c = get_con()
+    row = c.execute("SELECT * FROM counterparties WHERE id=?", (pid,)).fetchone()
+    if not row:
+        raise HTTPException(404)
+    used = c.execute("SELECT COUNT(*) FROM transactions WHERE counterparty=?", (row["name"],)).fetchone()[0]
+    if used:
+        flash(request, f"«{row['name']}» використаний у {used} операціях — його можна сховати зі списку або об'єднати з іншим, але не видалити.")
+        return RedirectResponse("/counterparties?q=" + row["name"], status_code=303)
+    with lock():
+        c.execute("DELETE FROM counterparties WHERE id=?", (pid,))
+        c.commit()
+    log_act(request, u, "контрагенти: видалено", row["name"])
+    flash(request, f"Контрагента «{row['name']}» видалено.")
+    return RedirectResponse("/counterparties", status_code=303)
+
+
+# ---------- log of edits (who changed what, and why) ----------
+@app.get("/edits", response_class=HTMLResponse)
+def edits_page(request: Request, u=Depends(need_analytics)):
+    import json as _json
+    c = get_con()
+    q = request.query_params
+    today = datetime.now(config.KYIV).date()
+    d_from = q.get("date_from") or (today - timedelta(days=30)).isoformat()
+    d_to = q.get("date_to") or today.isoformat()
+    who = int(q["user"]) if (q.get("user") or "").isdigit() else None
+    only_amount = q.get("amount") == "1"
+    accn = {r["id"]: r["name"] for r in c.execute("SELECT id,name FROM accounts")}
+    catn = {r["id"]: r["name"] for r in c.execute("SELECT id,name FROM categories")}
+    sql = ("SELECT a.*, u.name uname FROM audit a JOIN users u ON u.id=a.user_id "
+           "WHERE a.action IN ('update','delete','restore') AND a.at BETWEEN ? AND ?")
+    args = [d_from + "T00:00:00", d_to + "T23:59:59"]
+    if who:
+        sql += " AND a.user_id=?"; args.append(who)
+    rows = []
+    for r in c.execute(sql + " ORDER BY a.id DESC LIMIT 1500", args):
+        try:
+            b, af = _json.loads(r["before_json"] or "{}"), _json.loads(r["after_json"] or "{}")
+        except ValueError:
+            b, af = {}, {}
+        amt = b.get("amount") != af.get("amount") and r["action"] == "update"
+        if only_amount and not amt:
+            continue
+        reason = (r["note"] or "")
+        reason = reason[len("Причина: "):] if reason.startswith("Причина: ") else reason
+        rows.append(dict(at=r["at"], who=r["uname"], tx=r["tx_id"], action={"update": "змінено", "delete": "видалено", "restore": "відновлено"}[r["action"]],
+                         diff=_tx_diff(b, af, accn, catn) if r["action"] == "update" else (b.get("description") or "")[:60],
+                         reason=reason, amount=amt))
+    users = c.execute("SELECT id,name FROM users ORDER BY name").fetchall()
+    return render(request, "edits.html", u, rows=rows[:500], users=users, d_from=d_from, d_to=d_to, who=who, only_amount=only_amount)
 
 
 # ---------- accounts (owner) ----------
@@ -1252,6 +1519,8 @@ def activity_page(request: Request, u=Depends(owner_only)):
                     det += " | " + _tx_diff(_json.loads(r["before_json"] or "{}"), _json.loads(r["after_json"] or "{}"), accn, catn)
                 except ValueError:
                     pass
+            if r["note"]:
+                det += " | " + r["note"]
             events.append(dict(at=r["at"], who=r["uname"], action=ac, details=det, ip="", kind="tx", link=f"/transactions/{r['tx_id']}"))
     if kind in ("", "settings", "login"):
         sql = "SELECT * FROM activity WHERE at BETWEEN ? AND ?"

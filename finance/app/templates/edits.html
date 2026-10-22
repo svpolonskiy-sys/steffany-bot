@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Журнал змін{% endblock %}{% block body %}<h1>Журнал змін операцій</h1>
+<p class="mut">Кожна зміна, видалення чи відновлення операції: хто, коли, що було й що стало, і причина, яку вказав той, хто змінював. Записи видалити неможливо.</p>
+<form method="get" class="card"><div class="row"><div><label>Хто</label><select name="user"><option value="">Усі</option>{% for x in users %}<option value="{{ x.id }}" {{ 'selected' if who==x.id }}>{{ x.name }}</option>{% endfor %}</select></div>
+<div><label>З</label><input type="date" name="date_from" value="{{ d_from }}"></div><div><label>По</label><input type="date" name="date_to" value="{{ d_to }}"></div>
+<div style="flex:0 0 auto"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" name="amount" value="1" style="width:auto" {{ 'checked' if only_amount }}>лише зміни сум</label><button>Показати</button></div></div></form>
+<table style="margin-top:12px"><tr><th>Коли</th><th>Хто</th><th>Операція</th><th>Що змінено</th><th>Причина</th></tr>
+{% for r in rows %}<tr><td class="num" style="white-space:nowrap">{{ r.at|dt }}</td><td><b>{{ r.who }}</b></td><td><a href="/transactions/{{ r.tx }}">№{{ r.tx }}</a> · {{ r.action }}</td>
+<td style="word-break:break-word">{% if r.amount %}<span class="tag auto">зміна суми</span> {% endif %}{{ r.diff }}</td><td style="word-break:break-word">{{ r.reason or '—' }}</td></tr>
+{% else %}<tr><td colspan="5" class="mut">За цей період змін немає</td></tr>{% endfor %}</table>{% endblock %}

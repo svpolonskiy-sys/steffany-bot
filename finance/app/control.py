@@ -23,7 +23,7 @@ BIG_UNCATEGORISED = 500000      # kopecks
 BIG_NEW_COUNTERPARTY = 2000000
 CASH_NO_COMMENT = 500000
 BIG_DELETE = 500000
-BIG_EDIT = 100000
+BIG_EDIT = 100          # every change of an amount from 1 UAH is shown to the owner
 
 
 def _f(key, kind, sev, title, detail, link="", amount=0, tx_ids=()):
@@ -50,7 +50,7 @@ def check_payroll(con, today):
 
 def check_duplicates(con):
     rows = con.execute(
-        "SELECT t.id, t.account_id, t.amount, t.occurred_at, t.description, t.counterparty, a.name acc "
+        "SELECT t.id, t.parent_id, t.account_id, t.amount, t.occurred_at, t.description, t.counterparty, a.name acc "
         "FROM transactions t JOIN accounts a ON a.id=t.account_id "
         "WHERE t.deleted_at IS NULL AND t.kind='expense' AND t.amount>=50000 AND t.occurred_at>=? "
         "ORDER BY t.account_id, t.amount, t.occurred_at", (config.HISTORY_START,)).fetchall()
@@ -61,6 +61,8 @@ def check_duplicates(con):
             da, db_ = datetime.fromisoformat(a["occurred_at"]), datetime.fromisoformat(b["occurred_at"])
             if db_ - da > timedelta(days=3):
                 break
+            if a["parent_id"] == b["id"] or b["parent_id"] == a["id"] or (a["parent_id"] and a["parent_id"] == b["parent_id"]):
+                continue                                          # parts of one split payment are not duplicates
             who_a, who_b = norm(a["counterparty"] or a["description"]), norm(b["counterparty"] or b["description"])
             if who_a != who_b or not who_a:
                 continue
@@ -124,7 +126,7 @@ def check_audit(con, today):
                      f"/transactions/{a['tx_id']}", b["amount"], (a["tx_id"],))
         elif a["action"] == "update" and abs((af.get("amount") or 0) - (b.get("amount") or 0)) >= BIG_EDIT:
             yield _f(f"amt:{a['id']}", "edit", "mid", f"Змінено суму: {_m(b['amount'])} → {_m(af['amount'])}",
-                     f"{a['uname']} · {a['at'][:16].replace('T', ' ')} · {(af.get('description') or '')[:70]}",
+                     f"{a['uname']} · {a['at'][:16].replace('T', ' ')} · {(a['note'] or '').replace('Причина: ', 'причина: ')[:140]}",
                      f"/transactions/{a['tx_id']}", abs(af["amount"] - b["amount"]), (a["tx_id"],))
 
 

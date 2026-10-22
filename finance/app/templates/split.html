@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block title %}Розділити платіж{% endblock %}{% block body %}
+<h1>Розділити платіж №{{ t.id }}</h1>
+<p class="mut">Один платіж можна розподілити між кількома категоріями, наприклад: частина — «Товар на вітрину», частина — «Матеріал в роботу». Загальна сума, рахунок і баланс не змінюються. Сума всіх частин має дорівнювати сумі платежу.</p>
+<div class="card infocard" style="max-width:720px;margin-bottom:12px"><div class="kv"><span>Дата</span><b>{{ t.occurred_at|dt }}</b></div><div class="kv"><span>Опис</span><b style="text-align:right">{{ t.description or '—' }}{% if t.counterparty %} · {{ t.counterparty }}{% endif %}</b></div>
+<div class="kv"><span>Сума платежу</span><b>{{ t.amount|money }}</b></div></div>
+<form method="post" class="card" style="max-width:720px" id="sf">
+<div id="rows">{% for i in range(2) %}<div class="row part" style="align-items:flex-end"><div><label>Категорія</label><select name="category_id" required><option value="">— оберіть —</option>{% for c in categories if c.kind==t.kind %}<option value="{{ c.id }}" {{ 'selected' if i==0 and c.id==t.category_id }}>{{ c.name }}</option>{% endfor %}</select></div>
+<div><label>Сума, ₴</label><input name="amount" inputmode="decimal" required class="pa" {% if i==0 %}value="{{ '%.2f'|format(t.amount/100) }}"{% endif %}></div><div style="flex:0 0 auto"><button type="button" class="sec sm rm" title="Прибрати частину">×</button></div></div>{% endfor %}</div>
+<p><button type="button" class="sec sm" id="add">+ Додати частину</button></p>
+<div id="left" class="flash" style="margin:8px 0"></div>
+<label>Причина розділення <span class="mut">(обов'язково)</span></label>
+<textarea name="reason" rows="2" required minlength="5" placeholder="напр.: у рахунку були і товари на вітрину, і матеріали для роботи"></textarea>
+<p><button id="go">Розділити</button> <a class="btn sec" href="/transactions/{{ t.id }}">Скасувати</a></p></form>
+<script>(function(){var total={{ t.amount }},rows=document.getElementById('rows'),left=document.getElementById('left'),go=document.getElementById('go');
+function k(v){var n=parseFloat((v||'0').replace(/\s/g,'').replace(',','.'));return isNaN(n)?0:Math.round(n*100)}
+function fmt(v){return (v/100).toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₴'}
+function upd(){var s=0;rows.querySelectorAll('.pa').forEach(function(i){s+=k(i.value)});var d=total-s;
+ left.textContent=d==0?'✓ Усю суму розподілено: '+fmt(total):(d>0?'Ще не розподілено: '+fmt(d):'Забагато на '+fmt(-d));left.style.color=d==0?'var(--in)':'var(--out)';go.disabled=d!=0}
+rows.addEventListener('input',upd);document.getElementById('add').onclick=function(){var r=rows.firstElementChild.cloneNode(true);r.querySelector('select').value='';var a=r.querySelector('input');a.value='';var d=total-Array.from(rows.querySelectorAll('.pa')).reduce(function(x,i){return x+k(i.value)},0);if(d>0)a.value=(d/100).toFixed(2);rows.appendChild(r);upd()};
+rows.addEventListener('click',function(e){if(e.target.classList.contains('rm')&&rows.children.length>2){e.target.closest('.part').remove();upd()}});upd()})();</script>{% endblock %}

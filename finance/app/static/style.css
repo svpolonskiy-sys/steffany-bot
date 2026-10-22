@@ -263,3 +263,5 @@ nav .brand{display:block}nav .brand .im{height:35px}
 .acct label{display:block;margin:12px 0 4px;color:var(--mut);font-size:13px}.acct label.chk{display:flex;gap:8px;align-items:flex-start;color:var(--ink);margin:14px 0 4px}.acct label.chk input{width:auto;margin-top:3px}
 .meter{height:6px;border-radius:4px;background:var(--line);margin:8px 0 4px;overflow:hidden}.meter i{display:block;height:100%;width:0;border-radius:4px;transition:width .3s,background .3s}
 .acct .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}.acct .kv:last-child{border:0}.acct .kv span{color:var(--mut)}.acct .kv b{text-align:right;word-break:break-word}
+.infocard .kv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}.infocard .kv:last-child{border:0}.infocard .kv span{color:var(--mut)}
+nav a.l{padding:7px 6px;font-size:13px}nav a.l::after{left:6px;right:6px}nav a.b{margin-right:8px}

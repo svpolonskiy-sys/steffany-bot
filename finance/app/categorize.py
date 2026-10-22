@@ -86,6 +86,10 @@ def categorize(con, kind: str, description: str, counterparty: str = "", create:
     """Returns category_id (or None for transfers/unknown)."""
     if kind == "transfer":
         return None
+    from .counterparties import default_category   # local import: directory is optional at start-up
+    cp_cat = default_category(con, counterparty, kind) if counterparty else None
+    if cp_cat:
+        return cp_cat
     text = norm(description) + " " + norm(counterparty)
     for r in con.execute(
             "SELECT r.* FROM rules r JOIN categories c ON c.id=r.category_id "

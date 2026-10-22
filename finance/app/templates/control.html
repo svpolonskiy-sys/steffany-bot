@@ -1,5 +1,6 @@
 {% extends "base.html" %}{% block title %}Контроль{% endblock %}{% block body %}<h1>Контроль</h1>
 <p class="mut">Система сама перевіряє облік: виплати ЗП проти таблиці, дублі платежів, підозрілі й незрозумілі витрати, залишки проти банку, зміни й видалення операцій. Кожен пункт можна закрити: «Вирішено» — ви розібралися, «Ігнорувати» — це нормально, надалі не показувати. Пункт, який перестав бути правдою, закривається сам.</p>
+<p><a href="/edits">Журнал змін операцій (хто, що й чому змінив) →</a></p>
 <div class="pills">{% for s,t in [('open','Відкриті'),('resolved','Вирішені'),('ignored','Ігноровані'),('fixed','Зникли самі')] %}<a class="{{ 'on' if st==s }}" href="/control?status={{ s }}">{{ t }}{% if counts.get(s) %} · {{ counts[s] }}{% endif %}</a>{% endfor %}</div>
 {% if st=='open' %}<div class="pills">{% for k,t in KINDS_C.items() %}{% if kinds.get(k) %}<a class="{{ 'on' if kind==k }}" href="/control?kind={{ k }}">{{ t }} · {{ kinds[k] }}</a>{% endif %}{% endfor %}{% if kind %}<a href="/control">усі</a>{% endif %}</div>{% endif %}
 {% for f in rows %}<div class="card"><div class="fnd"><div class="tx">

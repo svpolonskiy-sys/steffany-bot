@@ -86,6 +86,9 @@ CREATE TABLE IF NOT EXISTS findings(
   title TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '', link TEXT NOT NULL DEFAULT '', amount INTEGER NOT NULL DEFAULT 0,
   tx_ids TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','ignored','resolved','fixed')),
   first_seen TEXT NOT NULL, last_seen TEXT NOT NULL, decided_at TEXT, decided_by TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS counterparties(
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE COLLATE NOCASE, note TEXT NOT NULL DEFAULT '',
+  default_category_id INTEGER REFERENCES categories(id), active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS sync_log(
   id INTEGER PRIMARY KEY, at TEXT NOT NULL, account_id INTEGER, ok INTEGER NOT NULL,
@@ -113,6 +116,9 @@ def connect(path: str | None = None) -> sqlite3.Connection:
     cols = {r[1] for r in con.execute("PRAGMA table_info(categories)")}
     if "exclude" not in cols:  # DBs created before the flag existed
         con.execute("ALTER TABLE categories ADD COLUMN exclude INTEGER NOT NULL DEFAULT 0")
+    tcols = {r[1] for r in con.execute("PRAGMA table_info(transactions)")}
+    if "parent_id" not in tcols:   # parts of a split payment point at the first part
+        con.execute("ALTER TABLE transactions ADD COLUMN parent_id INTEGER")
     ucols = {r[1] for r in con.execute("PRAGMA table_info(users)")}
     for c_, d_ in (("title", "TEXT NOT NULL DEFAULT ''"), ("perms", "TEXT NOT NULL DEFAULT ''"), ("must_change", "INTEGER NOT NULL DEFAULT 0"),
                    ("last_login", "TEXT"), ("last_ip", "TEXT"), ("sess_ver", "INTEGER NOT NULL DEFAULT 0")):

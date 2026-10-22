@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Контрагенти{% endblock %}{% block body %}<h1>Контрагенти</h1>
+<p class="mut">Довідник тих, кому ви платите і від кого отримуєте гроші. З нього підставляється назва під час внесення платежів. Нові імена з банку додаються сюди самі. Для контрагента можна задати категорію за замовчуванням: тоді його платежі потраплятимуть саме в неї.</p>
+{% if can_edit %}<form method="post" action="/counterparties" class="card"><div class="row"><div><label>Новий контрагент</label><input name="name" required></div>
+<div><label>Категорія за замовчуванням</label><select name="default_category_id"><option value="">— немає —</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }} ({{ 'дохід' if c.kind=='income' else 'витрата' }})</option>{% endfor %}</select></div>
+<div><label>Примітка</label><input name="note"></div><div style="flex:0 0 auto"><button>Додати</button></div></div></form>{% endif %}
+<form method="get" class="row" style="margin:12px 0"><div><input name="q" value="{{ q }}" placeholder="Пошук за назвою чи приміткою"></div><div style="flex:0 0 auto"><select name="show" onchange="this.form.submit()"><option value="active" {{ 'selected' if show!='all' }}>Лише активні</option><option value="all" {{ 'selected' if show=='all' }}>З прихованими</option></select></div><div style="flex:0 0 auto"><button class="sec">Знайти</button></div></form>
+<p class="mut">Показано: {{ rows|length }}{% if total>rows|length %} з {{ total }}{% endif %}</p>
+<table><tr><th>Контрагент</th><th>Категорія за замовчуванням</th><th class="r">Платежів</th><th>Останній</th><th></th></tr>
+{% for r in rows %}<tr {% if not r.active %}style="opacity:.55"{% endif %}><td style="word-break:break-word"><b>{{ r.name }}</b>{% if not r.active %} <span class="tag">прихований</span>{% endif %}{% if r.note %}<div class="mut" style="font-size:12px">{{ r.note }}</div>{% endif %}</td>
+<td>{{ r.cname or '—' }}</td><td class="r num">{{ r.n }}</td><td class="num">{{ r.last_at[:10] if r.last_at else '—' }}</td>
+<td>{% if can_edit %}<details><summary class="btn sec sm" style="display:inline-block;list-style:none">Змінити</summary>
+<form method="post" action="/counterparties/{{ r.id }}" class="card" style="margin-top:6px;min-width:300px"><label>Назва</label><input name="name" value="{{ r.name }}">
+<label>Категорія за замовчуванням</label><select name="default_category_id"><option value="">— немає —</option>{% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if c.id==r.default_category_id }}>{{ c.name }}</option>{% endfor %}</select>
+<label>Примітка</label><input name="note" value="{{ r.note }}"><label>Показувати у списку</label><select name="active"><option value="1" {{ 'selected' if r.active }}>Так</option><option value="0" {{ 'selected' if not r.active }}>Ні, сховати</option></select>
+<p><button class="sm">Зберегти</button></p></form>
+<form method="post" action="/counterparties/{{ r.id }}" class="row" style="margin:4px 0" onsubmit="return !this.merge_into.value||confirm('Усі платежі «{{ r.name|e }}» перейдуть до вибраного контрагента, а цей запис зникне. Продовжити?')"><div><select name="merge_into" style="min-width:180px"><option value="">Об'єднати з…</option>{% for o in rows if o.id!=r.id %}<option value="{{ o.id }}">{{ o.name[:50] }}</option>{% endfor %}</select></div><div style="flex:0 0 auto"><button class="sm sec">Об'єднати</button></div></form>
+<form method="post" action="/counterparties/{{ r.id }}/delete" onsubmit="return confirm('Видалити контрагента «{{ r.name|e }}»?')" style="margin:4px 0"><button class="sm red">Видалити</button></form></details>{% endif %}</td></tr>
+{% else %}<tr><td colspan="5" class="mut">Нічого не знайдено</td></tr>{% endfor %}</table>{% endblock %}

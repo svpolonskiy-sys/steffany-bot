@@ -1,5 +1,10 @@
 {% extends "base.html" %}{% block title %}Операція{% endblock %}{% block body %}<h1>{{ 'Операція №' ~ t.id if t else 'Нова операція' }}</h1>
-{% if t and t.deleted_at %}<div class="flash">Видалено {{ t.deleted_at|dt }}. <form method="post" action="/transactions/{{ t.id }}/restore" style="display:inline"><button class="sm">Відновити</button></form></div>{% endif %}
+{% if t and t.deleted_at %}<div class="flash">Видалено {{ t.deleted_at|dt }}. <form method="post" action="/transactions/{{ t.id }}/restore" style="display:inline"><input name="reason" required minlength="5" placeholder="причина відновлення" style="width:220px;display:inline-block"> <button class="sm">Відновити</button></form></div>{% endif %}
+{% if t and parent %}<div class="flash">Це частина розділеного платежу. Головна частина: <a href="/transactions/{{ parent.id }}">№{{ parent.id }} ({{ parent.amount|money }})</a>.</div>{% endif %}
+{% if t and parts %}<div class="card" style="max-width:640px;margin-bottom:12px"><b>Платіж розділено на частини</b>
+<table class="hist"><tr><th>№</th><th>Сума</th><th>Категорія</th></tr><tr><td>{{ t.id }} (ця)</td><td class="num">{{ t.amount|money }}</td><td>{% for c in categories if c.id==t.category_id %}{{ c.name }}{% endfor %}</td></tr>
+{% for p in parts %}<tr><td><a href="/transactions/{{ p.id }}">{{ p.id }}</a></td><td class="num">{{ p.amount|money }}</td><td>{% for c in categories if c.id==p.category_id %}{{ c.name }}{% endfor %}</td></tr>{% endfor %}</table>
+<form method="post" action="/transactions/{{ t.id }}/unsplit" class="row" style="margin-top:8px"><div><input name="reason" required minlength="5" placeholder="причина об'єднання назад"></div><div style="flex:0 0 auto"><button class="sm sec">Об'єднати назад у один платіж</button></div></form></div>{% endif %}
 {% if not t and presets %}<p class="presets"><span class="mut">Швидкий переказ:</span><br>{% for lbl,f,to,d in presets %}<a class="btn sec sm" href="/transactions/new?kind=transfer&from_acc={{ f }}&to_acc={{ to }}&desc={{ d|urlencode }}">{{ lbl }}</a>{% endfor %}</p>{% endif %}
 <form method="post" class="card" style="max-width:640px" id="f">
 <label>Тип</label><select name="kind" id="kind" onchange="sync()">{% for k,v in KINDS.items() %}<option value="{{ k }}" {{ 'selected' if kind==k }}>{{ v }}</option>{% endfor %}</select>
@@ -9,13 +14,16 @@
 <div><label>Дата й час</label><input type="datetime-local" name="occurred_at" required value="{{ default_dt }}"></div></div>
 <div id="catbox"><label>Категорія <span class="mut">(порожньо — підберу автоматично)</span></label><select name="category_id"><option value="">Автоматично</option>
 {% for c in categories %}<option value="{{ c.id }}" data-k="{{ c.kind }}" {{ 'selected' if t and t.category_id==c.id }}>{{ c.name }} ({{ 'дохід' if c.kind=='income' else 'витрата' }})</option>{% endfor %}</select></div>
-<label>Контрагент</label><input name="counterparty" value="{{ t.counterparty if t else '' }}">
+<label>Контрагент</label><input name="counterparty" list="cpl" autocomplete="off" value="{{ t.counterparty if t else '' }}"><datalist id="cpl">{% for n in cps %}<option value="{{ n }}">{% endfor %}</datalist>
 <label>Опис</label><textarea name="description" rows="2">{{ t.description if t else (pre.desc if pre else '') }}</textarea>
 {% if t %}<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="make_rule" value="1" style="width:auto"> Завжди відносити до цієї категорії операції, що містять:</label>
 <input name="rule_text" placeholder="напр. «Нова пошта»" value="{{ t.counterparty or '' }}">{% endif %}
+{% if t and not t.deleted_at %}<div class="flash" style="margin-top:10px"><b>Причина зміни — обов'язково.</b> Будь-яка зміна операції записується в журнал разом із вашим поясненням.{% if t.source in ('privat','alteg') %} Операція прийшла з {{ 'банку' if t.source=='privat' else 'Alteg' }}: після вашої зміни вона більше не оновлюватиметься автоматично.{% endif %}
+<textarea name="reason" rows="2" required minlength="5" placeholder="Чому змінюєте? Напр.: помилково внесено іншу суму" style="margin-top:8px"></textarea></div>{% endif %}
 <div id="sum" class="flash" style="display:none"></div>
 <p><button>Зберегти</button> <a class="btn sec" href="/transactions">Скасувати</a></p></form>
-{% if t and not t.deleted_at %}<form method="post" action="/transactions/{{ t.id }}/delete" onsubmit="return confirm('Видалити операцію? Історія збережеться.')"><button class="red sm">Видалити</button></form>{% endif %}
+{% if t and not t.deleted_at %}<div class="row" style="align-items:flex-end;margin-top:10px">{% if t.kind!='transfer' %}<div style="flex:0 0 auto"><a class="btn sec" href="/transactions/{{ t.id }}/split">Розділити між категоріями</a></div>{% endif %}
+<form method="post" action="/transactions/{{ t.id }}/delete" class="row" style="margin:0" onsubmit="return confirm('Видалити операцію? Історія збережеться.')"><div><input name="reason" required minlength="5" placeholder="причина видалення" style="min-width:240px"></div><div style="flex:0 0 auto"><button class="red sm">Видалити</button></div></form></div>{% endif %}
 {% if history %}<h2>Історія змін</h2><table class="hist"><tr><th>Коли</th><th>Хто</th><th>Дія</th><th>Було → стало</th></tr>
 {% for h in history %}<tr><td class="num">{{ h.at|dt }}</td><td>{{ h.uname or 'система' }}</td><td>{{ {'create':'створено','update':'змінено','delete':'видалено','restore':'відновлено'}[h.action] }} {{ h.note }}</td>
 <td class="mut" style="word-break:break-all">{{ h.before_json or '' }}<br>→ {{ h.after_json or '' }}</td></tr>{% endfor %}</table>{% endif %}
