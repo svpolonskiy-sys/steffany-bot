@@ -1597,5 +1597,5 @@ def control_decide(request: Request, fid: int, action: str = Form(...), note: st
             c.execute("UPDATE findings SET status=?, decided_at=?, decided_by=?, note=? WHERE id=?",
                       (action, now_local(), u["name"], note.strip()[:300], fid))
         c.commit()
-    log_act(request, u, "Контроль: " + {"ignored": "ігноровано", "resolved": "вирішено", "open": "повернуто"}[action], f["title"])
+    log_act(request, u, "Контроль: " + {"ignored": "дозволено", "resolved": "вирішено", "open": "повернуто"}[action], f["title"])
     return RedirectResponse(request.headers.get("referer") or "/control", status_code=303)
