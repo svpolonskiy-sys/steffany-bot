@@ -3,14 +3,32 @@
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png?v=2">
 <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=2"><link rel="manifest" href="/static/manifest.webmanifest?v=2"><meta name="theme-color" content="#6b2f6e">
 <link rel="stylesheet" href="/static/style.css?v={{ asset_v }}"></head><body>
-{% if user %}<nav><div class="nv"><a class="b" href="/" title="Steffany · Фінанси">{% set compact=true %}{% include "_logo.html" %}<span class="fin">Фінанси</span></a>
-{% for href,t,need in [('/','Огляд',''),('/cash','Каса',''),('/transactions','Операції',''),('/reports','Звіти',''),('/pl','P&L','analytics'),('/payroll','Зарплата','analytics'),('/credits','Кредити','analytics'),('/control','Контроль','analytics'),('/categories','Категорії',''),('/counterparties','Контрагенти',''),('/accounts','Рахунки','')] %}{% if not need or can[need] %}
-<a class="l {{ 'on' if request.url.path==href or (href!='/' and request.url.path.startswith(href)) }}" href="{{ href }}">{{ t }}{% if href=='/control' and ctl_open %} <span class="bdg">{{ ctl_open }}</span>{% endif %}</a>{% endif %}{% endfor %}
-{% if user.role=='owner' %}<a class="l {{ 'on' if request.url.path=='/users' }}" href="/users">Користувачі</a><a class="l {{ 'on' if request.url.path=='/activity' }}" href="/activity">Активність</a>{% endif %}
-<span class="sp"></span><span class="who">{{ user.name }} · {{ user.title or ROLES[user.role] }}</span>
-<a class="l me {{ 'on' if request.url.path in ('/account','/password') }}" href="/account" title="Мій кабінет: змінити пароль">Кабінет</a><form method="post" action="/logout" style="margin:0"><button class="sec sm" style="margin-left:4px">Вийти</button></form></div></nav>{% endif %}
+{% if user %}{% macro lk(href,t,badge=0) %}<a class="l {{ 'on' if (request.url.path==href or (href!='/' and request.url.path.startswith(href))) }}" href="{{ href }}">{{ t }}{% if badge %} <span class="bdg">{{ badge }}</span>{% endif %}</a>{% endmacro %}
+<nav class="topnav" id="topnav"><div class="nv"><a class="b" href="/" title="Steffany · Фінанси">{% set compact=true %}{% include "_logo.html" %}<span class="fin">Фінанси</span></a>
+<div class="menu" id="menu">
+{{ lk('/','Огляд') }}{{ lk('/cash','Каса') }}{{ lk('/transactions','Операції') }}
+<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/reports','/pl','/payroll','/credits')) }}" aria-haspopup="true" aria-expanded="false">Звіти <i class="car"></i></button>
+<div class="ddp"><div class="gh">Звіти</div>{{ lk('/reports','Звіти за період') }}{% if can.analytics %}{{ lk('/pl','Прибутки й витрати (P&L)') }}{{ lk('/payroll','Зарплата') }}{{ lk('/credits','Кредити') }}{% endif %}</div></div>
+{% if can.analytics %}{{ lk('/control','Контроль',ctl_open) }}{% endif %}
+<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/categories','/counterparties','/accounts')) }}" aria-haspopup="true" aria-expanded="false">Довідники <i class="car"></i></button>
+<div class="ddp"><div class="gh">Довідники</div>{{ lk('/categories','Категорії й правила') }}{{ lk('/counterparties','Контрагенти') }}{{ lk('/accounts','Рахунки') }}</div></div>
+{% if user.role=='owner' %}<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/users','/activity','/edits')) }}" aria-haspopup="true" aria-expanded="false">Керування <i class="car"></i></button>
+<div class="ddp"><div class="gh">Керування</div>{{ lk('/users','Користувачі') }}{{ lk('/activity','Журнал активності') }}{{ lk('/edits','Журнал змін операцій') }}</div></div>{% endif %}
+</div>
+<span class="sp"></span>
+<div class="dd me"><button type="button" class="ddb ava {{ 'on' if request.url.path in ('/account','/password') }}" aria-haspopup="true" aria-expanded="false" aria-label="Мій профіль"><span class="av">{{ user.name.split()[:2]|map('first')|join|upper }}</span><span class="nm">{{ user.name.split()[0] }}</span><i class="car"></i></button>
+<div class="ddp right"><div class="who2"><b>{{ user.name }}</b><span>{{ user.title or ROLES[user.role] }}</span></div>{{ lk('/account','Мій кабінет · змінити пароль') }}
+<form method="post" action="/logout" style="margin:0"><button class="l out-btn">Вийти</button></form></div></div>
+<button type="button" class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span><span></span><span></span>{% if ctl_open %}<em>{{ ctl_open }}</em>{% endif %}</button>
+</div></nav>{% endif %}
 <main>{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}{% block body %}{% endblock %}</main>
 {% if user %}<div class="add"><a class="btn red" href="/transactions/new?kind=expense">− Витрата</a><a class="btn grn" href="/transactions/new?kind=income">+ Надходження</a><a class="btn blu" href="/transactions/new?kind=transfer">⇄ Переказ</a></div>{% endif %}
+<script>(function(){var nav=document.getElementById('topnav');if(!nav)return;
+function closeAll(except){nav.querySelectorAll('.dd.open').forEach(function(d){if(d!==except){d.classList.remove('open');d.querySelector('.ddb').setAttribute('aria-expanded','false')}})}
+nav.addEventListener('click',function(e){var b=e.target.closest('.ddb');if(b){var d=b.parentNode,o=!d.classList.contains('open');closeAll(d);d.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');e.stopPropagation();return}
+ if(e.target.closest('#burger')){var o=!nav.classList.contains('open');nav.classList.toggle('open',o);document.getElementById('burger').setAttribute('aria-expanded',o?'true':'false');closeAll();e.stopPropagation()}});
+document.addEventListener('click',function(e){if(!nav.contains(e.target)){closeAll();nav.classList.remove('open')}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAll();nav.classList.remove('open')}})})();</script>
 <script>(function(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
 document.querySelectorAll('.big.num').forEach(function(el){var m=el.textContent.trim().match(/^([+\-−]?)([\d\s\u00a0]+(?:,\d+)?)(\s*₴.*)$/);if(!m)return;
 var target=parseFloat(m[2].replace(/[\s\u00a0]/g,'').replace(',','.'));if(!isFinite(target)||target===0)return;var t0=null,dur=650;

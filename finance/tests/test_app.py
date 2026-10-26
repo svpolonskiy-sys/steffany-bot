@@ -648,7 +648,7 @@ def test_transaction_filters(client):
     def n(qs):
         r = client.get("/transactions" + qs)
         assert r.status_code == 200
-        return len(__import__("re").findall(r'<tr class=""><td class="num"><a href="/transactions/\d+">', r.text))
+        return len(__import__("re").findall(r'<tr class=""><td class="num d"><a href="/transactions/\d+">', r.text))
     assert n("") == 4
     assert n("?kind=expense") == 2 and n("?kind=income") == 1 and n("?kind=transfer") == 1
     assert n("?kind=expense&kind=income") == 3                                   # several types together
