@@ -339,3 +339,35 @@ nav.open .burger span:nth-child(1){top:20px;transform:rotate(45deg)}nav.open .bu
  table.txt tr:hover td{background:none}
  table.txt tr{padding:11px 14px}
 }
+
+/* ================= menu: capsule with a sliding highlight and icons ================= */
+@media (min-width:901px){
+ nav.topnav .menu{position:relative;gap:2px;padding:4px;border:1px solid var(--line);border-radius:999px;
+  background:color-mix(in srgb,var(--card) 60%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 6px 18px -12px rgba(70,40,130,.35)}
+ .menu .ind{position:absolute;left:0;top:4px;bottom:4px;width:0;border-radius:999px;pointer-events:none;opacity:0;z-index:0;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--acc2) 42%,#fff 0%),color-mix(in srgb,#e58bb4 38%,var(--acc2)));
+  box-shadow:0 6px 16px -6px color-mix(in srgb,var(--acc) 60%,transparent),inset 0 1px 0 rgba(255,255,255,.45);
+  transition:transform .42s cubic-bezier(.3,1.35,.4,1),width .42s cubic-bezier(.3,1.35,.4,1),opacity .2s,background .3s}
+ .menu .ind.ghost{background:color-mix(in srgb,var(--acc2) 20%,transparent);box-shadow:none}
+ nav.topnav .menu>a.l,nav.topnav .menu .ddb{position:relative;z-index:1;border-radius:999px;padding:8px 14px 8px 12px;background:none!important;color:var(--ink);font-weight:500}
+ nav.topnav .menu>a.l.on,nav.topnav .menu .ddb.on,.menu .dd.open>.ddb{color:var(--accd);font-weight:600}
+ nav.topnav .menu>a.l:hover,nav.topnav .menu .ddb:hover{color:var(--accd)}
+ .menu>a.l.on::after{display:none}
+ .menu .bdg{margin-left:2px}
+}
+.mi{flex:none;color:var(--acc);opacity:.85;transition:transform .35s cubic-bezier(.3,1.6,.4,1),opacity .2s}
+.l:hover .mi,.ddb:hover .mi{transform:translateY(-2px) rotate(-8deg) scale(1.12);opacity:1}
+.l.on .mi,.ddb.on .mi{opacity:1}
+.menu>a.l[href="/control"] .mi{color:var(--in)}
+.ddp a.l .mi{width:18px;height:18px}.ddp a.l{gap:10px}
+.ddp a.l:hover{background:color-mix(in srgb,var(--acc2) 18%,transparent)!important;color:var(--accd)}
+@keyframes ddin{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:none}}
+.dd.open>.ddp{animation:ddin .22s cubic-bezier(.2,.9,.3,1.2) both}
+@media (max-width:1180px) and (min-width:901px){.menu .mi{display:none}nav.topnav .menu>a.l,nav.topnav .menu .ddb{padding:8px 11px}}
+@media (max-width:900px){.menu .ind{display:none}.menu>a.l .mi,.menu .ddp a.l .mi{width:20px;height:20px}.menu>a.l,.ddp a.l{gap:12px}}
+@media (prefers-color-scheme:dark){
+ nav.topnav .menu{background:color-mix(in srgb,var(--card) 70%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+ .menu .ind{background:linear-gradient(135deg,color-mix(in srgb,var(--acc2) 55%,transparent),color-mix(in srgb,#b0508a 45%,var(--acc2)))}
+ nav.topnav .menu>a.l.on,nav.topnav .menu .ddb.on,.menu .dd.open>.ddb,nav.topnav .menu>a.l:hover,nav.topnav .menu .ddb:hover{color:#fff}
+}
+@media (prefers-reduced-motion:reduce){.menu .ind{transition:none}}

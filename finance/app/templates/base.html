@@ -3,21 +3,22 @@
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=2"><link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png?v=2">
 <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=2"><link rel="manifest" href="/static/manifest.webmanifest?v=2"><meta name="theme-color" content="#6b2f6e">
 <link rel="stylesheet" href="/static/style.css?v={{ asset_v }}"></head><body>
-{% if user %}{% macro lk(href,t,badge=0) %}<a class="l {{ 'on' if (request.url.path==href or (href!='/' and request.url.path.startswith(href))) }}" href="{{ href }}">{{ t }}{% if badge %} <span class="bdg">{{ badge }}</span>{% endif %}</a>{% endmacro %}
+{% if user %}{% macro ic(n) %}<svg class="mi" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if n=='home' %}<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>{% elif n=='cash' %}<path d="M3 8h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 8l11-4v4"/><circle cx="17" cy="14" r="1.3"/>{% elif n=='ops' %}<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.1"/><circle cx="4.5" cy="12" r="1.1"/><circle cx="4.5" cy="18" r="1.1"/>{% elif n=='rep' %}<path d="M4 20h16"/><path d="M7 20v-7M12 20V5M17 20v-10"/>{% elif n=='ctl' %}<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5L16 9.5"/>{% elif n=='ref' %}<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>{% elif n=='adm' %}<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>{% elif n=='pl' %}<path d="M4 17l5-6 4 3 7-9"/><path d="M15 5h5v5"/>{% elif n=='pay' %}<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/>{% elif n=='cred' %}<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>{% elif n=='cat' %}<path d="M4 4h7l9 9-7 7-9-9z"/><circle cx="8" cy="8" r="1.2"/>{% elif n=='cp' %}<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5"/><path d="M16 5a3 3 0 0 1 0 6M18 14.5c2 .7 3 2.3 3 5.5"/>{% elif n=='acc' %}<path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/>{% elif n=='log' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>{% elif n=='edit' %}<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>{% else %}<circle cx="12" cy="12" r="3"/>{% endif %}</svg>{% endmacro %}
+{% macro lk(href,t,badge=0,icon='') %}<a class="l {{ 'on' if (request.url.path==href or (href!='/' and request.url.path.startswith(href))) }}" href="{{ href }}">{% if icon %}{{ ic(icon) }}{% endif %}<span class="lt">{{ t }}</span>{% if badge %} <span class="bdg">{{ badge }}</span>{% endif %}</a>{% endmacro %}
 <nav class="topnav" id="topnav"><div class="nv"><a class="b" href="/" title="Steffany · Фінанси">{% set compact=true %}{% include "_logo.html" %}<span class="fin">Фінанси</span></a>
-<div class="menu" id="menu">
-{{ lk('/','Огляд') }}{{ lk('/cash','Каса') }}{{ lk('/transactions','Операції') }}
-<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/reports','/pl','/payroll','/credits')) }}" aria-haspopup="true" aria-expanded="false">Звіти <i class="car"></i></button>
-<div class="ddp"><div class="gh">Звіти</div>{{ lk('/reports','Звіти за період') }}{% if can.analytics %}{{ lk('/pl','Прибутки й витрати (P&L)') }}{{ lk('/payroll','Зарплата') }}{{ lk('/credits','Кредити') }}{% endif %}</div></div>
-{% if can.analytics %}{{ lk('/control','Контроль',ctl_open) }}{% endif %}
-<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/categories','/counterparties','/accounts')) }}" aria-haspopup="true" aria-expanded="false">Довідники <i class="car"></i></button>
-<div class="ddp"><div class="gh">Довідники</div>{{ lk('/categories','Категорії й правила') }}{{ lk('/counterparties','Контрагенти') }}{{ lk('/accounts','Рахунки') }}</div></div>
-{% if user.role=='owner' %}<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/users','/activity','/edits')) }}" aria-haspopup="true" aria-expanded="false">Керування <i class="car"></i></button>
-<div class="ddp"><div class="gh">Керування</div>{{ lk('/users','Користувачі') }}{{ lk('/activity','Журнал активності') }}{{ lk('/edits','Журнал змін операцій') }}</div></div>{% endif %}
+<div class="menu" id="menu"><i class="ind" aria-hidden="true"></i>
+{{ lk('/','Огляд',0,'home') }}{{ lk('/cash','Каса',0,'cash') }}{{ lk('/transactions','Операції',0,'ops') }}
+<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/reports','/pl','/payroll','/credits')) }}" aria-haspopup="true" aria-expanded="false">{{ ic('rep') }}<span class="lt">Звіти</span> <i class="car"></i></button>
+<div class="ddp"><div class="gh">Звіти</div>{{ lk('/reports','Звіти за період',0,'rep') }}{% if can.analytics %}{{ lk('/pl','Прибутки й витрати (P&L)',0,'pl') }}{{ lk('/payroll','Зарплата',0,'pay') }}{{ lk('/credits','Кредити',0,'cred') }}{% endif %}</div></div>
+{% if can.analytics %}{{ lk('/control','Контроль',ctl_open,'ctl') }}{% endif %}
+<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/categories','/counterparties','/accounts')) }}" aria-haspopup="true" aria-expanded="false">{{ ic('ref') }}<span class="lt">Довідники</span> <i class="car"></i></button>
+<div class="ddp"><div class="gh">Довідники</div>{{ lk('/categories','Категорії й правила',0,'cat') }}{{ lk('/counterparties','Контрагенти',0,'cp') }}{{ lk('/accounts','Рахунки',0,'acc') }}</div></div>
+{% if user.role=='owner' %}<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/users','/activity','/edits')) }}" aria-haspopup="true" aria-expanded="false">{{ ic('adm') }}<span class="lt">Керування</span> <i class="car"></i></button>
+<div class="ddp"><div class="gh">Керування</div>{{ lk('/users','Користувачі',0,'cp') }}{{ lk('/activity','Журнал активності',0,'log') }}{{ lk('/edits','Журнал змін операцій',0,'edit') }}</div></div>{% endif %}
 </div>
 <span class="sp"></span>
 <div class="dd me"><button type="button" class="ddb ava {{ 'on' if request.url.path in ('/account','/password') }}" aria-haspopup="true" aria-expanded="false" aria-label="Мій профіль"><span class="av">{{ user.name.split()[:2]|map('first')|join|upper }}</span><span class="nm">{{ user.name.split()[0] }}</span><i class="car"></i></button>
-<div class="ddp right"><div class="who2"><b>{{ user.name }}</b><span>{{ user.title or ROLES[user.role] }}</span></div>{{ lk('/account','Мій кабінет · змінити пароль') }}
+<div class="ddp right"><div class="who2"><b>{{ user.name }}</b><span>{{ user.title or ROLES[user.role] }}</span></div>{{ lk('/account','Мій кабінет · змінити пароль',0,'pay') }}
 <form method="post" action="/logout" style="margin:0"><button class="l out-btn">Вийти</button></form></div></div>
 <button type="button" class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span><span></span><span></span>{% if ctl_open %}<em>{{ ctl_open }}</em>{% endif %}</button>
 </div></nav>{% endif %}
@@ -28,7 +29,16 @@ function closeAll(except){nav.querySelectorAll('.dd.open').forEach(function(d){i
 nav.addEventListener('click',function(e){var b=e.target.closest('.ddb');if(b){var d=b.parentNode,o=!d.classList.contains('open');closeAll(d);d.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');e.stopPropagation();return}
  if(e.target.closest('#burger')){var o=!nav.classList.contains('open');nav.classList.toggle('open',o);document.getElementById('burger').setAttribute('aria-expanded',o?'true':'false');closeAll();e.stopPropagation()}});
 document.addEventListener('click',function(e){if(!nav.contains(e.target)){closeAll();nav.classList.remove('open')}});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAll();nav.classList.remove('open')}})})();</script>
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAll();nav.classList.remove('open')}});
+/* sliding highlight: follows the pointer, rests under the current section */
+var menu=document.getElementById('menu'),ind=menu.querySelector('.ind');
+function items(){return Array.prototype.filter.call(menu.children,function(c){return c.matches('a.l')||c.classList.contains('dd')}).map(function(c){return c.matches('a.l')?c:c.querySelector('.ddb')})}
+function put(el,ghost){if(!el||getComputedStyle(ind).display==='none'){ind.style.opacity=0;return}
+ ind.style.opacity=1;ind.classList.toggle('ghost',!!ghost);ind.style.width=el.offsetWidth+'px';ind.style.transform='translateX('+(el.offsetLeft)+'px)'}
+function rest(){var a=items().filter(function(e){return e.classList.contains('on')})[0];if(a){put(a,false)}else{ind.style.opacity=0}}
+items().forEach(function(e){e.addEventListener('mouseenter',function(){put(e,e.classList.contains('on')?false:true)});e.addEventListener('focus',function(){put(e,true)})});
+menu.addEventListener('mouseleave',rest);window.addEventListener('resize',rest);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(rest);rest();setTimeout(rest,400)})();</script>
 <script>(function(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
 document.querySelectorAll('.big.num').forEach(function(el){var m=el.textContent.trim().match(/^([+\-−]?)([\d\s\u00a0]+(?:,\d+)?)(\s*₴.*)$/);if(!m)return;
 var target=parseFloat(m[2].replace(/[\s\u00a0]/g,'').replace(',','.'));if(!isFinite(target)||target===0)return;var t0=null,dur=650;
