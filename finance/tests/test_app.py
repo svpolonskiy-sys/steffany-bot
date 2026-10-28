@@ -878,3 +878,13 @@ def test_counterparty_directory_and_category_delete(client):
     client.post(f"/categories/{c1}/delete", data={"move_to": str(other)})
     assert not main.con.execute("SELECT 1 FROM categories WHERE id=?", (c1,)).fetchone()
     assert main.con.execute("SELECT category_id FROM transactions ORDER BY id DESC").fetchone()[0] == other
+
+
+def test_credit_block_lists_only_repayments_not_cash_withdrawals(client):
+    a = accid("ФОП 1")
+    kr = cat.get_or_create_category(main.con, "Кредит", "expense")
+    for d, desc in (("2026-10-02T10:00", "Погашення заборгованості за кредитним договором 111-КД-1"),
+                    ("2026-10-12T16:21", "4246 **** **** 9652 Зняття готівки: Зняття готівки в банкоматі")):
+        client.post("/transactions/new", data=dict(kind="expense", account_id=a, amount="1000", occurred_at=d, description=desc, category_id=kr))
+    page = client.get("/credits").text
+    assert "Погашення заборгованості за кредитним договором" in page and "Зняття готівки" not in page

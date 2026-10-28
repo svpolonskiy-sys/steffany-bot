@@ -755,7 +755,9 @@ def credits_page(request: Request, u=Depends(need_analytics)):
                     "ORDER BY o.occurred_at DESC, o.id DESC LIMIT 300").fetchall()
     repay = c.execute(
         "SELECT t.*, a.name acc FROM transactions t JOIN accounts a ON a.id=t.account_id JOIN categories k ON k.id=t.category_id "
-        "WHERE t.deleted_at IS NULL AND k.name='Кредит' AND t.kind='expense' ORDER BY t.occurred_at DESC LIMIT 100").fetchall()
+        "WHERE t.deleted_at IS NULL AND k.name='Кредит' AND t.kind='expense' "
+        "AND lower(t.description) NOT LIKE '%зняття готівки%' AND lower(t.description) NOT LIKE '%банкомат%' "   # cash withdrawals are not repayments
+        "ORDER BY t.occurred_at DESC LIMIT 100").fetchall()
     summary = sync.credit_summary(c)
     show_all = request.query_params.get("all") == "1"
     if not show_all:
