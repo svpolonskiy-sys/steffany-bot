@@ -1066,4 +1066,8 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     r = payrun.parse_mark("переробка Іванов", people)
     assert r["kind"] == "rework" and r["other"]["name"] == "Іванов Іван"
     assert payrun.parse_mark("переробка", people)["other"] is None                      # master unknown -> shown in Control, nothing applied
-    assert payrun.parse_mark("блогер (по бартеру)", people) is None and payrun.parse_mark("відмовився оплачувати", people) is None
+    assert payrun.parse_mark("блогер (по бартеру)", people)["kind"] == "barter" and payrun.parse_mark("відмовився оплачувати", people)["kind"] == "refuse"
+    for rid, who, com, first, paid in ((20, "Нонік Анна", "блогер (по бартеру )", 180000, 0), (21, "Нонік Анна", "відмовився оплачувати", 50000, 0)):
+        main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(?,?,?,1,?,?,?,0,'x')", (rid, "2026-09-15", who, com, first, paid))
+    ef = payrun.visit_effects(main.con, "2026-09", people)
+    assert ef["per"]["Нонік Анна"] == 700 + 1800 and not [x for x in ef["pending"] if x["rid"] in (20, 21)]       # barter pays the percentage, a refusal does not

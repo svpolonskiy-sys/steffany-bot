@@ -238,12 +238,20 @@ def parse_mark(comment: str, people: list[dict]):
         return None
     tags = re.findall(r"#\s*([\w'’]+)", low)
     kind = None
+    if re.search(r"відмов\w*\s+(?:від\s+)?(?:оплат|оплач|плат)|не\s+(?:оплат|заплат|платив)", low):
+        return dict(kind="refuse", amount=None, other=None)           # client refused to pay: the master gets no percentage
     for t in tags:
         kind = ("rework" if t.startswith("переробк") else "cert" if t.startswith("сертиф") else "points" if t.startswith(("бал", "бонус"))
                 else "gift" if t.startswith("подарун") else None) or kind
     if kind is None:                                                      # plain words, no '#'
-        if re.search(r"переробк", low):
+        if re.search(r"переробк\w*\s+(?:після\s+)?(?:іншого|іншому|чужого)\s+салон", low):
+            kind = "gift"                                             # redone after another salon: nothing to move between our masters
+        elif re.search(r"переробк", low):
             kind = "rework"
+        elif re.search(r"бартер|блогер", low):
+            kind = "barter"                                           # free for a blogger: the master is still paid in full
+        elif re.search(r"подарун|комплімент", low):
+            kind = "gift"
         elif re.search(r"сертифікат", low):
             kind = "cert"
         elif re.search(r"(?<!\w)(бали|балів|балами|бонус\w*)(?!\w)", low):
@@ -260,7 +268,8 @@ def parse_mark(comment: str, people: list[dict]):
     return dict(kind=kind, amount=_mark_amount(low), other=other)
 
 
-MARK_LABEL = {"cert": "сертифікат", "points": "бали", "rework": "переробка", "gift": "подарунок", "discount": "знижка (ЗП з повної суми)"}
+MARK_LABEL = {"cert": "сертифікат", "points": "бали", "rework": "переробка", "gift": "подарунок", "barter": "бартер (ЗП з повної суми)",
+              "refuse": "відмова від оплати (без ЗП)", "discount": "знижка (ЗП з повної суми)"}
 
 
 def visit_effects(con, ym: str, people: list[dict]) -> dict:
@@ -290,6 +299,11 @@ def visit_effects(con, ym: str, people: list[dict]) -> dict:
             if amt:
                 per[who] = per.get(who, 0) + amt
             lines.append(dict(base, kind="discount", amount=amt, other="", effect=(f"знижка {pct}%: +{amt:,.0f} до каси {who}, ЗП з повної суми" if amt else f"знижка {pct}%, але оплати немає")))
+        elif m["kind"] == "refuse":
+            lines.append(dict(base, kind="refuse", amount=0, other="", effect="клієнт відмовився платити: % майстру не нараховується"))
+        elif m["kind"] == "barter":
+            per[who] = per.get(who, 0) + amt
+            lines.append(dict(base, kind="barter", amount=amt, other="", effect=f"бартер: +{amt:,.0f} до каси {who}, ЗП з повної суми"))
         elif m["kind"] == "gift":
             lines.append(dict(base, kind="gift", amount=0, other="", effect="без змін: подарунок"))
         elif m["kind"] in ("cert", "points"):
