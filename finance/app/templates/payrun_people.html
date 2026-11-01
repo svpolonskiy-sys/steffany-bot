@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}Співробітники й ставки{% endblock %}{% block body %}
+<h1>Співробітники та ставки</h1>
+<p class="mut">Список, за яким рахується зарплата. Відсоток від каси, фіксована ставка, щомісячна доплата (наприклад, керівнику нейл-напряму) та «імена в Alteg» — як співробітник записаний в Alteg, якщо прізвище там інше. <a href="/payrun">← Назад до нарахування</a></p>
+<div class="pr-scroll"><table class="prt"><tr><th>Прізвище, ім'я</th><th>Розділ</th><th>Тип</th><th>% від каси</th><th>Фікс., ₴</th><th>Щомісячна доплата, ₴</th><th>Ставка/год, ₴</th><th>Імена в Alteg (через |)</th><th>Примітка</th><th>Активний</th><th></th></tr>
+{% for p in people %}<tr {% if not p.active %}style="opacity:.55"{% endif %}><form method="post" action="/payrun/people"><input type="hidden" name="pid" value="{{ p.id }}">
+<td><input class="md-in" name="name" value="{{ p.name }}"></td>
+<td><select name="section">{% for s in SECTIONS %}<option {{ 'selected' if s==p.section }}>{{ s }}</option>{% endfor %}</select></td>
+<td><select name="kind">{% for k,v in KIND_LABEL.items() %}<option value="{{ k }}" {{ 'selected' if k==p.kind }}>{{ v }}</option>{% endfor %}</select></td>
+<td><input class="sm-in" name="pct" value="{{ (p.pct*100)|round(1) if p.pct else '' }}"></td><td><input class="sm-in" name="fixed" value="{{ (p.fixed/100)|int if p.fixed else '' }}"></td>
+<td><input class="sm-in" name="extra" value="{{ (p.extra/100)|int if p.extra else '' }}"></td><td><input class="sm-in" name="rate" value="{{ (p.rate/100)|int if p.rate else '' }}"></td>
+<td><input class="md-in" name="alias" value="{{ p.alias }}"></td><td><input class="md-in" name="note" value="{{ p.note }}"></td>
+<td><select name="active"><option value="1" {{ 'selected' if p.active }}>так</option><option value="0" {{ 'selected' if not p.active }}>ні</option></select></td>
+<td>{% if can_edit %}<button class="sm">Зберегти</button>{% endif %}</td></form></tr>{% endfor %}</table></div>
+{% if can_edit %}<h2>Додати співробітника</h2><form method="post" action="/payrun/people" class="card"><div class="row"><div><label>Прізвище, ім'я</label><input name="name" required></div>
+<div><label>Розділ</label><select name="section">{% for s in SECTIONS %}<option>{{ s }}</option>{% endfor %}</select></div><div><label>Тип</label><select name="kind">{% for k,v in KIND_LABEL.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+<div><label>% від каси</label><input name="pct" placeholder="40"></div><div><label>Фікс., ₴</label><input name="fixed"></div><div><label>Доплата/міс, ₴</label><input name="extra"></div>
+<div style="flex:0 0 auto"><button>Додати</button></div></div></form>{% endif %}{% endblock %}

@@ -10,7 +10,7 @@
 {{ lk('/','Огляд',0,'home') }}{{ lk('/cash','Каса',0,'cash') }}{{ lk('/transactions','Операції',0,'ops') }}
 <div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/reports','/pl','/payroll','/credits')) }}" aria-haspopup="true" aria-expanded="false">{{ ic('rep') }}<span class="lt">Звіти</span> <i class="car"></i></button>
 <div class="ddp"><div class="gh">Звіти</div>{{ lk('/reports','Звіти за період',0,'rep') }}{% if can.analytics %}{{ lk('/pl','Прибутки й витрати (P&L)',0,'pl') }}{{ lk('/payroll','Зарплата',0,'pay') }}{{ lk('/credits','Кредити',0,'cred') }}{% endif %}</div></div>
-{% if can.analytics %}{{ lk('/control','Контроль',ctl_open,'ctl') }}{% endif %}
+{% if can.analytics %}{{ lk('/payrun','Нарахування ЗП',0,'pay') }}{{ lk('/control','Контроль',ctl_open,'ctl') }}{% endif %}
 <div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/categories','/counterparties','/accounts')) }}" aria-haspopup="true" aria-expanded="false">{{ ic('ref') }}<span class="lt">Довідники</span> <i class="car"></i></button>
 <div class="ddp"><div class="gh">Довідники</div>{{ lk('/categories','Категорії й правила',0,'cat') }}{{ lk('/counterparties','Контрагенти',0,'cp') }}{{ lk('/accounts','Рахунки',0,'acc') }}</div></div>
 {% if user.role=='owner' %}<div class="dd"><button type="button" class="l ddb {{ 'on' if request.url.path.startswith(('/users','/activity','/edits')) }}" aria-haspopup="true" aria-expanded="false">{{ ic('adm') }}<span class="lt">Керування</span> <i class="car"></i></button>

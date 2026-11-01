@@ -942,3 +942,85 @@ def test_transfer_breakdown_in_reports(client):
     assert t["total"] == 350000 and t["count"] == 3 and [g["name"] for g in t["groups"]] == ["ФОП 1 → Сейф", "Каса салон → Сейф"]
     page = client.get("/reports?date_from=2026-10-01&date_to=2026-10-31").text
     assert 'id="transfers"' in page and "Каса салон → Сейф" in page and 'href="#transfers"' in page
+
+
+def _payrun_setup(ym="2026-09"):
+    """Roster of three people + Alteg sales for the month, no accountant data yet."""
+    from app import payrun
+    for name, section, kind, pct, extra in (("Іванов Іван", "Перукарі", "master", 0.4, 0), ("Нонік Анна", "Майстри манікюру", "master", 0.4, 500000),
+                                             ("Петрова Ольга", "Адміністратори", "admin", None, 0)):
+        main.con.execute("INSERT INTO pay_people(name,section,kind,pct,extra,rate) VALUES(?,?,?,?,?,?)", (name, section, kind, pct, extra, 7000 if kind == "admin" else 0))
+    rows = (("Іванов Іван", "Перукар", 1, "Перукарські послуги", "service", 1000000), ("Іванов Іван", "Перукар", 1, "Товари", "goods", 100000),
+            ("Анна Нонік", "Майстер нігтьового сервісу", 2, "Манікюр", "service", 500000))
+    for i, (n, role, sid, cat_, typ, amt) in enumerate(rows):
+        main.con.execute("INSERT INTO alteg_pay(external_id,occurred_at,amount,method,staff_id,staff_name,staff_role,category_title,item_type) VALUES(?,?,?,?,?,?,?,?,?)",
+                         (f"p{i}", f"{ym}-{10 + i}T12:00:00", amt, "cash", sid, n, role, cat_, typ))
+    main.con.commit()
+
+
+def test_payrun_formulas_follow_the_sheet(client):
+    from app import payrun
+    assert payrun.rnd(2.5) == 3 and payrun.rnd(-2.5) == -3 and payrun.rnd(2.4999) == 2          # Excel ROUND
+    _payrun_setup()
+    f1 = [dict(name="Іванов Іван", adv_card=1000, sal_card=1000, taxes=300), dict(name="Нонік Анна", adv_card=1000, sal_card=1000, taxes=300),
+          dict(name="Петрова Ольга", adv_card=3465, sal_card=3465, taxes=2070)]
+    payrun.save_f1(main.con, "2026-09", f1, "file", "t.xlsx", "Бухгалтер")
+    payrun.save_adj(main.con, "2026-09", {"Петрова Ольга|Адміністратори": dict(hours=100, shifts=10, retail=1000, fines=50, fines_note="запізнення")})
+    rid = payrun.create_run(main.con, "2026-09", "Бухгалтер")
+    run = payrun.get_run(main.con, rid)
+    by = {r["name"]: r for r in run["result"]["rows"]}
+    assert by["Іванов Іван"]["gross"] == 4000 + 100                      # 40% of 10 000 till + 10% of 1 000 retail
+    assert by["Нонік Анна"]["gross"] == 2000 + 5000                      # 40% of 5 000 + the monthly extra of the nail head
+    assert by["Петрова Ольга"]["gross"] == 7000 + 600 + 100              # 70 x 100 h + 4% of 15 000 (all shifts) + 10% of 1 000 retail
+    assert by["Петрова Ольга"]["to_pay"] == 7700 - 2070 - 3465 - 3465 - 50 == -1350 + 0 and run["status"] in ("warn", "error")   # overpaid -> flagged
+    assert any(c["code"] == "C5" and c["status"] == "warn" for c in run["checks"])
+    assert any(c["code"] == "C1" and c["status"] == "ok" for c in run["checks"])                  # second method agrees
+    t = run["result"]["totals"]
+    assert t["gross"] == sum(r["gross"] for r in run["result"]["rows"])
+
+
+def test_payrun_needs_accountants_data_first(client):
+    from app import payrun
+    _payrun_setup()
+    import pytest
+    with pytest.raises(payrun.PayrunError):
+        payrun.create_run(main.con, "2026-09", "x")
+    r = client.post("/payrun/run", data={"month": "2026-09"}, follow_redirects=True)
+    assert "спочатку завантажте дані" in r.text.lower()
+    assert main.con.execute("SELECT COUNT(*) FROM pay_runs").fetchone()[0] == 0
+    with pytest.raises(payrun.PayrunError):                              # the running month cannot be accrued
+        payrun.save_f1(main.con, "2099-01", [dict(name="Іванов Іван", adv_card=1)], "file", "x", "x")
+        payrun.create_run(main.con, "2099-01", "x")
+
+
+def test_payrun_checks_catch_unknown_people_and_missing_hours(client):
+    from app import payrun
+    _payrun_setup()
+    payrun.save_f1(main.con, "2026-09", [dict(name="Невідомий Хтось", adv_card=100, sal_card=100), dict(name="Іванов Іван", adv_card=10, sal_card=10)], "file", "t.xlsx", "x")
+    run = payrun.get_run(main.con, payrun.create_run(main.con, "2026-09", "x"))
+    st = {c["code"]: c["status"] for c in run["checks"]}
+    assert run["status"] == "error" and st["B1"] == "error" and st["B4"] == "error"       # unknown person; administrator without hours
+    assert "Невідомий Хтось" in next(c for c in run["checks"] if c["code"] == "B1")["detail"]
+
+
+def test_payrun_reads_accountants_excel_and_exports(client):
+    from openpyxl import Workbook
+    import io
+    from app import payrun
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Вересень 2026"
+    ws.append(["Прізвище, ім'я", "Аванс Ф-1", "ЗП 1-форма", "Відпускні", "Лікарняні"])
+    ws.append(["Іванов Іван", 3000, 3500, 1200, 0])
+    ws.append(["Разом", 3000, 3500, 1200, 0])
+    buf = io.BytesIO()
+    wb.save(buf)
+    rows = payrun.parse_f1(buf.getvalue(), "2026-09")
+    assert rows == [dict(name="Іванов Іван", adv_card=3000.0, sal_card=3500.0, vacation=1200.0, sick=0.0)]
+    r = client.post("/payrun/upload", data={"month": "2026-09"}, files={"file": ("f1.xlsx", buf.getvalue(), "application/octet-stream")}, follow_redirects=True)
+    assert "Файл прийнято" in r.text and payrun.load_inputs(main.con, "2026-09")["f1"][0]["vacation"] == 1200.0
+    _payrun_setup()
+    rid = payrun.create_run(main.con, "2026-09", "x")
+    x = client.get(f"/payrun/{rid}/xlsx")
+    assert x.status_code == 200 and x.content[:2] == b"PK"
+    assert "Нарахування ЗП за вересень 2026" in client.get(f"/payrun/{rid}").text and "Самоперевірка" in client.get(f"/payrun/{rid}").text

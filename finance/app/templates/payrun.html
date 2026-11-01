@@ -1,0 +1,49 @@
+{% extends "base.html" %}{% block title %}Нарахування ЗП{% endblock %}{% block body %}
+<h1>Нарахування ЗП</h1>
+<p class="mut">Зарплата нараховується за <b>повний попередній місяць</b> (з 1 по останній день): каса та продажі беруться з Alteg, виплати по картках (Ф-1) — від бухгалтера, формули — з вашої зарплатної таблиці. Спочатку завантажте дані від бухгалтера: без них нарахувати не можна.</p>
+<div class="pills">{% for m in months %}<a class="{{ 'on' if m==ym }}" href="/payrun?month={{ m }}">{{ labels[m] }}</a>{% endfor %}<a href="/payrun/people">⚙ Співробітники та ставки</a></div>
+
+<div class="card pr-step" id="step1"><div class="pr-h"><span class="pr-n">1</span><div><b>Дані від бухгалтера: виплати Ф-1 по банку</b><div class="mut" style="font-size:13px">аванс, зарплата, відпускні, лікарняні, податки · за {{ ym_label }}</div></div>
+<span class="chip2 {{ 'okc' if inputs and inputs.f1 else 'errc' }}">{{ '✓ завантажено' if inputs and inputs.f1 else '✗ даних немає' }}</span></div>
+{% if inputs and inputs.f1 %}{% set a=inputs.f1|sum(attribute='adv_card') %}<div class="pr-sum">Джерело: <b>{{ inputs.src_name }}</b> · {{ inputs.loaded_at|dt }}{% if inputs.loaded_by %} · {{ inputs.loaded_by }}{% endif %} · працівників: <b>{{ inputs.f1|length }}</b> · аванс <b class="num">{{ ((inputs.f1|sum(attribute='adv_card'))*100)|round|int|money }}</b> · ЗП Ф-1 <b class="num">{{ ((inputs.f1|sum(attribute='sal_card'))*100)|round|int|money }}</b>{% if inputs.f1|sum(attribute='vacation') %} · відпускні <b class="num">{{ ((inputs.f1|sum(attribute='vacation'))*100)|round|int|money }}</b>{% endif %}{% if inputs.f1|sum(attribute='sick') %} · лікарняні <b class="num">{{ ((inputs.f1|sum(attribute='sick'))*100)|round|int|money }}</b>{% endif %}</div>{% endif %}
+{% if can_edit %}<div class="opts"><button type="button" class="opt on" data-p="pa">📎 Завантажити Excel</button><button type="button" class="opt" data-p="pb">🔗 Посилання на Google Диск</button></div>
+<form method="post" action="/payrun/upload" enctype="multipart/form-data" class="optp" id="pa"><input type="hidden" name="month" value="{{ ym }}"><div class="row" style="align-items:flex-end"><div><label>Файл Excel (.xlsx) з виплатами Ф-1</label><input type="file" name="file" accept=".xlsx" required></div><div style="flex:0 0 auto"><button>Завантажити</button></div></div></form>
+<div class="optp" id="pb" style="display:none"><form method="post" action="/payrun/link"><input type="hidden" name="month" value="{{ ym }}"><div class="row" style="align-items:flex-end"><div><label>Посилання на таблицю Google (доступ «усім, хто має посилання»)</label><input name="url" value="{{ link }}" placeholder="https://docs.google.com/spreadsheets/d/…" required></div><div style="flex:0 0 auto"><button>Зберегти й підтягнути</button></div></div></form>
+{% if link %}<form method="post" action="/payrun/refresh" style="margin-top:8px"><input type="hidden" name="month" value="{{ ym }}"><button class="sec sm">↻ Оновити дані з посилання</button> <span class="mut" style="font-size:12.5px">бухгалтер наповнює таблицю на Диску, а ви натискаєте, щоб підтягнути зміни</span></form>{% endif %}</div>
+<p class="mut" style="font-size:12.5px;margin:10px 0 0">Що має бути в таблиці: рядок-заголовок з колонкою <i>Прізвище</i> та колонками <i>Аванс</i>, <i>ЗП Ф-1</i>, <i>Відпускні</i>, <i>Лікарняні</i> (за потреби <i>Податки</i>, <i>Штраф</i>, <i>Доплати</i>). Якщо таблиця має аркуші за місяцями, береться аркуш потрібного місяця.{% if sheet_has %}
+<form method="post" action="/payrun/import-sheet" style="display:inline;margin-left:6px"><input type="hidden" name="month" value="{{ ym }}"><button class="sm sec" onclick="return confirm('Узяти виплати Ф-1 і ручні колонки з наявної зарплатної таблиці за {{ ym_label }}? Поточні дані за цей місяць буде замінено.')">Для перевірки: взяти з зарплатної таблиці Google</button></form>{% endif %}</p>
+{% else %}<p class="mut">Завантажувати дані може власник або бухгалтер.</p>{% endif %}</div>
+
+{% if inputs and inputs.f1 %}
+<div class="card pr-step" id="step2"><div class="pr-h"><span class="pr-n">2</span><div><b>Додаткові дані за місяць</b><div class="mut" style="font-size:13px">години й зміни адміністраторів, штрафи, разові доплати, готівкові аванси · каса й роздріб підтягнуті з Alteg ({{ alteg_days }} днів із даними)</div></div></div>
+{% if unmatched %}<div class="flash warn">В Alteg є працівники, яких немає у списку: {% for s in unmatched %}<b>{{ s.name }}</b> ({{ (s.svc+s.goods)|money }}){{ ', ' if not loop.last }}{% endfor %}. <a href="/payrun/people">Додайте їх у список співробітників</a>, інакше нарахування покаже помилку.</div>{% endif %}
+<form method="post" action="/payrun/adjust"><input type="hidden" name="month" value="{{ ym }}">
+<div class="pr-scroll"><table class="prt adjt"><tr><th>Співробітник</th><th class="r">Каса Alteg</th><th class="r">Роздріб Alteg</th><th>Години</th><th>Зміни</th><th>Роздріб (вручну)</th><th>Штраф, ₴</th><th>За що штраф</th><th>Разова доплата</th><th>Коригування каси</th><th>Препарати (косметолог)</th><th>Аванс готівкою</th></tr>
+{% for sec in SECTIONS %}{% set grp=preview|selectattr('p.section','equalto',sec)|list %}{% if grp %}<tr class="sec"><td colspan="12">{{ sec }}</td></tr>
+{% for r in grp %}{% set p=r.p %}{% set a=r.adj %}<tr><td><b>{{ p.name }}</b>{% if not p.active %} <span class="tag">неактивний</span>{% endif %}<div class="mut" style="font-size:11.5px">{{ KIND_LABEL[p.kind] }}</div></td>
+<td class="r num">{{ (r.cash*100)|round|int|money if r.cash else '—' }}</td><td class="r num">{{ (r.goods*100)|round|int|money if r.goods else '—' }}</td>
+<td>{% if p.kind=='admin' %}<input class="sm-in" name="{{ p.id }}_hours" value="{{ a.hours if 'hours' in a else '' }}" inputmode="decimal">{% endif %}</td>
+<td>{% if p.kind=='admin' %}<input class="sm-in" name="{{ p.id }}_shifts" value="{{ a.shifts if 'shifts' in a else '' }}" inputmode="decimal">{% endif %}</td>
+<td>{% if p.kind in ('admin','master','cosm') %}<input class="sm-in" name="{{ p.id }}_retail" value="{{ a.retail if 'retail' in a else '' }}" placeholder="{{ r.goods if r.goods else '' }}" inputmode="decimal">{% endif %}</td>
+<td><input class="sm-in" name="{{ p.id }}_fines" value="{{ a.fines if 'fines' in a else '' }}" inputmode="decimal"></td><td><input class="md-in" name="{{ p.id }}_fines_note" value="{{ a.fines_note or '' }}"></td>
+<td><input class="sm-in" name="{{ p.id }}_extra" value="{{ a.extra if 'extra' in a else '' }}" placeholder="{{ (p.extra/100)|int if p.extra else '' }}" inputmode="decimal"></td>
+<td>{% if p.kind in ('master','cosm') %}<input class="sm-in" name="{{ p.id }}_cash_adj" value="{{ a.cash_adj if 'cash_adj' in a else '' }}" inputmode="decimal">{% endif %}</td>
+<td>{% if p.kind=='cosm' %}<input class="sm-in" name="{{ p.id }}_inj_cost" value="{{ a.inj_cost if 'inj_cost' in a else '' }}" inputmode="decimal">{% endif %}</td>
+<td><input class="sm-in" name="{{ p.id }}_adv_cash" value="{{ a.adv_cash if 'adv_cash' in a else '' }}" placeholder="{{ r.adv if r.adv else '' }}" inputmode="decimal"></td></tr>{% endfor %}{% endif %}{% endfor %}</table></div>
+{% if adv.unmatched %}<div class="flash warn" style="margin-top:10px">Аванси з каси без розпізнаного працівника: {% for u in adv.unmatched %}{{ u.date[8:10] }}.{{ u.date[5:7] }} {{ u.amount|money }} «{{ u.text }}»{{ '; ' if not loop.last }}{% endfor %}. Внесіть їх вручну у стовпчик «Аванс готівкою».</div>{% endif %}
+<p class="mut" style="font-size:12.5px;margin:10px 0">Сірі підказки в полях — те, що знайдено автоматично (роздріб з Alteg, щомісячна доплата, готівковий аванс з каси). Якщо поле порожнє, береться підказка. «Коригування каси» — ручна поправка до каси з Alteg (з плюсом або мінусом), «Препарати» віднімаються від каси ін'єкцій косметолога.</p>
+{% if can_edit %}<button>Зберегти додаткові дані</button>{% endif %}</form></div>
+
+<div class="card pr-step" id="step3"><div class="pr-h"><span class="pr-n">3</span><div><b>Нарахувати зарплату за {{ ym_label }}</b><div class="mut" style="font-size:13px">система порахує за формулами таблиці й проведе багаторівневу самоперевірку</div></div></div>
+<ul class="ready"><li class="ok">Дані від бухгалтера завантажено ({{ inputs.f1|length }} рядків)</li><li class="{{ 'ok' if alteg_days else 'bad' }}">Каса з Alteg: днів із даними {{ alteg_days }}</li><li class="{{ 'ok' if not unmatched else 'bad' }}">Усі працівники Alteg є у списку</li></ul>
+{% if can_edit %}<form method="post" action="/payrun/run"><input type="hidden" name="month" value="{{ ym }}"><button style="font-size:16px;padding:12px 22px">Нарахувати ЗП за {{ ym_label }}</button></form>{% endif %}</div>
+{% endif %}
+
+<h2>Збережені звіти</h2>
+<table><tr><th>Місяць</th><th>Версія</th><th>Сформовано</th><th>Перевірки</th><th class="r">Витрата компанії</th><th></th></tr>
+{% for r in runs %}<tr><td><b>{{ labelf(r.ym) }}</b></td><td>v{{ r.version }}</td><td class="num">{{ r.created_at|dt }}<div class="mut" style="font-size:12px">{{ r.created_by }}</div></td>
+<td><span class="chip2 {{ {'ok':'okc','warn':'warnc','error':'errc'}[r.status] }}">{{ {'ok':'✓ усе гаразд','warn':'⚠ є попередження','error':'✗ є помилки'}[r.status] }}</span></td><td class="r num">{{ r.total_cost|money }}</td>
+<td style="white-space:nowrap"><a class="btn sm sec" href="/payrun/{{ r.id }}">Відкрити</a> <a class="btn sm sec" href="/payrun/{{ r.id }}/xlsx">Excel ↓</a></td></tr>
+{% else %}<tr><td colspan="6" class="mut">Звітів ще немає</td></tr>{% endfor %}</table>
+<script>document.querySelectorAll('.opt').forEach(function(b){b.onclick=function(){document.querySelectorAll('.opt').forEach(function(x){x.classList.toggle('on',x===b)});document.querySelectorAll('.optp').forEach(function(p){p.style.display=p.id===b.dataset.p?'block':'none'})}});
+if({{ 'true' if link else 'false' }}&&!{{ 'true' if inputs and inputs.f1 else 'false' }}){var o=document.querySelector('[data-p=pb]');if(o)o.click()}</script>{% endblock %}

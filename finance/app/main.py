@@ -11,13 +11,13 @@ from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, Form, HTTPException, Request
+from fastapi import File, UploadFile, Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import categorize as cat, config, control, counterparties as cps, drill, payroll, pl, privat, reports, sync
+from . import categorize as cat, config, control, counterparties as cps, drill, payroll, payrun, pl, privat, reports, sync
 from .db import (account_balances, add_audit, connect, get_setting, insert_tx, lock, now_local, set_setting,
                  update_tx)
 from .security import encrypt, hash_password, verify_password
@@ -1605,3 +1605,218 @@ def control_decide(request: Request, fid: int, action: str = Form(...), note: st
         c.commit()
     log_act(request, u, "Контроль: " + {"ignored": "дозволено", "resolved": "вирішено", "open": "повернуто"}[action], f["title"])
     return RedirectResponse(request.headers.get("referer") or "/control", status_code=303)
+
+
+# ---------- payroll accrual run ("Нарахування ЗП") ----------
+def pay_edit(u=Depends(current_user)):
+    if u["role"] not in ("owner", "accountant"):
+        raise HTTPException(403, "Нарахування ЗП доступне власнику та бухгалтеру")
+    return u
+
+
+def _pay_month(request) -> str:
+    q = request.query_params.get("month") or ""
+    return q if re.fullmatch(r"\d{4}-\d{2}", q) else payrun.default_month()
+
+
+@app.get("/payrun", response_class=HTMLResponse)
+def payrun_page(request: Request, u=Depends(need_analytics)):
+    c = get_con()
+    ym = _pay_month(request)
+    people = payrun.roster(c)
+    inputs = payrun.load_inputs(c, ym)
+    alteg = payrun.alteg_month(c, ym)
+    adv = payrun.cash_advances(c, ym, people)
+    preview = []
+    for p in people:
+        st = [v for v in alteg["staff"].values() if payrun.match_name(v["name"], [p])]
+        preview.append(dict(p=p, key=f"{p['name']}|{p['section']}", cash=sum(v["svc"] for v in st) / 100, goods=sum(v["goods"] for v in st) / 100,
+                            adv=adv["per"].get(p["name"], 0) / 100 if p["section"] == payrun._primary_section(people, p["name"]) else 0,
+                            adj=(inputs["adj"].get(f"{p['name']}|{p['section']}", {}) if inputs else {})))
+    today = datetime.now(config.KYIV).date()
+    months = []
+    m = today.replace(day=1)
+    for _ in range(5):
+        m = (m - timedelta(days=1)).replace(day=1)
+        months.append(m.strftime("%Y-%m"))
+    return render(request, "payrun.html", u, ym=ym, ym_label=payrun.month_label(ym), months=months, labels={x: payrun.month_label(x) for x in months},
+                  inputs=inputs, preview=preview, runs=payrun.list_runs(c), link=get_setting(c, "payrun_f1_url", ""),
+                  can_edit=u["role"] in ("owner", "accountant"), sheet_has=bool(c.execute("SELECT 1 FROM payroll WHERE month=?", (ym,)).fetchone()),
+                  adv=adv, alteg_days=len(alteg["days"]), unmatched=[s_ for k, s_ in alteg["staff"].items() if k != "none" and not payrun.match_name(s_["name"], people)
+                                                                    and not payrun.norm(s_["role"]).startswith("корпоративна") and (s_["svc"] or s_["goods"])],
+                  SECTIONS=payrun.SECTIONS, KIND_LABEL=payrun.KIND_LABEL, labelf=payrun.month_label)
+
+
+def _f1_summary(rows):
+    return dict(n=len(rows), adv=sum(r.get("adv_card", 0) for r in rows), sal=sum(r.get("sal_card", 0) for r in rows),
+                vac=sum(r.get("vacation", 0) for r in rows), sick=sum(r.get("sick", 0) for r in rows))
+
+
+@app.post("/payrun/upload")
+async def payrun_upload(request: Request, month: str = Form(...), file: UploadFile = File(...), u=Depends(pay_edit)):
+    data = await file.read()
+    if len(data) > 12_000_000 or data[:2] != b"PK":
+        flash(request, "Потрібен файл Excel (.xlsx) розміром до 12 МБ")
+        return RedirectResponse(f"/payrun?month={month}", status_code=303)
+    try:
+        rows = payrun.parse_f1(data, month)
+    except Exception:
+        log.exception("f1 parse failed")
+        rows = []
+    if not rows:
+        flash(request, "У файлі не знайдено таблицю виплат: потрібні колонка з прізвищем та колонки «Аванс», «ЗП Ф-1», «Відпускні», «Лікарняні»")
+        return RedirectResponse(f"/payrun?month={month}", status_code=303)
+    with lock():
+        payrun.save_f1(get_con(), month, rows, "file", file.filename or "файл", u["name"])
+    log_act(request, u, "нарахування ЗП: завантажено файл Ф-1", f"{month}: {file.filename}, {len(rows)} рядків")
+    sm = _f1_summary(rows)
+    flash(request, f"Файл прийнято: {sm['n']} працівників, аванс {money(round(sm['adv'] * 100))}, ЗП Ф-1 {money(round(sm['sal'] * 100))}.")
+    return RedirectResponse(f"/payrun?month={month}", status_code=303)
+
+
+def _link_import(request, c, month, url, u):
+    try:
+        rows = payrun.parse_f1(payrun.fetch_link(url), month)
+    except payrun.PayrunError as e:
+        flash(request, str(e))
+        return False
+    except Exception:
+        log.exception("f1 link failed")
+        flash(request, "Не вдалось прочитати таблицю за посиланням")
+        return False
+    if not rows:
+        flash(request, f"У таблиці не знайдено виплат за {payrun.month_label(month)}: потрібен аркуш цього місяця з колонками «Аванс», «ЗП Ф-1», «Відпускні», «Лікарняні»")
+        return False
+    with lock():
+        payrun.save_f1(c, month, rows, "link", "Google Диск", u["name"])
+    sm = _f1_summary(rows)
+    flash(request, f"Таблицю з Google Диска прочитано: {sm['n']} працівників, аванс {money(round(sm['adv'] * 100))}, ЗП Ф-1 {money(round(sm['sal'] * 100))}.")
+    return True
+
+
+@app.post("/payrun/link")
+def payrun_link(request: Request, month: str = Form(...), url: str = Form(...), u=Depends(pay_edit)):
+    c = get_con()
+    set_setting(c, "payrun_f1_url", url.strip())
+    c.commit()
+    log_act(request, u, "нарахування ЗП: збережено посилання на Google Диск", url.strip()[:120])
+    _link_import(request, c, month, url, u)
+    return RedirectResponse(f"/payrun?month={month}", status_code=303)
+
+
+@app.post("/payrun/refresh")
+def payrun_refresh(request: Request, month: str = Form(...), u=Depends(pay_edit)):
+    c = get_con()
+    url = get_setting(c, "payrun_f1_url", "")
+    if not url:
+        flash(request, "Посилання ще не збережено")
+    else:
+        _link_import(request, c, month, url, u)
+    return RedirectResponse(f"/payrun?month={month}", status_code=303)
+
+
+@app.post("/payrun/import-sheet")
+def payrun_import_sheet(request: Request, month: str = Form(...), u=Depends(pay_edit)):
+    try:
+        with lock():
+            n = payrun.import_from_sheet_table(get_con(), month, u["name"])
+        flash(request, f"Дані взято із зарплатної таблиці Google: {n} рядків")
+        log_act(request, u, "нарахування ЗП: дані з зарплатної таблиці", month)
+    except payrun.PayrunError as e:
+        flash(request, str(e))
+    return RedirectResponse(f"/payrun?month={month}", status_code=303)
+
+
+@app.post("/payrun/adjust")
+async def payrun_adjust(request: Request, u=Depends(pay_edit)):
+    form = await request.form()
+    month = form.get("month", "")
+    c = get_con()
+    adj = {}
+    for p in payrun.roster(c):
+        d = {}
+        for fld in ("hours", "shifts", "retail", "fines", "extra", "cash_adj", "inj_cost", "adv_cash", "vacation", "sick"):
+            v = str(form.get(f"{p['id']}_{fld}", "")).strip()
+            if v != "":
+                try:
+                    d[fld] = float(v.replace(" ", "").replace(",", "."))
+                except ValueError:
+                    flash(request, f"Некоректне число у полі «{fld}» для {p['name']}")
+                    return RedirectResponse(f"/payrun?month={month}", status_code=303)
+        note = str(form.get(f"{p['id']}_fines_note", "")).strip()
+        if note:
+            d["fines_note"] = note[:200]
+        if d:
+            adj[f"{p['name']}|{p['section']}"] = d
+    try:
+        with lock():
+            payrun.save_adj(c, month, adj)
+    except payrun.PayrunError as e:
+        flash(request, str(e))
+        return RedirectResponse(f"/payrun?month={month}", status_code=303)
+    log_act(request, u, "нарахування ЗП: збережено додаткові дані", month)
+    flash(request, "Додаткові дані збережено")
+    return RedirectResponse(f"/payrun?month={month}#step3", status_code=303)
+
+
+@app.post("/payrun/run")
+def payrun_run(request: Request, month: str = Form(...), u=Depends(pay_edit)):
+    try:
+        with lock():
+            rid = payrun.create_run(get_con(), month, u["name"])
+    except payrun.PayrunError as e:
+        flash(request, str(e))
+        return RedirectResponse(f"/payrun?month={month}", status_code=303)
+    log_act(request, u, "нарахування ЗП: сформовано звіт", f"{month}, №{rid}")
+    return RedirectResponse(f"/payrun/{rid}", status_code=303)
+
+
+@app.get("/payrun/people", response_class=HTMLResponse)
+def payrun_people(request: Request, u=Depends(need_analytics)):
+    return render(request, "payrun_people.html", u, people=payrun.roster(get_con(), False), SECTIONS=payrun.SECTIONS, KIND_LABEL=payrun.KIND_LABEL,
+                  can_edit=u["role"] in ("owner", "accountant"))
+
+
+@app.post("/payrun/people")
+def payrun_people_save(request: Request, pid: str = Form(""), name: str = Form(...), section: str = Form(...), kind: str = Form(...), pct: str = Form(""),
+                       fixed: str = Form("0"), extra: str = Form("0"), rate: str = Form("0"), alias: str = Form(""), note: str = Form(""), active: str = Form("1"),
+                       u=Depends(pay_edit)):
+    def kop(v):
+        try:
+            return round(float(v.replace(" ", "").replace(",", ".") or 0) * 100)
+        except ValueError:
+            raise HTTPException(400, "Некоректне число")
+    if section not in payrun.SECTIONS or kind not in payrun.KIND_LABEL:
+        raise HTTPException(400)
+    pc = float(pct.replace(",", ".")) / 100 if pct.strip() else None
+    c = get_con()
+    with lock():
+        if _oi(pid):
+            c.execute("UPDATE pay_people SET name=?,section=?,kind=?,pct=?,fixed=?,extra=?,rate=?,alias=?,note=?,active=? WHERE id=?",
+                      (name.strip(), section, kind, pc, kop(fixed), kop(extra), kop(rate), alias.strip().lower(), note.strip(), 0 if active == "0" else 1, _oi(pid)))
+        else:
+            c.execute("INSERT OR IGNORE INTO pay_people(name,section,kind,pct,fixed,extra,rate,alias,note,active) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                      (name.strip(), section, kind, pc, kop(fixed), kop(extra), kop(rate), alias.strip().lower(), note.strip(), 0 if active == "0" else 1))
+        c.commit()
+    log_act(request, u, "нарахування ЗП: змінено список співробітників", name.strip())
+    flash(request, "Збережено")
+    return RedirectResponse("/payrun/people", status_code=303)
+
+
+@app.get("/payrun/{rid}", response_class=HTMLResponse)
+def payrun_view(request: Request, rid: int, u=Depends(need_analytics)):
+    run = payrun.get_run(get_con(), rid)
+    if not run:
+        raise HTTPException(404)
+    return render(request, "payrun_view.html", u, run=run, ym_label=payrun.month_label(run["ym"]), SECTIONS=payrun.SECTIONS,
+                  can_edit=u["role"] in ("owner", "accountant"), KIND_LABEL=payrun.KIND_LABEL)
+
+
+@app.get("/payrun/{rid}/xlsx")
+def payrun_xlsx(request: Request, rid: int, u=Depends(need_analytics)):
+    run = payrun.get_run(get_con(), rid)
+    if not run:
+        raise HTTPException(404)
+    log_act(request, u, "нарахування ЗП: експорт Excel", f"{run['ym']}, версія {run['version']}")
+    return Response(payrun.export_xlsx(run), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f'attachment; filename="zarplata-{run["ym"]}-v{run["version"]}.xlsx"'})
