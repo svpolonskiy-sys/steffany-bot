@@ -14,6 +14,7 @@ ALTEG_PARTNER_KEY = os.environ.get("ALTEG_PARTNER_KEY", "")
 ALTEG_LOGIN = os.environ.get("ALTEG_LOGIN", "")
 ALTEG_PASSWORD = os.environ.get("ALTEG_PASSWORD", "")
 ALTEG_LOCATION = os.environ.get("ALTEG_LOCATION", "751396")  # Київська 77
+ALTEG_CHAIN = os.environ.get("ALTEG_CHAIN", "50068")  # мережа Steffany (для лояльності)
 ALTEG_CASH_ACCOUNT = int(os.environ.get("ALTEG_CASH_ACCOUNT", "1526207"))  # "Основна каса"
 ALTEG_CASHLESS_ACCOUNT = int(os.environ.get("ALTEG_CASHLESS_ACCOUNT", "1526208"))  # "Розрахунковий рахунок" (card sales, daily takings only)
 

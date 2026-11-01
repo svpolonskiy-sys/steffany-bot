@@ -72,6 +72,10 @@ CREATE TABLE IF NOT EXISTS alteg_visits(
   comment TEXT NOT NULL DEFAULT '', first_cost INTEGER NOT NULL DEFAULT 0, paid INTEGER NOT NULL DEFAULT 0, zero_cost INTEGER NOT NULL DEFAULT 0,
   services TEXT NOT NULL DEFAULT '', fetched_at TEXT);
 CREATE INDEX IF NOT EXISTS ix_visit_day ON alteg_visits(day);
+CREATE TABLE IF NOT EXISTS alteg_loyalty(
+  id INTEGER PRIMARY KEY, created TEXT NOT NULL, visit_id INTEGER, record_id INTEGER, type_id INTEGER NOT NULL, type_title TEXT NOT NULL DEFAULT '',
+  amount REAL NOT NULL, certificate_id INTEGER, card_id INTEGER, abonement_id INTEGER);
+CREATE INDEX IF NOT EXISTS ix_loy_rec ON alteg_loyalty(record_id);
 CREATE TABLE IF NOT EXISTS payroll(
   id INTEGER PRIMARY KEY, month TEXT NOT NULL, section TEXT NOT NULL, name TEXT NOT NULL,
   gross INTEGER NOT NULL DEFAULT 0, vacation INTEGER NOT NULL DEFAULT 0, sick INTEGER NOT NULL DEFAULT 0,

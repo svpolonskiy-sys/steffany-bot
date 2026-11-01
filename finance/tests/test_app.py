@@ -1076,3 +1076,8 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     fs = {f["key"]: f for f in control.check_visits(main.con, date(2026, 10, 5))}
     assert fs["conflict:30"]["sev"] == "high" and "відсоток не нараховується" in fs["conflict:30"]["detail"]
     assert all(len(f["detail"].split()) <= 51 and "Допишіть" not in f["detail"] for f in fs.values())
+    main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(40,'2026-09-16','Нонік Анна',1,'',100000,0,0,'Манікюр 1000→0')")
+    main.con.execute("INSERT INTO alteg_loyalty(id,created,visit_id,record_id,type_id,type_title,amount) VALUES(1,'2026-09-16T10:00:00',1,40,8,'Debit from gift card',1000)")
+    main.con.execute("INSERT INTO alteg_loyalty(id,created,visit_id,record_id,type_id,type_title,amount) VALUES(2,'2026-09-16T10:00:00',1,9999,8,'Debit from gift card',777)")   # other salon of the chain
+    ef = payrun.visit_effects(main.con, "2026-09", people)
+    assert ef["per"]["Нонік Анна"] == 700 + 1800 + 1000 and not [x for x in ef["pending"] if x["rid"] == 40]       # certificate from the loyalty block, no comment needed

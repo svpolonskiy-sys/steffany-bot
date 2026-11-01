@@ -121,6 +121,24 @@ def _record(self, rid: int):
     return _slim_record(d["data"]) if d.get("success") and d.get("data") else None
 
 
+def _loyalty(self, start: str, end: str):
+    """Loyalty movements of the whole chain (certificate / bonus-card debits, memberships) for a period."""
+    if not self.user_token:
+        self.login()
+    out, page = [], 1
+    while True:
+        d = self._call(self.s.get, f"{API}/chain/{config.ALTEG_CHAIN}/loyalty/transactions", headers=self._h(), timeout=60,
+                       params={"created_after": start, "created_before": end, "count": 200, "page": page}).json()
+        if not d.get("success"):
+            raise AltegError(f"Alteg (лояльність): {d.get('meta', {}).get('message')}")
+        rows = d.get("data") or []
+        out += rows
+        if len(rows) < 200 or page > 100:
+            return out
+        page += 1
+
+
+AltegClient.loyalty = _loyalty
 AltegClient.records = _records
 AltegClient.visits = _visits
 AltegClient.record = _record

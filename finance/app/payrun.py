@@ -211,7 +211,29 @@ def sync_visits(con, ym: str, client=None) -> int:
                      r.get("comment") or "", first, paid, zero,
                      "; ".join(f"{x.get('title')} {x.get('first_cost')}→{x.get('cost_to_pay')}" for x in sv), stamp))
     con.commit()
+    try:
+        sync_loyalty(con, ym, client)
+    except Exception:                      # the comments are still usable without the loyalty block
+        pass
     return len(rows)
+
+
+def sync_loyalty(con, ym: str, client=None) -> int:
+    """Certificate / bonus-card debits from the "Лояльність" block, tied to visits (the chain feed also holds other salons: those never match our visits)."""
+    from . import alteg
+    lo, hi = month_bounds(ym)
+    client = client or alteg.AltegClient()
+    rows = client.loyalty(lo.isoformat(), (hi + timedelta(days=1)).isoformat())
+    con.execute("DELETE FROM alteg_loyalty WHERE substr(created,1,10) BETWEEN ? AND ?", (lo.isoformat(), hi.isoformat()))
+    for t in rows:
+        con.execute("INSERT OR REPLACE INTO alteg_loyalty(id,created,visit_id,record_id,type_id,type_title,amount,certificate_id,card_id,abonement_id) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (t["id"], (t.get("created_date") or "")[:19], t.get("visit_id"), t.get("item_record_id") or 0, t.get("type_id"),
+                     (t.get("type") or {}).get("title", ""), float(t.get("amount") or 0), t.get("certificate_id") or 0, t.get("card_id") or 0, t.get("abonement_id") or 0))
+    con.commit()
+    return len(rows)
+
+
+LOYALTY_PAID = {8: "сертифікатом", 3: "бонусами / карткою лояльності"}      # money was taken earlier (sale of the certificate); the master earns on use
 
 
 def _find_person(text: str, people: list[dict]):
@@ -286,7 +308,7 @@ def visit_conflicts(con, ym: str, people: list[dict]) -> list[dict]:
 
 
 MARK_LABEL = {"cert": "сертифікат", "points": "бали", "rework": "переробка", "gift": "подарунок", "barter": "бартер (ЗП з повної суми)",
-              "refuse": "відмова від оплати (без ЗП)", "discount": "знижка (ЗП з повної суми)"}
+              "refuse": "відмова від оплати (без ЗП)", "loyalty": "блок «Лояльність» Alteg", "discount": "знижка (ЗП з повної суми)"}
 
 
 def visit_effects(con, ym: str, people: list[dict]) -> dict:
@@ -296,12 +318,27 @@ def visit_effects(con, ym: str, people: list[dict]) -> dict:
                        (lo.isoformat(), hi.isoformat())).fetchall()
     per: dict[str, float] = {}
     lines, pending, bad = [], [], []
+    loy: dict[int, dict] = {}
+    for t in con.execute("SELECT record_id, type_id, SUM(amount) s FROM alteg_loyalty WHERE type_id IN (8,3) AND record_id>0 GROUP BY 1,2"):
+        loy.setdefault(t["record_id"], {})[t["type_id"]] = t["s"]
     for v in rows:
         hit = match_name(v["staff_name"], people)
         who = hit[0]["name"] if hit else v["staff_name"]
         short = max(v["first_cost"] - v["paid"], 0) / 100
         m = parse_mark(v["comment"], people)
         base = dict(rid=v["record_id"], day=v["day"], staff=who, comment=v["comment"][:140].replace("\n", " "), services=v["services"])
+        lo_ = loy.get(v["record_id"])
+        if lo_ and hit:
+            # the "Лояльність" block of the visit is the source of truth for certificates / bonuses: the master earns on the value used
+            amt = round(sum(lo_.values()), 2)
+            how = " і ".join(LOYALTY_PAID[k] for k in sorted(lo_, reverse=True))
+            if hit[0]["kind"] == "cosm":
+                lines.append(dict(base, kind="loyalty", amount=amt, other="", effect=f"оплачено {how}: у косметолога не додано, правила в таблиці немає"))
+            else:
+                per[who] = per.get(who, 0) + amt
+                lines.append(dict(base, kind="loyalty", amount=amt, other="", effect=f"оплачено {how}: +{amt:,.2f} до каси {who}"))
+            if m is None or m["kind"] in ("cert", "points", "barter", "gift"):
+                continue
         if m is None:
             if v["first_cost"] > 0 and v["paid"] < v["first_cost"] * FREE_RATIO and not (hit and hit[0]["kind"] == "cosm"):   # cosmetology has its own promo prices
                 pending.append(dict(base, first=v["first_cost"] / 100, paid=v["paid"] / 100))
