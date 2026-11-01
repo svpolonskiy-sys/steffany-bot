@@ -909,3 +909,25 @@ def test_tax_and_owner_breakdown_in_reports(client):
     for u in ("/pl?date_from=2026-10-01&date_to=2026-10-31&preset=", "/reports?date_from=2026-10-01&date_to=2026-10-31"):
         page = client.get(u).text
         assert "Усього податків сплачено" in page and "ЄСВ за працівників" in page and "Виведення грошей з бізнесу" in page and "Усього виведено власником" in page
+
+
+def test_half_filled_sheet_section_is_estimated_not_trusted(client):
+    """A month whose sheet is only partly filled must not shrink the payroll: the section is estimated from Alteg sales."""
+    import datetime
+    from app import payroll, pl
+    today = datetime.datetime.now(main.config.KYIV).date()
+    ym = today.strftime("%Y-%m")
+    prev = (today.replace(day=1) - datetime.timedelta(days=1)).strftime("%Y-%m")
+    main.con.executemany("INSERT INTO payroll(month,section,name,gross,vacation,sick,fines,taxes,sales,adv_card,sal_card,adv_cash,to_pay) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [(prev, "Перукарі", "А", 5000000, 100000, 0, 0, 300000, 12000000, 300000, 300000, 0, 4100000),
+         (prev, "Майстри манікюру", "Б", 4000000, 0, 200000, 0, 200000, 10000000, 300000, 300000, 0, 3200000)])
+    main.con.execute("INSERT INTO payroll(month,section,name,gross) VALUES(?,?,?,?)", (ym, "Перукарі", "А", 400000))   # only a fraction filled
+    main.con.execute("INSERT INTO payroll(month,section,name,gross) VALUES(?,?,?,?)", (ym, "Майстри манікюру", "Б", 400000))
+    for d_ in range(1, today.day + 1):
+        main.con.execute("INSERT INTO alteg_pay(external_id,occurred_at,amount,method,category_title,item_type,staff_id,staff_name,staff_role) VALUES(?,?,?,?,?,?,?,?,?)",
+                         (f"t{d_}", f"{ym}-{d_:02d}T12:00:00", 2000000, "cash", "Перукарські послуги", "service", 1, "А", "Перукар"))
+    main.con.commit()
+    ex = payroll.for_period_ex(main.con, today.replace(day=1), today)
+    assert "Перукарі" in ex["partial"].get(ym, []) and ym in ex["est"]
+    assert ex["total"]["Перукарі"] > 400000                       # estimate, not the half-filled 4 000 ₴ of the sheet
+    assert payroll.fill_status(main.con, ym)["rows"] == 2 and not payroll.is_final(main.con, ym)

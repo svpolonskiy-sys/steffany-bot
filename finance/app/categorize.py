@@ -233,6 +233,7 @@ EXCLUDED_RULES = [  # (kind, pattern, category, priority)
 
 def migrate(con):
     """Idempotent upgrades applied on every start (safe on an existing database)."""
+    get_or_create_category(con, "Декретні", "expense")      # maternity pay is its own labour category
     for name, kind in EXCLUDED:
         cid = get_or_create_category(con, name, kind)
         con.execute("UPDATE categories SET exclude=1, auto=0 WHERE id=?", (cid,))

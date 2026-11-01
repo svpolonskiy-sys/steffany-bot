@@ -31,7 +31,7 @@ DEFAULT_GROUP = {
     # expenses
     "Матеріал в роботу": "cogs", "Товари одноразового використання": "cogs", "Товар на вітрину": "cogs",
     "Реалізація товару": "cogs", "Продукти для клієнтів": "cogs",
-    "Зарплата": "labour", "Витрати на персонал": "labour", "Премія": "labour", "Відпускні": "labour", "ЛІКАРНЯНІ": "labour",
+    "Зарплата": "labour", "Витрати на персонал": "labour", "Премія": "labour", "Відпускні": "labour", "ЛІКАРНЯНІ": "labour", "Декретні": "labour",
     "Оренда": "rent", "Комунальні": "utilities", "Комунальні послуги": "utilities", "Витрати на приміщення": "utilities",
     "Реклама": "marketing", "Поліграфія": "marketing",
     "Комісія банку": "bank", "Комісія за обслуговування рахунку": "bank",
@@ -124,7 +124,8 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     wide_lo, wide_hi = (lo - timedelta(days=75)).isoformat() + "T00:00:00", (hi + timedelta(days=75)).isoformat() + "T23:59:59"
     other_income, exp, nonpl = {}, {}, {}
     payroll_tax = 0
-    pay, est_months, pay_by_month = payroll.for_period(con, lo, hi)
+    ex = payroll.for_period_ex(con, lo, hi)
+    pay, est_months, pay_by_month = ex["total"], ex["est"], ex["per_month"]
     pay_mode = sum(pay.values()) > 0   # payroll accrual replaces ledger salary payments (avoids double counting)
     esv = pit = paid_payroll = 0
     q = ("SELECT t.kind, t.amount, t.occurred_at, t.description, t.counterparty, c.name cname, COALESCE(c.exclude,0) ex, "
@@ -217,7 +218,7 @@ def compute(con, lo: date, hi: date, accrual: bool = False) -> dict:
     days = (hi - lo).days + 1
     return dict(services=services, goods=goods, gift=gift, other_income=other_income, sales=sales, oi=oi, revenue=revenue,
                 exp=exp, payroll_tax=payroll_tax, pay=pay, pay_mode=pay_mode, est_months=est_months, esv=esv, pit=pit,
-                paid_payroll=paid_payroll, compensated=payroll.compensation(con, lo, hi), cogs=cogs, labour=labour, opex=opex, gross=gross,
+                paid_payroll=paid_payroll, compensated=payroll.compensation(con, lo, hi), pay_vs=ex["vs"], pay_comp=ex["comp"], pay_partial=ex["partial"], cogs=cogs, labour=labour, opex=opex, gross=gross,
                 contribution=contribution, ebitda=ebitda, interest=interest, tax=tax, net=net, nonpl=nonpl,
                 n_pay=n_pay, cash_rev=cash_rev, card_rev=card_rev, days=days, capex=tot("capex"))
 
@@ -239,7 +240,7 @@ def close_months(con) -> list[str]:
         if today < nxt + timedelta(days=7):
             break
         ym = m.strftime("%Y-%m")
-        if not con.execute("SELECT 1 FROM pl_closed WHERE month=?", (ym,)).fetchone() and payroll.month_costs(con, ym):
+        if not con.execute("SELECT 1 FROM pl_closed WHERE month=?", (ym,)).fetchone() and payroll.is_final(con, ym):
             c = compute(con, m, nxt - timedelta(days=1), accrual=True)
             con.execute("INSERT INTO pl_closed(month,closed_at,revenue,cogs,gross,labour,opex,ebitda,interest,tax,net) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                         (ym, today.isoformat(), c["revenue"], c["cogs"], c["gross"], c["labour"], c["opex"], c["ebitda"],
@@ -294,12 +295,29 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
 
     add("ОПЛАТА ПРАЦІ", kind="head")
     if cur["pay_mode"]:
-        est = bool(cur["est_months"])
+        def sal(d, sec):      # salary of a section without vacation / sick pay (shown on their own lines)
+            return d["pay"].get(sec, 0) - d["pay_vs"].get(sec, 0)
+        partial_secs = {s_ for v in cur["pay_partial"].values() for s_ in v}
+        est_all = bool(cur["est_months"]) and not cur["pay_partial"]
         for sec in payroll.SECTION_ORDER:
-            if cur["pay"].get(sec) or prev["pay"].get(sec):
-                add(sec + (" (оцінка)" if est and cur["pay"].get(sec) else ""), amount=cur["pay"].get(sec, 0),
-                    pamount=prev["pay"].get(sec, 0), indent=1)
-        cats(cur["exp"].get("labour", {}), prev["exp"].get("labour", {}))   # staff outside the sheet (cleaners, etc.)
+            if sal(cur, sec) or sal(prev, sec):
+                est = est_all or sec in partial_secs
+                add(sec + (" (оцінка)" if est and cur["pay"].get(sec) else ""), amount=sal(cur, sec), pamount=sal(prev, sec), indent=1)
+        add("Зарплата нарахована", amount=sum(sal(cur, s_) for s_ in cur["pay"]), pamount=sum(sal(prev, s_) for s_ in prev["pay"]), kind="sub",
+            note="на карту + готівкою + ПДФО/ВЗ, утримані з працівників")
+        pc, cc = prev["pay_comp"], cur["pay_comp"]
+        if est_all or partial_secs:
+            add("розподіл на карту й готівку з'явиться, коли зарплатну таблицю за місяць буде заповнено повністю", amount=None, kind="note", indent=2)
+        elif cc["card"] or cc["cash"]:
+            add("з них виплачується на карту (аванс + Ф-1)", amount=cc["card"], pamount=pc["card"], kind="note", indent=2)
+            add("з них виплачується готівкою (аванси + виплата 7 числа)", amount=cc["cash"], pamount=pc["cash"], kind="note", indent=2)
+            add("з них ПДФО та військовий збір (утримані з працівників, сплачуються до бюджету)", amount=cc["taxes"], pamount=pc["taxes"], kind="note", indent=2)
+        lab, plab = dict(cur["exp"].get("labour", {})), dict(prev["exp"].get("labour", {}))
+        decree, pdecree = lab.pop("Декретні", 0), plab.pop("Декретні", 0)
+        add("Лікарняні", amount=cur["pay_comp"]["sick"], pamount=prev["pay_comp"]["sick"], indent=1)
+        add("Відпускні", amount=cur["pay_comp"]["vacation"], pamount=prev["pay_comp"]["vacation"], indent=1)
+        add("Декретні", amount=decree, pamount=pdecree, indent=1)
+        cats(lab, plab)   # staff outside the sheet (cleaners, etc.)
         add("ЄСВ роботодавця (за місяцем нарахування)", "esv", indent=1)
     else:
         cats(cur["exp"].get("labour", {}), prev["exp"].get("labour", {}))
@@ -361,7 +379,7 @@ def build(con, d_from: str, d_to: str, accrual: bool = False) -> dict:
     today = datetime.now(config.KYIV).date()
     nxt = (hi.replace(day=28) + timedelta(days=4)).replace(day=1)
     month_end = hi == nxt - timedelta(days=1)
-    months_cov = all(payroll.month_costs(con, m_) for m_ in _months(lo, hi))
+    months_cov = all(payroll.is_final(con, m_) for m_ in _months(lo, hi))
     pay_day = nxt + timedelta(days=7)  # salary for the month is paid on the 7th of the next one -> report is final on the 8th
     status = "final" if (month_end and months_cov and today >= pay_day) else "preliminary"
     why = ("" if status == "final" else

@@ -7,7 +7,7 @@ Cost of a person = Зарплата + Відпускні + Лікарняні - 
 """
 import io
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import requests
 from openpyxl import load_workbook
@@ -211,37 +211,91 @@ def estimate(con, lo: date, hi: date, ref_month: str | None) -> dict[str, int]:
     return {k: int(round(v)) for k, v in res.items() if v}
 
 
-def for_period(con, lo: date, hi: date) -> tuple[dict[str, int], list[str], dict[str, dict[str, int]]]:
-    """Payroll accrued in [lo, hi] by section and the months that are estimates."""
+SEC_TOL = 0.90      # a sheet section below 90% of the rate-based estimate is a half-filled section
+SETTLE_DAYS = 10    # after this many days past month-end the sheet is final and always trusted
+
+
+def fill_status(con, ym: str) -> dict:
+    """How complete the sheet of a month is: people in it versus the last fully filled month."""
+    rows = con.execute("SELECT COUNT(*) FROM payroll WHERE month=?", (ym,)).fetchone()[0]
+    ref = max((c for c in covered_months(con) if c < ym), default=None)
+    ref_rows = con.execute("SELECT COUNT(*) FROM payroll WHERE month=?", (ref,)).fetchone()[0] if ref else 0
+    return dict(rows=rows, ref=ref, ref_rows=ref_rows, partial=bool(ref_rows and rows < 0.85 * ref_rows))
+
+
+def for_period_ex(con, lo: date, hi: date) -> dict:
+    """Payroll accrued in [lo, hi]. A month is taken from the sheet section by section; a section that is only
+    half-filled (below SEC_TOL of the rate-based estimate while the month is still open) is estimated instead.
+    Returns total/est/per_month/partial plus the sheet components (card, cash, ПДФО/ВЗ, vacation, sick) of the sheet part."""
     hist = date.fromisoformat(config.HISTORY_START)
+    today = datetime.now(config.KYIV).date()
     total: dict[str, int] = {}
     est: list[str] = []
     per_month: dict[str, dict[str, int]] = {}
+    partial: dict[str, list[str]] = {}
+    vs: dict[str, int] = {}                    # section -> vacation + sick inside the sheet part
+    comp = dict(gross=0, vacation=0, sick=0, fines=0, taxes=0, card=0, cash=0)
     covered = covered_months(con)
     m = lo.replace(day=1)
     while m <= hi:
         nxt = (m.replace(day=28) + timedelta(days=4)).replace(day=1)
-        a_, b_ = max(m, lo), min(nxt - timedelta(days=1), hi)
+        me = nxt - timedelta(days=1)
+        a_, b_ = max(m, lo), min(me, hi)
         ym = m.strftime("%Y-%m")
         if b_ >= hist:
             a_ = max(a_, hist)
             dim = (nxt - m).days
+            f = ((b_ - a_).days + 1) / dim
             costs = month_costs(con, ym)
+            ref = max((c for c in covered if c < ym), default=None)
+            used, replaced = set(), []
             if costs:
-                f = ((b_ - a_).days + 1) / dim
-                for sec, v in costs.items():
-                    total[sec] = total.get(sec, 0) + int(round(v * f))
-                    per_month.setdefault(ym, {})[sec] = int(round(v * f))
-            else:
-                ref = max((c for c in covered if c < ym), default=None)
-                e = estimate(con, a_, b_, ref)
-                for sec, v in e.items():
+                settled = today > me + timedelta(days=SETTLE_DAYS)
+                cmp_est = {} if settled else estimate(con, m, min(me, today), ref)
+                for sec in set(costs) | set(cmp_est):
+                    if not settled and cmp_est.get(sec, 0) > 0 and costs.get(sec, 0) < SEC_TOL * cmp_est[sec]:
+                        replaced.append(sec)
+                    elif sec in costs:
+                        used.add(sec)
+            e_win = estimate(con, a_, b_, ref) if (replaced or not costs) else {}
+            for sec in used:
+                v = int(round(costs[sec] * f))
+                total[sec] = total.get(sec, 0) + v
+                per_month.setdefault(ym, {})[sec] = v
+            for sec in (replaced if costs else list(e_win)):
+                v = e_win.get(sec, 0)
+                if v:
                     total[sec] = total.get(sec, 0) + v
                     per_month.setdefault(ym, {})[sec] = v
-                if any(e.values()):
-                    est.append(ym)
+            if (replaced and any(e_win.get(s, 0) for s in replaced)) or (not costs and any(e_win.values())):
+                est.append(ym)
+                if replaced:
+                    partial[ym] = replaced
+            if used:
+                ph = ",".join("?" * len(used))
+                for r in con.execute(f"SELECT section, SUM(gross) g, SUM(vacation) v, SUM(sick) k, SUM(fines) fi, SUM(taxes) tx, "
+                                     f"SUM(adv_card+sal_card) cd, SUM(adv_cash+to_pay) cs FROM payroll WHERE month=? AND section IN ({ph}) GROUP BY section",
+                                     (ym, *used)):
+                    vs[r["section"]] = vs.get(r["section"], 0) + int(round((r["v"] + r["k"]) * f))
+                    for key, col in (("gross", "g"), ("vacation", "v"), ("sick", "k"), ("fines", "fi"), ("taxes", "tx"), ("card", "cd"), ("cash", "cs")):
+                        comp[key] += int(round(r[col] * f))
         m = nxt
-    return total, est, per_month
+    return dict(total=total, est=est, per_month=per_month, partial=partial, vs=vs, comp=comp)
+
+
+def for_period(con, lo: date, hi: date) -> tuple[dict[str, int], list[str], dict[str, dict[str, int]]]:
+    ex = for_period_ex(con, lo, hi)
+    return ex["total"], ex["est"], ex["per_month"]
+
+
+def is_final(con, ym: str) -> bool:
+    """The month's payroll is entirely from a filled sheet (nothing estimated, nobody missing)."""
+    if not month_costs(con, ym) or fill_status(con, ym)["partial"]:
+        return False
+    y, mo = map(int, ym.split("-"))
+    ms = date(y, mo, 1)
+    me = (ms.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+    return ym not in for_period_ex(con, ms, me)["est"]
 
 
 def compensation(con, lo: date, hi: date) -> int:

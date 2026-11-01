@@ -900,7 +900,7 @@ def payroll_page(request: Request, u=Depends(need_analytics)):
     esv = pl._esv_sum(c, lo, hi)
     unrecorded = max(plan["cash"] - rec["cash"], 0)
     months = sorted(payroll.covered_months(c), reverse=True)
-    return render(request, "payroll.html", u, ym=ym, plan=plan, rec=rec, costs=costs, esv=esv, unrecorded=unrecorded, months=months,
+    return render(request, "payroll.html", u, ym=ym, plan=plan, rec=rec, costs=costs, esv=esv, unrecorded=unrecorded, months=months, fill=payroll.fill_status(c, ym),
                   accounts=acc, pay_date=(nxt + timedelta(days=6)).isoformat(), can_record=u["role"] in ("owner", "accountant"),
                   order=payroll.SECTION_ORDER, month_name=ms.strftime("%m.%Y"))
 

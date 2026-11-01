@@ -379,3 +379,5 @@ nav.open .burger span:nth-child(1){top:20px;transform:rotate(45deg)}nav.open .bu
 .drg>summary::-webkit-details-marker{display:none}.drg>summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--acc);border-bottom:2px solid var(--acc);transform:rotate(-45deg);transition:transform .2s;flex:none}
 .drg[open]>summary::before{transform:rotate(45deg)}.drg>summary:hover{background:color-mix(in srgb,var(--acc2) 12%,transparent)}.drg .dn{flex:1;min-width:0;font-weight:500}.drg .dc{font-size:12.5px}
 .dtab{margin:0 8px 8px;width:calc(100% - 16px)}.dtab td{vertical-align:top}
+
+tr.pl-note td{color:var(--mut);font-size:13px}tr.pl-note td:first-child{font-style:italic}
