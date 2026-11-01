@@ -1047,6 +1047,6 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     assert ef["per"] == {"Нонік Анна": 700, "Іванов Іван": -700 + 300}                  # rework moves 700; the certificate adds the unpaid 300
     assert len(ef["pending"]) == 1 and ef["pending"][0]["day"] == "2026-09-12"           # unmarked free visit is flagged; the no-show is not
     assert ef["unresolved"] == []
-    payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0)], "file", "t.xlsx", "Бухгалтер")
+    payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0, vacation=0, sick=0, maternity=0)], "file", "t.xlsx", "Бухгалтер")
     page = client.get("/payrun?month=2026-09")
     assert page.status_code == 200 and "Потрібен коментар" in page.text and "переробка" in page.text
