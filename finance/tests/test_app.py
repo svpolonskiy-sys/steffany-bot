@@ -1086,3 +1086,32 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(50,'2026-09-17','Нонік Анна',1,'переробка',100000,0,0,'Манікюр 1000→0')")
     ef = payrun.visit_effects(main.con, "2026-09", people)
     assert ef["per"]["Нонік Анна"] == 700 + 1800 + 1000 and not [x for x in ef["pending"] + ef["unresolved"] if x["rid"] == 50]   # self-rework: nothing moves, nothing flagged
+
+
+def test_admin_self_registration_by_link_needs_owner_approval(client):
+    r = client.post("/users/join/new", follow_redirects=True)
+    token = main.get_setting(main.con, "join_token")
+    assert token and f"/join/{token}" in client.get("/users").text
+    anon = TestClient(main.app, base_url="http://testserver")
+    assert "недійсне" in anon.get("/join/wrong").text                                         # wrong link
+    ok = dict(name="Олена Петренко", phone="0671234567", login="Olena.P", email="Olena@Mail.ua", password="Secret123x", password2="Secret123x")
+    bad = anon.post(f"/join/{token}", data=dict(ok, password2="other"))
+    assert "не збігаються" in bad.text and main.con.execute("SELECT COUNT(*) FROM reg_requests").fetchone()[0] == 0
+    sent = anon.post(f"/join/{token}", data=ok)
+    assert "Запит надіслано" in sent.text
+    row = main.con.execute("SELECT * FROM reg_requests").fetchone()
+    assert row["status"] == "pending" and row["phone"] == "+380671234567" and row["login"] == "olena.p" and "Secret123x" not in row["pw_hash"]
+    assert main.con.execute("SELECT COUNT(*) FROM users WHERE login='olena.p'").fetchone()[0] == 0     # no access yet
+    wait = anon.post("/login", data={"email": "olena.p", "password": "Secret123x"}, follow_redirects=True)
+    assert "очікує підтвердження" in wait.text
+    dup = anon.post(f"/join/{token}", data=dict(ok, email="x@y.ua"))
+    assert "зайняті" in dup.text                                                                  # login taken by the pending request
+    client.post(f"/users/requests/{row['id']}/approve")
+    u = main.con.execute("SELECT * FROM users WHERE login='olena.p'").fetchone()
+    assert u["role"] == "admin" and u["perms"] == "" and u["must_change"] == 0 and u["phone"] == "+380671234567"
+    for who in ("olena.p", "olena@mail.ua"):                                                      # login by login or by email
+        a2 = TestClient(main.app, base_url="http://testserver")
+        assert a2.post("/login", data={"email": who, "password": "Secret123x"}, follow_redirects=False).status_code == 303
+        assert a2.get("/users", follow_redirects=False).status_code == 403                           # admin cannot manage users
+    client.post("/users/join/off")
+    assert "недійсне" in anon.get(f"/join/{token}").text

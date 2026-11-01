@@ -227,11 +227,16 @@ def login(request: Request, email: str = Form(...), password: str = Form(...)):
     if len(recent) >= 8:
         flash(request, "Забагато спроб. Спробуйте за кілька хвилин.")
         return RedirectResponse("/login", status_code=303)
-    u = get_con().execute("SELECT * FROM users WHERE email=? AND active=1", (email.strip().lower(),)).fetchone()
+    who = email.strip().lower()
+    u = get_con().execute("SELECT * FROM users WHERE (email=? OR login=?) AND active=1", (who, who)).fetchone()
     if not u or not verify_password(password, u["pw_hash"]):
+        pend = get_con().execute("SELECT pw_hash FROM reg_requests WHERE status='pending' AND (email=? OR login=?)", (who, who)).fetchone()
+        if pend and verify_password(password, pend["pw_hash"]):
+            flash(request, "Ваш запит на реєстрацію ще очікує підтвердження власника. Після підтвердження ви зможете увійти.")
+            return RedirectResponse("/login", status_code=303)
         _fail[ip] = recent + [time.time()]
         log_act(request, None, "вхід: невдала спроба", email.strip().lower()[:80])
-        flash(request, "Невірний email або пароль")
+        flash(request, "Невірний логін, email або пароль")
         return RedirectResponse("/login", status_code=303)
     request.session.clear()
     request.session["uid"] = u["id"]
@@ -1355,8 +1360,13 @@ def _gen_password() -> str:
 
 @app.get("/users", response_class=HTMLResponse)
 def users_page(request: Request, u=Depends(owner_only)):
-    return render(request, "users.html", u, users=get_con().execute("SELECT * FROM users ORDER BY id").fetchall(), PERMS=PERMS,
-                  defaults=ROLE_DEFAULT_PERMS, temp=request.session.pop("temp", None))
+    c = get_con()
+    tok, exp, ok = _join_state(c)
+    return render(request, "users.html", u, users=c.execute("SELECT * FROM users ORDER BY id").fetchall(), PERMS=PERMS,
+                  defaults=ROLE_DEFAULT_PERMS, temp=request.session.pop("temp", None),
+                  join_link=(f"{request.url.scheme}://{request.url.netloc}/join/{tok}" if ok else ""), join_exp=exp, join_ok=ok,
+                  reqs=c.execute("SELECT * FROM reg_requests WHERE status='pending' ORDER BY id").fetchall(),
+                  done_reqs=c.execute("SELECT * FROM reg_requests WHERE status<>'pending' ORDER BY id DESC LIMIT 10").fetchall())
 
 
 @app.post("/users")
@@ -1417,6 +1427,125 @@ def user_reset(request: Request, uid: int, u=Depends(owner_only)):
     c.commit()
     log_act(request, u, "користувачі: скинуто пароль", t["name"])
     request.session["temp"] = {"name": t["name"], "email": t["email"], "password": pw}
+    return RedirectResponse("/users", status_code=303)
+
+
+# ---------- self-registration of administrators by a link, approved by the owner ----------
+JOIN_DAYS = 30
+_join_hits: dict[str, list[float]] = {}
+
+
+def _join_state(c):
+    tok, exp = get_setting(c, "join_token", ""), get_setting(c, "join_expires", "")
+    ok = bool(tok) and bool(exp) and exp >= datetime.now(config.KYIV).date().isoformat()
+    return tok, exp, ok
+
+
+def _join_valid(c, token: str) -> bool:
+    tok, _exp, ok = _join_state(c)
+    return ok and secrets.compare_digest(tok.encode(), token.encode())
+
+
+def _norm_phone(s: str) -> str:
+    d = re.sub(r"\D", "", s or "")
+    if len(d) == 10 and d.startswith("0"):
+        d = "38" + d
+    return "+" + d if len(d) == 12 and d.startswith("380") else ""
+
+
+def _join_errors(c, f: dict) -> str:
+    login, email, pw = f["login"], f["email"], f["password"]
+    if len(f["name"].split()) < 2:
+        return "Вкажіть ім'я та прізвище."
+    if not f["phone"]:
+        return "Вкажіть телефон у форматі +380XXXXXXXXX."
+    if not re.fullmatch(r"[a-z0-9._-]{3,32}", login):
+        return "Логін: 3–32 символи, лише латинські літери, цифри, крапка, дефіс і підкреслення."
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return "Вкажіть коректну електронну пошту."
+    if len(pw) < 8 or len(set(pw)) < 4 or pw.lower() in (login, email.lower()):
+        return "Пароль має бути не коротшим за 8 символів, з різними літерами й цифрами, не збігатися з логіном чи поштою."
+    if pw != f["password2"]:
+        return "Пароль і його повторення не збігаються."
+    if c.execute("SELECT 1 FROM users WHERE email=? OR login=? OR lower(email)=?", (email, login, login)).fetchone() or \
+       c.execute("SELECT 1 FROM reg_requests WHERE status='pending' AND (email=? OR login=?)", (email, login)).fetchone():
+        return "Такий логін або пошта вже зайняті. Оберіть інший логін."
+    return ""
+
+
+@app.get("/join/{token}", response_class=HTMLResponse)
+def join_page(request: Request, token: str):
+    c = get_con()
+    if not _join_valid(c, token):
+        return render(request, "join.html", state="bad")
+    return render(request, "join.html", state="form", f={})
+
+
+@app.post("/join/{token}", response_class=HTMLResponse)
+async def join_submit(request: Request, token: str):
+    c = get_con()
+    ip = client_ip(request)
+    recent = [t for t in _join_hits.get(ip, []) if time.time() - t < 3600]
+    if len(recent) >= 8:
+        return render(request, "join.html", state="bad", msg="Забагато спроб. Спробуйте пізніше.")
+    _join_hits[ip] = recent + [time.time()]
+    if not _join_valid(c, token):
+        return render(request, "join.html", state="bad")
+    form = await request.form()
+    f = dict(name=" ".join(str(form.get("name", "")).split())[:80], phone=_norm_phone(str(form.get("phone", ""))), login=str(form.get("login", "")).strip().lower(),
+             email=str(form.get("email", "")).strip().lower()[:120], password=str(form.get("password", "")), password2=str(form.get("password2", "")))
+    err = _join_errors(c, f)
+    if err:
+        return render(request, "join.html", state="form", f=f, error=err)
+    with lock():
+        c.execute("INSERT INTO reg_requests(name,phone,login,email,pw_hash,created_at,ip) VALUES(?,?,?,?,?,?,?)",
+                  (f["name"], f["phone"], f["login"], f["email"], hash_password(f["password"]), now_local(), ip))
+        c.commit()
+    log_act(request, None, "реєстрація: надіслано запит", f"{f['name']}, {f['phone']}, логін {f['login']}")
+    return render(request, "join.html", state="sent", f=f)
+
+
+@app.post("/users/join/new")
+def join_new(request: Request, u=Depends(owner_only)):
+    c = get_con()
+    set_setting(c, "join_token", secrets.token_urlsafe(24))
+    set_setting(c, "join_expires", (datetime.now(config.KYIV).date() + timedelta(days=JOIN_DAYS)).isoformat())
+    log_act(request, u, "реєстрація: створено нове посилання", f"діє {JOIN_DAYS} днів")
+    flash(request, f"Нове посилання створено, діє {JOIN_DAYS} днів. Старе більше не працює.")
+    return RedirectResponse("/users", status_code=303)
+
+
+@app.post("/users/join/off")
+def join_off(request: Request, u=Depends(owner_only)):
+    set_setting(get_con(), "join_token", "")
+    log_act(request, u, "реєстрація: посилання вимкнено")
+    flash(request, "Посилання для реєстрації вимкнено")
+    return RedirectResponse("/users", status_code=303)
+
+
+@app.post("/users/requests/{rid}/{action}")
+def join_decide(request: Request, rid: int, action: str, u=Depends(owner_only)):
+    c = get_con()
+    r = c.execute("SELECT * FROM reg_requests WHERE id=? AND status='pending'", (rid,)).fetchone()
+    if not r or action not in ("approve", "reject"):
+        raise HTTPException(404)
+    if action == "reject":
+        c.execute("UPDATE reg_requests SET status='rejected', decided_at=?, decided_by=? WHERE id=?", (now_local(), u["name"], rid))
+        c.commit()
+        log_act(request, u, "реєстрація: відхилено", f"{r['name']} ({r['login']})")
+        flash(request, f"Запит {r['name']} відхилено")
+        return RedirectResponse("/users", status_code=303)
+    try:
+        with lock():
+            cur = c.execute("INSERT INTO users(email,login,phone,name,title,role,perms,pw_hash,must_change) VALUES(?,?,?,?,?,?,?,?,0)",
+                            (r["email"], r["login"], r["phone"], r["name"], "Адміністратор", "admin", ROLE_DEFAULT_PERMS["admin"], r["pw_hash"]))
+            c.execute("UPDATE reg_requests SET status='approved', decided_at=?, decided_by=?, user_id=? WHERE id=?", (now_local(), u["name"], cur.lastrowid, rid))
+            c.commit()
+    except sqlite3.IntegrityError:
+        flash(request, "Такий логін або пошта вже є в системі. Відхиліть запит або змініть дані наявного користувача.")
+        return RedirectResponse("/users", status_code=303)
+    log_act(request, u, "реєстрація: підтверджено", f"{r['name']} ({r['login']}, {r['phone']}), роль Адміністратор")
+    flash(request, f"{r['name']} отримала доступ: увійти можна за логіном «{r['login']}» або поштою.")
     return RedirectResponse("/users", status_code=303)
 
 

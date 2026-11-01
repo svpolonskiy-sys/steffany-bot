@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Реєстрація{% endblock %}{% block body %}<div class="loginbox card">{% set compact=false %}{% include "_logo.html" %}
+{% if state=='bad' %}<h1 style="font-size:24px;margin:0 0 6px">Посилання недійсне</h1><p class="mut">{{ msg or 'Це посилання вже не працює. Попросіть власника надіслати нове.' }}</p>
+{% elif state=='sent' %}<h1 style="font-size:24px;margin:0 0 6px">Запит надіслано</h1><p class="mut">Дякуємо, {{ f.name }}. Власник перевірить і підтвердить доступ. Після цього увійдіть за логіном «{{ f.login }}» або поштою та створеним вами паролем.</p><p><a href="/login">До входу</a></p>
+{% else %}<h1 style="font-size:24px;margin:0 0 6px">Реєстрація адміністратора</h1><p class="mut" style="margin:0 0 10px">Заповніть дані. Доступ з'явиться після підтвердження власником.</p>
+{% if error %}<div class="flash warn">{{ error }}</div>{% endif %}
+<form method="post"><label>Ім'я та прізвище</label><input name="name" value="{{ f.name or '' }}" required autocomplete="name">
+<label>Телефон</label><input name="phone" type="tel" value="{{ f.phone or '' }}" placeholder="+380…" required autocomplete="tel">
+<label>Логін <span class="mut">(латиницею, для входу)</span></label><input name="login" value="{{ f.login or '' }}" required autocapitalize="off" autocomplete="username">
+<label>Електронна пошта</label><input name="email" type="email" value="{{ f.email or '' }}" required autocomplete="email">
+<label>Пароль <span class="mut">(мінімум 8 символів)</span></label><input name="password" type="password" required autocomplete="new-password">
+<label>Повторіть пароль</label><input name="password2" type="password" required autocomplete="new-password">
+<p><button style="width:100%">Надіслати запит на реєстрацію</button></p></form>{% endif %}</div>{% endblock %}

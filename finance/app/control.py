@@ -16,7 +16,7 @@ log = logging.getLogger("control")
 
 SEV = {"high": "Високий", "mid": "Середній", "low": "Низький"}
 KINDS = {"pay": "Виплати ЗП", "dup": "Дублі платежів", "susp": "Підозрілі платежі", "bal": "Залишки й синхронізація",
-         "edit": "Зміни в обліку", "cat": "Категорії", "visit": "Коментарі до візитів"}
+         "edit": "Зміни в обліку", "cat": "Категорії", "visit": "Коментарі до візитів", "reg": "Реєстрації"}
 SKIP_CATS = ("Зарплата", "Податки", "Кредит", "Комісія за обслуговування рахунку", "Виведення грошей з бізнесу")
 
 BIG_UNCATEGORISED = 500000      # kopecks
@@ -143,6 +143,11 @@ def check_visits(con, today):
             yield _f(f"conflict:{c['rid']}", "visit", "high", f"Конфлікт із клієнтом: {c['staff']}, {_d(c['day'])}", _cap(txt), link, round(c["first"] * 100))
 
 
+def check_registrations(con):
+    for r in con.execute("SELECT * FROM reg_requests WHERE status='pending'"):
+        yield _f(f"reg:{r['id']}", "reg", "mid", f"Запит на реєстрацію: {r['name']}", f"{r['name']} ({r['phone']}, логін {r['login']}) просить доступ адміністратора. Підтвердіть або відхиліть у розділі «Користувачі».", "/users")
+
+
 def check_audit(con, today):
     since = (today - timedelta(days=30)).isoformat()
     for a in con.execute(
@@ -186,7 +191,7 @@ def detect(con, today=None):
     today = today or datetime.now(config.KYIV).date()
     out = []
     for fn in (lambda: check_payroll(con, today), lambda: check_duplicates(con), lambda: check_suspicious(con),
-               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today)):
+               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today), lambda: check_registrations(con)):
         try:
             out += list(fn())
         except Exception:

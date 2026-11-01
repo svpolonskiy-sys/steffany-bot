@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS users(
   pw_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1,
   title TEXT NOT NULL DEFAULT '', perms TEXT NOT NULL DEFAULT '', must_change INTEGER NOT NULL DEFAULT 0,
   last_login TEXT, last_ip TEXT, sess_ver INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS reg_requests(
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL, login TEXT NOT NULL, email TEXT NOT NULL, pw_hash TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')), created_at TEXT NOT NULL, ip TEXT NOT NULL DEFAULT '',
+  decided_at TEXT, decided_by TEXT NOT NULL DEFAULT '', user_id INTEGER);
 CREATE TABLE IF NOT EXISTS accounts(
   id INTEGER PRIMARY KEY, name TEXT NOT NULL,
   kind TEXT NOT NULL CHECK(kind IN ('fop','cash','card','credit')),
@@ -140,9 +144,11 @@ def connect(path: str | None = None) -> sqlite3.Connection:
         con.execute("ALTER TABLE transactions ADD COLUMN parent_id INTEGER")
     ucols = {r[1] for r in con.execute("PRAGMA table_info(users)")}
     for c_, d_ in (("title", "TEXT NOT NULL DEFAULT ''"), ("perms", "TEXT NOT NULL DEFAULT ''"), ("must_change", "INTEGER NOT NULL DEFAULT 0"),
-                   ("last_login", "TEXT"), ("last_ip", "TEXT"), ("sess_ver", "INTEGER NOT NULL DEFAULT 0")):
+                   ("last_login", "TEXT"), ("last_ip", "TEXT"), ("sess_ver", "INTEGER NOT NULL DEFAULT 0"),
+                   ("login", "TEXT"), ("phone", "TEXT NOT NULL DEFAULT ''")):
         if c_ not in ucols:
             con.execute(f"ALTER TABLE users ADD COLUMN {c_} {d_}")
+    con.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_users_login ON users(login) WHERE login IS NOT NULL AND login<>''")
     pcols = {r[1] for r in con.execute("PRAGMA table_info(payroll)")}
     for c_, t_ in (("hours", "REAL"), ("shifts", "REAL"), ("rate", "INTEGER"), ("retail", "INTEGER"), ("adv_card", "INTEGER"),
                    ("sal_card", "INTEGER"), ("adv_cash", "INTEGER"), ("to_pay", "INTEGER")):

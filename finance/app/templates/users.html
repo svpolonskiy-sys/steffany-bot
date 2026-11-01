@@ -3,6 +3,17 @@
 Сайт: <b>{{ request.url.scheme }}://{{ request.url.netloc }}</b> &nbsp; Логін: <b>{{ temp.email }}</b> &nbsp; Тимчасовий пароль: <code>{{ temp.password }}</code>
 <div class="mut" style="margin-top:6px">При першому вході людина сама створить свій пароль. Ви його не знатимете.</div></div>{% endif %}
 
+<div class="card" style="margin-bottom:14px"><b>Реєстрація адміністраторів за посиланням</b>
+<p class="mut" style="margin:6px 0">Надішліть це посилання адміністраторам. Кожен сам вводить ім'я, телефон, логін, пошту й пароль і надсилає запит. Доступ з'являється лише після вашого підтвердження, роль завжди «Адміністратор».</p>
+{% if join_ok %}<div class="tempbox" style="word-break:break-all"><code id="jl">{{ join_link }}</code> <button type="button" class="sm sec" onclick="navigator.clipboard.writeText(document.getElementById('jl').textContent);this.textContent='Скопійовано'">Копіювати</button><div class="mut" style="margin-top:4px">Діє до {{ join_exp[8:10] }}.{{ join_exp[5:7] }}.{{ join_exp[:4] }}</div></div>
+<form method="post" action="/users/join/off" style="display:inline"><button class="sm sec">Вимкнути посилання</button></form> {% else %}<p class="mut">Посилання не активне.</p>{% endif %}
+<form method="post" action="/users/join/new" style="display:inline"><button class="sm">{{ 'Створити нове посилання (старе перестане працювати)' if join_ok else 'Створити посилання' }}</button></form></div>
+{% if reqs %}<div class="card" style="margin-bottom:14px"><b>Запити на реєстрацію ({{ reqs|length }})</b><table style="margin-top:8px"><tr><th>Хто</th><th>Телефон</th><th>Логін / email</th><th>Коли</th><th></th></tr>
+{% for r in reqs %}<tr><td><b>{{ r.name }}</b></td><td>{{ r.phone }}</td><td>{{ r.login }}<br><span class="mut">{{ r.email }}</span></td><td class="mut">{{ r.created_at|dt }}</td>
+<td style="white-space:nowrap"><form method="post" action="/users/requests/{{ r.id }}/approve" style="display:inline" onsubmit="return confirm('Підтвердити, що {{ r.name }} — ваш адміністратор, і дати доступ?')"><button class="sm">Підтвердити</button></form>
+<form method="post" action="/users/requests/{{ r.id }}/reject" style="display:inline"><button class="sm sec">Відхилити</button></form></td></tr>{% endfor %}</table></div>{% endif %}
+{% if done_reqs %}<details style="margin-bottom:14px"><summary class="mut">Останні рішення за запитами</summary><ul class="mut">{% for r in done_reqs %}<li>{{ r.name }} ({{ r.login }}) — {{ 'підтверджено' if r.status=='approved' else 'відхилено' }} {{ r.decided_at|dt }}, {{ r.decided_by }}</li>{% endfor %}</ul></details>{% endif %}
+
 <div class="card" style="margin-bottom:14px"><b>Як це працює.</b> Кожен працює за власним логіном (email + пароль), усі дії записуються: хто вніс, змінив чи видалив операцію (з історією «було → стало») та хто що змінював у налаштуваннях і коли заходив — див. розділ <a href="/activity">«Активність»</a>. Права за замовчуванням:
 <ul style="margin:6px 0 0 18px;padding:0" class="mut"><li><b>Адміністратор:</b> бачить баланси всіх рахунків, вносить, редагує й видаляє операції (історія зберігається), дивиться каси й звіти. Без P&amp;L, зарплати й кредитів.</li>
 <li><b>Керівник салону</b> — це адміністратор, якому ви вмикаєте потрібні додаткові права (наприклад, «P&amp;L, Зарплата, Кредити» або «категорії»).</li>
