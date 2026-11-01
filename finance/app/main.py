@@ -165,6 +165,29 @@ def log_act(request: Request, user, action: str, details: str = ""):
     get_con().commit()
 
 
+def is_limited(u) -> bool:
+    """A plain administrator (no extra rights): sees only the salon till and the operations of the last two days."""
+    return u["role"] == "admin" and not has_perm(u, "analytics")
+
+
+def full_access(u=Depends(current_user)):
+    if is_limited(u):
+        raise HTTPException(403, "Цей розділ недоступний для ролі «Адміністратор»")
+    return u
+
+
+def _till_id(c):
+    r = c.execute("SELECT id FROM accounts WHERE active=1 AND lower(name) LIKE '%каса салон%' ORDER BY id").fetchone()
+    return r["id"] if r else None
+
+
+def _own_recent(c, u, t) -> bool:
+    """An administrator may touch only his own operation made during the last 24 hours."""
+    if not is_limited(u):
+        return True
+    return bool(t) and t["created_by"] == u["id"] and t["created_at"] >= (datetime.now(config.KYIV) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S")
+
+
 def owner_only(u=Depends(current_user)):
     if u["role"] != "owner":
         raise HTTPException(403, "Лише для власника")
@@ -179,14 +202,18 @@ def api_user(request: Request):
     tok = request.headers.get("x-api-token", "")
     if config.API_TOKEN and tok and tok == config.API_TOKEN:
         return True
-    return current_user(request)
+    u = current_user(request)
+    if is_limited(u):
+        raise HTTPException(403, "Недоступно для ролі «Адміністратор»")
+    return u
 
 
 def render(request, name, user=None, **ctx):
     flash = request.session.pop("flash", None)
     can = {p_: (has_perm(user, p_) if user else False) for p_ in PERMS}
     ctl = control.open_count(get_con()) if user and can.get("analytics") else 0
-    return tpl.TemplateResponse(request, name, {"user": user, "flash": flash, "now": now_local(), "can": can, "ctl_open": ctl, **ctx})
+    return tpl.TemplateResponse(request, name, {"user": user, "flash": flash, "now": now_local(), "can": can, "ctl_open": ctl,
+                                                 "limited": bool(user) and is_limited(user), **ctx})
 
 
 def flash(request, msg):
@@ -271,8 +298,19 @@ def health():
 @app.get("/", response_class=HTMLResponse)
 def dashboard(request: Request, u=Depends(current_user)):
     c = get_con()
-    b = reports.balances(c)
     today = datetime.now(config.KYIV).date()
+    if is_limited(u):
+        till = _till_id(c)
+        bal = account_balances(c).get(till, 0) if till else 0
+        y = today - timedelta(days=1)
+        recent = c.execute(
+            "SELECT t.*, a.name acc, a2.name acc2, c.name cat, u.name author FROM transactions t JOIN accounts a ON a.id=t.account_id "
+            "LEFT JOIN accounts a2 ON a2.id=t.to_account_id LEFT JOIN categories c ON c.id=t.category_id LEFT JOIN users u ON u.id=t.created_by "
+            "WHERE t.deleted_at IS NULL AND (t.account_id=? OR t.to_account_id=?) AND t.occurred_at>=? ORDER BY t.occurred_at DESC, t.id DESC LIMIT 300",
+            (till, till, y.isoformat() + "T00:00:00")).fetchall()
+        takings = reports.daily_cash(c, today.isoformat(), today.isoformat())["days"][0]
+        return render(request, "dashboard_admin.html", u, till_bal=bal, takings=takings, recent=recent, today=today.isoformat())
+    b = reports.balances(c)
     day = reports.build(c, today.isoformat(), today.isoformat())
     takings = reports.daily_cash(c, today.isoformat(), today.isoformat())["days"][0]
     month = reports.build(c, today.replace(day=1).isoformat(), today.isoformat())
@@ -439,6 +477,12 @@ def tx_list(request: Request, u=Depends(current_user)):
     qp = request.query_params
     f = parse_tx_filters(qp)
     page = max(int(qp.get("page", 1) or 1), 1) if (qp.get("page") or "1").isdigit() else 1
+    if is_limited(u):                         # the till and the last two days only, no deleted
+        till = _till_id(c)
+        f["accounts"] = [till] if till else [0]
+        f["deleted"] = False
+        f["date_from"] = max(f["date_from"] or "", (datetime.now(config.KYIV).date() - timedelta(days=1)).isoformat())
+        f["date_to"] = ""
     sql, args = tx_query(f)
     total = c.execute(f"SELECT COUNT(*) FROM ({sql})", args).fetchone()[0]
     rows = c.execute(sql + " LIMIT 100 OFFSET ?", (*args, (page - 1) * 100)).fetchall()
@@ -478,7 +522,7 @@ def tx_list(request: Request, u=Depends(current_user)):
 
 
 @app.get("/transactions/export.csv")
-def tx_csv(request: Request, u=Depends(current_user)):
+def tx_csv(request: Request, u=Depends(full_access)):
     log_act(request, u, "експорт операцій (CSV)", str(request.url.query)[:200])
     sql, args = tx_query(parse_tx_filters(request.query_params))
     out = io.StringIO()
@@ -493,7 +537,7 @@ def tx_csv(request: Request, u=Depends(current_user)):
 
 
 @app.get("/transactions/export.xlsx")
-def tx_xlsx(request: Request, u=Depends(current_user)):
+def tx_xlsx(request: Request, u=Depends(full_access)):
     from openpyxl import Workbook
     log_act(request, u, "експорт операцій (Excel)", str(request.url.query)[:200])
     sql, args = tx_query(parse_tx_filters(request.query_params))
@@ -543,9 +587,15 @@ def tx_new(request: Request, kind: str = "expense", from_acc: int | None = None,
         if f and t]
     if kind == "transfer" and not from_acc:      # the usual transfer is cash desk -> safe, never the first bank account
         from_acc, to_acc = find("каса салон") or find("каса"), to_acc or find("сейф")
+    L = lists(c)
+    if is_limited(u):
+        till = _till_id(c)
+        L["accounts"] = [a for a in L["accounts"] if a["id"] == till]
+        presets = [p for p in presets if p[1] == till and "сейф" in p[0].lower()]
+        from_acc = till
     return render(request, "tx_form.html", u, t=None, kind=kind, history=[], presets=presets,
                   pre=dict(from_acc=from_acc, to_acc=to_acc, desc=desc),
-                  default_dt=datetime.now(config.KYIV).strftime("%Y-%m-%dT%H:%M"), **lists(c))
+                  default_dt=datetime.now(config.KYIV).strftime("%Y-%m-%dT%H:%M"), **L)
 
 
 @app.post("/transactions/new")
@@ -555,11 +605,15 @@ def tx_create(request: Request, kind: str = Form(...), account_id: int = Form(..
               u=Depends(current_user)):
     c = get_con()
     d = _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, description, counterparty, category_id)
+    if is_limited(u) and d["account_id"] != _till_id(c):
+        raise HTTPException(403, "Адміністратор вносить операції лише по «Каса салон»")
     with lock():
         cps.ensure(c, d["counterparty"])
         insert_tx(c, user_id=u["id"], source="manual", **d)
         c.commit()
-    if d["kind"] == "transfer":
+    if d["kind"] == "transfer" and is_limited(u):
+        flash(request, f"Переказ {money(d['amount'])} з каси салону записано. Каса салон тепер: {money(account_balances(c)[d['account_id']])}.")
+    elif d["kind"] == "transfer":
         bal = account_balances(c)
         nm = {r["id"]: r["name"] for r in c.execute("SELECT id,name FROM accounts")}
         flash(request, f"Переказ {money(d['amount'])}: {nm[d['account_id']]} → {nm[d['to_account_id']]}. "
@@ -575,6 +629,8 @@ def tx_edit_page(request: Request, tid: int, u=Depends(current_user)):
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     if not t:
         raise HTTPException(404)
+    if not _own_recent(c, u, t):
+        raise HTTPException(403, "Адміністратор може відкривати лише власні операції за останню добу")
     hist = c.execute("SELECT a.*, u.name uname FROM audit a LEFT JOIN users u ON u.id=a.user_id "
                      "WHERE a.tx_id=? ORDER BY a.id DESC", (tid,)).fetchall()
     parts, parent = _split_info(c, t)
@@ -598,6 +654,8 @@ def tx_update(request: Request, tid: int, kind: str = Form(...), account_id: int
     before = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     if not before:
         raise HTTPException(404)
+    if not _own_recent(c, u, before):
+        raise HTTPException(403, "Адміністратор може змінювати лише власні операції за останню добу")
     d = _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, description, counterparty, category_id)
     if (before["category_id"] and not _oi(category_id)) and kind != "transfer":
         d["category_id"] = before["category_id"]          # an empty category box on edit keeps the current one
@@ -632,6 +690,8 @@ def tx_set_category(tid: int, category_id: int = Form(...), rule_text: str = For
     k = c.execute("SELECT * FROM categories WHERE id=?", (category_id,)).fetchone()
     if not t or not k or t["kind"] == "transfer" or k["kind"] != t["kind"]:
         raise HTTPException(400, "Категорія не підходить до цієї операції")
+    if not _own_recent(c, u, t):
+        raise HTTPException(403, "Адміністратор може змінювати лише власні операції за останню добу")
     n = 0
     with lock():
         update_tx(c, tid, u["id"], note="категорію змінено вручну", category_id=category_id)
@@ -645,6 +705,8 @@ def tx_set_category(tid: int, category_id: int = Form(...), rule_text: str = For
 @app.post("/transactions/{tid}/delete")
 def tx_delete(request: Request, tid: int, reason: str = Form(""), u=Depends(current_user)):
     reason = _reason(reason)
+    if not _own_recent(get_con(), u, get_con().execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()):
+        raise HTTPException(403, "Адміністратор може видаляти лише власні операції за останню добу")
     if len(reason) < MIN_REASON:
         flash(request, "Вкажіть причину видалення (щонайменше 5 символів).")
         return RedirectResponse(f"/transactions/{tid}", status_code=303)
@@ -656,7 +718,7 @@ def tx_delete(request: Request, tid: int, reason: str = Form(""), u=Depends(curr
 
 
 @app.post("/transactions/{tid}/restore")
-def tx_restore(request: Request, tid: int, reason: str = Form(""), u=Depends(current_user)):
+def tx_restore(request: Request, tid: int, reason: str = Form(""), u=Depends(full_access)):
     reason = _reason(reason)
     if len(reason) < MIN_REASON:
         flash(request, "Вкажіть причину відновлення (щонайменше 5 символів).")
@@ -676,7 +738,7 @@ def _split_info(c, t):
 
 
 @app.get("/transactions/{tid}/split", response_class=HTMLResponse)
-def tx_split_page(request: Request, tid: int, u=Depends(current_user)):
+def tx_split_page(request: Request, tid: int, u=Depends(full_access)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     if not t or t["deleted_at"] or t["kind"] == "transfer":
@@ -685,7 +747,7 @@ def tx_split_page(request: Request, tid: int, u=Depends(current_user)):
 
 
 @app.post("/transactions/{tid}/split")
-async def tx_split(request: Request, tid: int, u=Depends(current_user)):
+async def tx_split(request: Request, tid: int, u=Depends(full_access)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     if not t or t["deleted_at"] or t["kind"] == "transfer":
@@ -728,7 +790,7 @@ async def tx_split(request: Request, tid: int, u=Depends(current_user)):
 
 
 @app.post("/transactions/{tid}/unsplit")
-def tx_unsplit(request: Request, tid: int, reason: str = Form(""), u=Depends(current_user)):
+def tx_unsplit(request: Request, tid: int, reason: str = Form(""), u=Depends(full_access)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     reason = _reason(reason)
@@ -798,13 +860,13 @@ def _cash_period(request, default_preset: str | None = None):
 
 
 @app.get("/cash", response_class=HTMLResponse)
-def cash_page(request: Request, u=Depends(current_user)):
+def cash_page(request: Request, u=Depends(full_access)):
     a, b, pr = _cash_period(request)
     return render(request, "cash.html", u, cash=reports.daily_cash(get_con(), a, b), d_from=a, d_to=b, preset=pr)
 
 
 @app.get("/cash/detail", response_class=HTMLResponse)
-def cash_detail(request: Request, u=Depends(current_user)):
+def cash_detail(request: Request, u=Depends(full_access)):
     a, b, pr = _cash_period(request, "today")
     return render(request, "cash_detail.html", u, det=reports.takings_detail(get_con(), a, b), d_from=a, d_to=b, preset=pr,
                   pay_error=get_setting(get_con(), "pay_sync_error", ""))
@@ -827,7 +889,7 @@ def api_cash_detail(request: Request, _=Depends(api_user)):
 
 
 @app.get("/cash/export.xlsx")
-def cash_xlsx(request: Request, u=Depends(current_user)):
+def cash_xlsx(request: Request, u=Depends(full_access)):
     from openpyxl import Workbook
     a, b, _ = _cash_period(request)
     rep = reports.daily_cash(get_con(), a, b)
@@ -1025,7 +1087,7 @@ def _period(request):
 
 
 @app.get("/reports", response_class=HTMLResponse)
-def reports_page(request: Request, u=Depends(current_user)):
+def reports_page(request: Request, u=Depends(full_access)):
     a, b, pr = _period(request)
     acc = int(request.query_params.get("account") or 0) or None
     c = get_con()
@@ -1036,7 +1098,7 @@ def reports_page(request: Request, u=Depends(current_user)):
 
 
 @app.get("/reports/export.xlsx")
-def reports_xlsx(request: Request, u=Depends(current_user)):
+def reports_xlsx(request: Request, u=Depends(full_access)):
     a, b, _ = _period(request)
     acc = int(request.query_params.get("account") or 0) or None
     c = get_con()
@@ -1047,7 +1109,7 @@ def reports_xlsx(request: Request, u=Depends(current_user)):
 
 # ---------- categories ----------
 @app.get("/categories", response_class=HTMLResponse)
-def categories_page(request: Request, u=Depends(current_user)):
+def categories_page(request: Request, u=Depends(full_access)):
     c = get_con()
     cats = c.execute("SELECT c.*, (SELECT COUNT(*) FROM transactions t WHERE t.category_id=c.id AND t.deleted_at IS NULL) n "
                      "FROM categories c WHERE archived=0 ORDER BY kind DESC, auto DESC, name").fetchall()
@@ -1157,7 +1219,7 @@ def rule_del(request: Request, rid: int, u=Depends(staff_cat)):
 
 # ---------- counterparties ----------
 @app.get("/counterparties", response_class=HTMLResponse)
-def counterparties_page(request: Request, u=Depends(current_user)):
+def counterparties_page(request: Request, u=Depends(full_access)):
     c = get_con()
     with lock():
         cps.sync(c)
@@ -1280,7 +1342,7 @@ def edits_page(request: Request, u=Depends(need_analytics)):
 
 # ---------- accounts (owner) ----------
 @app.get("/accounts", response_class=HTMLResponse)
-def accounts_page(request: Request, u=Depends(current_user)):
+def accounts_page(request: Request, u=Depends(full_access)):
     c = get_con()
     bal = account_balances(c)
     accs = c.execute("SELECT * FROM accounts ORDER BY active DESC, sort, id").fetchall()

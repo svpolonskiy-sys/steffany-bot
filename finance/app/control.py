@@ -151,7 +151,7 @@ def check_registrations(con):
 def check_audit(con, today):
     since = (today - timedelta(days=30)).isoformat()
     for a in con.execute(
-            "SELECT a.*, u.name uname FROM audit a JOIN users u ON u.id=a.user_id "
+            "SELECT a.*, u.name uname, u.role urole FROM audit a JOIN users u ON u.id=a.user_id "
             "WHERE a.at>=? AND a.action IN ('delete','update') ORDER BY a.id", (since,)):
         try:
             b, af = json.loads(a["before_json"] or "{}"), json.loads(a["after_json"] or "{}")
@@ -159,7 +159,7 @@ def check_audit(con, today):
             continue
         if (b.get("occurred_at") or "") < config.HISTORY_START:
             continue
-        if a["action"] == "delete" and (b.get("amount") or 0) >= BIG_DELETE:
+        if a["action"] == "delete" and (b.get("amount") or 0) >= BIG_DELETE and a["urole"] != "admin":
             yield _f(f"del:{a['id']}", "edit", "mid", f"Видалено операцію {_m(b['amount'])}",
                      f"{a['uname']} · {a['at'][:16].replace('T', ' ')} · {(b.get('description') or '')[:70]} (можна відновити в «Операціях»).",
                      f"/transactions/{a['tx_id']}", b["amount"], (a["tx_id"],))
@@ -167,6 +167,20 @@ def check_audit(con, today):
             yield _f(f"amt:{a['id']}", "edit", "mid", f"Змінено суму: {_m(b['amount'])} → {_m(af['amount'])}",
                      f"{a['uname']} · {a['at'][:16].replace('T', ' ')} · {(a['note'] or '').replace('Причина: ', 'причина: ')[:140]}",
                      f"/transactions/{a['tx_id']}", abs(af["amount"] - b["amount"]), (a["tx_id"],))
+
+
+def check_admin_deletes(con):
+    """Every deletion made by an administrator is shown to the owner, whatever the amount."""
+    acc = {r["id"]: r["name"] for r in con.execute("SELECT id,name FROM accounts")}
+    for a in con.execute("SELECT a.*, u.name uname FROM audit a JOIN users u ON u.id=a.user_id WHERE u.role='admin' AND a.action='delete' ORDER BY a.id"):
+        try:
+            b = json.loads(a["before_json"] or "{}")
+        except ValueError:
+            continue
+        yield _f(f"adel:{a['id']}", "edit", "high", f"Адміністратор видалив операцію {_m(b.get('amount') or 0)}",
+                 f"{a['uname']} видалив(ла) операцію «{(b.get('description') or '—')[:60]}» по рахунку «{acc.get(b.get('account_id'), '?')}» від {_d((b.get('occurred_at') or '')[:10]) if b.get('occurred_at') else '—'}. "
+                 f"{(a['note'] or '').replace('Причина: ', 'Причина: ')[:140]} Можна відновити в «Операціях».",
+                 f"/transactions/{a['tx_id']}", b.get("amount") or 0, (a["tx_id"],))
 
 
 def check_accounts(con):
@@ -191,7 +205,7 @@ def detect(con, today=None):
     today = today or datetime.now(config.KYIV).date()
     out = []
     for fn in (lambda: check_payroll(con, today), lambda: check_duplicates(con), lambda: check_suspicious(con),
-               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today), lambda: check_registrations(con)):
+               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today), lambda: check_registrations(con), lambda: check_admin_deletes(con)):
         try:
             out += list(fn())
         except Exception:

@@ -232,7 +232,7 @@ def test_roles_permissions_and_audit(client):
         assert adm.get(u, follow_redirects=False).status_code == 403, u
     assert adm.post("/accounts", data={"name": "x", "kind": "cash", "source": "manual"}).status_code == 403
     assert adm.post("/categories", data={"name": "x", "kind": "expense"}).status_code == 403
-    assert adm.get("/transactions/new").status_code == 200 and adm.get("/cash").status_code == 200
+    assert adm.get("/transactions/new").status_code == 200 and adm.get("/cash").status_code == 403       # no reports / cash pages for a plain administrator
     assert "P&amp;L" not in adm.get("/").text and "Користувачі" not in adm.get("/").text   # menu hides what is not allowed
     # what the administrator does is attributed to them
     cash = accid("Каса салон")
@@ -1115,3 +1115,29 @@ def test_admin_self_registration_by_link_needs_owner_approval(client):
         assert a2.get("/users", follow_redirects=False).status_code == 403                           # admin cannot manage users
     client.post("/users/join/off")
     assert "недійсне" in anon.get(f"/join/{token}").text
+
+
+def test_administrator_is_limited_and_deletions_reach_control(client):
+    c0 = main.con
+    till, safe = accid("Каса салон"), accid("Сейф")
+    client.post("/users", data={"name": "Адмін Тест", "email": "adm@x.ua", "role": "admin", "password": "Admin1234x"})
+    c0.execute("UPDATE users SET must_change=0 WHERE email='adm@x.ua'"); c0.commit()
+    a = TestClient(main.app, base_url="http://testserver")
+    assert a.post("/login", data={"email": "adm@x.ua", "password": "Admin1234x"}, follow_redirects=False).status_code == 303
+    home = a.get("/").text
+    assert "Каса салон" in home and "Всього грошей" not in home and "Сейф" not in home
+    for path in ("/api/balances", "/api/cash", "/api/report", "/reports", "/cash", "/categories", "/counterparties", "/accounts", "/control", "/payrun", "/pl", "/users", "/transactions/export.csv"):
+        assert a.get(path, follow_redirects=False).status_code == 403, path
+    a.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "100", "occurred_at": "2026-11-01T10:00", "description": "Мої витрати тест"})
+    mine = c0.execute("SELECT id FROM transactions WHERE description='Мої витрати тест'").fetchone()["id"]
+    assert a.post("/transactions/new", data={"kind": "expense", "account_id": accid("ФОП 1"), "amount": "5", "occurred_at": "2026-11-01T10:00", "description": "x"}).status_code == 403
+    client.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "50", "occurred_at": "2026-11-01T11:00", "description": "Чужа операція"})
+    other = c0.execute("SELECT id FROM transactions WHERE description='Чужа операція'").fetchone()["id"]
+    assert a.post(f"/transactions/{other}/delete", data={"reason": "не моє, але видалю"}).status_code == 403
+    assert a.get(f"/transactions/{other}").status_code == 403
+    a.post(f"/transactions/{mine}/delete", data={"reason": "помилково внесла"})
+    assert c0.execute("SELECT deleted_at FROM transactions WHERE id=?", (mine,)).fetchone()["deleted_at"]
+    from app import control
+    fs = [f for f in control.check_admin_deletes(c0)]
+    assert fs and fs[0]["sev"] == "high" and "помилково внесла" in fs[0]["detail"]
+    assert a.post(f"/transactions/{mine}/restore", data={"reason": "повернути назад"}).status_code == 403    # only the owner restores
