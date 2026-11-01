@@ -109,19 +109,38 @@ def check_suspicious(con):
                  f"/transactions/{t['id']}", t["amount"], (t["id"],))
 
 
+def _cap(text: str, n: int = 50) -> str:
+    w = text.split()
+    return text if len(w) <= n else " ".join(w[:n]) + "…"
+
+
+def _clip(text: str, n: int) -> str:
+    w = text.split()
+    return text if len(w) <= n else " ".join(w[:n]) + "…"
+
+
 def check_visits(con, today):
-    """Visits paid far below the price (or not at all) need a comment in Alteg: the payroll accrual reads it."""
+    """Visits whose payment is unexplained, and any conflict with a client, are shown with a short explanation (≤50 words)."""
     from . import payrun
     people = payrun.roster(con)
     first = today.replace(day=1)
     for ym in ((first - timedelta(days=1)).strftime("%Y-%m"), first.strftime("%Y-%m")):
+        link = f"/payrun?month={ym}"
         ef = payrun.visit_effects(con, ym, people)
         for x in ef["pending"]:
+            com = f"У коментарі Alteg «{_clip(x['comment'], 18)}» причини немає." if x["comment"] else "Коментаря в Alteg немає."
             yield _f(f"visit:{x['rid']}", "visit", "mid", f"Візит без пояснення оплати: {x['staff']}, {_d(x['day'])}",
-                     f"{x['services']}: оплачено {x['paid']:,.0f} із {x['first']:,.0f} ₴." + (f" Коментар в Alteg: «{x['comment']}» (програма не розпізнала причину)." if x["comment"] else " Коментаря в Alteg немає.") + f" Допишіть у коментарі Alteg: #сертифікат, #бали, #бонуси, #переробка Прізвище, #подарунок або Рикова25.",
-                     f"/payrun?month={ym}", round(max(x["first"] - x["paid"], 0) * 100))
+                     _cap(f"{_clip(x['services'], 14)}: оплачено {x['paid']:,.0f} із {x['first']:,.0f} ₴. {com} Невідомо, чому візит не оплачено повністю, тому каса майстра може бути занижена."),
+                     link, round(max(x["first"] - x["paid"], 0) * 100))
         for b in ef["unresolved"]:
-            yield _f(f"visitbad:{b['rid']}", "visit", "mid", f"Мітку в коментарі не застосовано: {b['staff']}, {_d(b['day'])}", f"{b['why']}. Коментар: «{b['comment']}»", f"/payrun?month={ym}")
+            yield _f(f"visitbad:{b['rid']}", "visit", "mid", f"Коментар не вдалося застосувати: {b['staff']}, {_d(b['day'])}",
+                     _cap(f"{b['why'][0].upper() + b['why'][1:]}. Коментар Alteg: «{_clip(b['comment'], 20)}». Уточніть коментар, і звіт врахує його сам."), link)
+        for c in payrun.visit_conflicts(con, ym, people):
+            if c["refused"]:
+                txt = f"Клієнт відмовився платити за {_clip(c['services'], 10)} ({c['first']:,.0f} ₴), майстру {c['staff']} відсоток не нараховується. Коментар Alteg: «{_clip(c['comment'], 18)}»."
+            else:
+                txt = f"У коментарі Alteg згадано конфлікт із клієнтом: «{_clip(c['comment'], 22)}». Послуги: {_clip(c['services'], 10)}, оплачено {c['paid']:,.0f} із {c['first']:,.0f} ₴. З'ясуйте, хто винен і чи потрібна компенсація."
+            yield _f(f"conflict:{c['rid']}", "visit", "high", f"Конфлікт із клієнтом: {c['staff']}, {_d(c['day'])}", _cap(txt), link, round(c["first"] * 100))
 
 
 def check_audit(con, today):

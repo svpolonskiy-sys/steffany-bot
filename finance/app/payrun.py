@@ -268,6 +268,23 @@ def parse_mark(comment: str, people: list[dict]):
     return dict(kind=kind, amount=_mark_amount(low), other=other)
 
 
+CONFLICT_RE = re.compile(r"відмов\w*\s+(?:від\s+)?(?:оплат|оплач|плат)|не\s+(?:оплат|заплат|платив)|конфлікт|скандал|скарг|жалоб|претензі|незадовол|не\s+сподобал|"
+                         r"не\s+влаштов|повернен\w*\s+(?:грош|кошт)|поверн\w*\s+грош|образ|нахамил|хамил|грубо", re.I)
+
+
+def visit_conflicts(con, ym: str, people: list[dict]) -> list[dict]:
+    """Visits whose comment mentions a conflict with the client or a refusal to pay: always shown in the Control centre."""
+    lo, hi = month_bounds(ym)
+    out = []
+    for v in con.execute("SELECT * FROM alteg_visits WHERE day BETWEEN ? AND ? AND comment<>'' ORDER BY day, record_id", (lo.isoformat(), hi.isoformat())):
+        if CONFLICT_RE.search(v["comment"]):
+            hit = match_name(v["staff_name"], people)
+            m = parse_mark(v["comment"], people)
+            out.append(dict(rid=v["record_id"], day=v["day"], staff=hit[0]["name"] if hit else v["staff_name"], comment=v["comment"].replace("\n", " "),
+                            services=v["services"], first=v["first_cost"] / 100, paid=v["paid"] / 100, refused=bool(m and m["kind"] == "refuse"), came=v["attendance"] == 1))
+    return out
+
+
 MARK_LABEL = {"cert": "сертифікат", "points": "бали", "rework": "переробка", "gift": "подарунок", "barter": "бартер (ЗП з повної суми)",
               "refuse": "відмова від оплати (без ЗП)", "discount": "знижка (ЗП з повної суми)"}
 

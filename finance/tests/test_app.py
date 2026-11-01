@@ -1071,3 +1071,8 @@ def test_payrun_visit_marks_move_money_between_masters(client):
         main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(?,?,?,1,?,?,?,0,'x')", (rid, "2026-09-15", who, com, first, paid))
     ef = payrun.visit_effects(main.con, "2026-09", people)
     assert ef["per"]["Нонік Анна"] == 700 + 1800 and not [x for x in ef["pending"] if x["rid"] in (20, 21)]       # barter pays the percentage, a refusal does not
+
+    main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(30,'2026-10-03','Іванов Іван',1,'клієнт скаржиться, відмовився оплачувати',50000,0,0,'Стрижка 500→0')")
+    fs = {f["key"]: f for f in control.check_visits(main.con, date(2026, 10, 5))}
+    assert fs["conflict:30"]["sev"] == "high" and "відсоток не нараховується" in fs["conflict:30"]["detail"]
+    assert all(len(f["detail"].split()) <= 51 and "Допишіть" not in f["detail"] for f in fs.values())
