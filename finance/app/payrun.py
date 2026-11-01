@@ -241,8 +241,13 @@ def parse_mark(comment: str, people: list[dict]):
     for t in tags:
         kind = ("rework" if t.startswith("переробк") else "cert" if t.startswith("сертиф") else "points" if t.startswith(("бал", "бонус"))
                 else "gift" if t.startswith("подарун") else None) or kind
-    if kind is None and re.search(r"переробк\w*\s+після", low):          # plain phrase, no '#'
-        kind = "rework"
+    if kind is None:                                                      # plain words, no '#'
+        if re.search(r"переробк", low):
+            kind = "rework"
+        elif re.search(r"сертифікат", low):
+            kind = "cert"
+        elif re.search(r"(?<!\w)(бали|балів|балами|бонус\w*)(?!\w)", low):
+            kind = "points"
     if kind is None:
         d = re.search(r"рикова\s*[-_]?\s*(\d{1,2})\b", low)
         if d and 0 < int(d.group(1)) < 100:
@@ -250,7 +255,7 @@ def parse_mark(comment: str, people: list[dict]):
         return None
     other = None
     if kind == "rework":
-        m = re.search(r"після\s+(.{0,40})", low) or re.search(r"#\s*переробк\w*(.{0,40})", low)
+        m = re.search(r"після\s+(.{0,40})", low) or re.search(r"переробк\w*(.{0,40})", low)
         other = _find_person(m.group(1), people) if m else None
     return dict(kind=kind, amount=_mark_amount(low), other=other)
 

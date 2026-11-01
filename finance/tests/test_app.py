@@ -1061,3 +1061,9 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     from datetime import date
     keys = [f["key"] for f in control.check_visits(main.con, date(2026, 10, 5))]
     assert "visit:3" in keys and "visit:4" not in keys and "visit:1" not in keys          # unmarked free visit flagged, no-show and marked visits not
+
+    assert payrun.parse_mark("сертифікат є, зняття зв лак", people)["kind"] == "cert"
+    r = payrun.parse_mark("переробка Іванов", people)
+    assert r["kind"] == "rework" and r["other"]["name"] == "Іванов Іван"
+    assert payrun.parse_mark("переробка", people)["other"] is None                      # master unknown -> shown in Control, nothing applied
+    assert payrun.parse_mark("блогер (по бартеру)", people) is None and payrun.parse_mark("відмовився оплачувати", people) is None

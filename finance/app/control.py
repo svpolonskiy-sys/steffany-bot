@@ -118,7 +118,7 @@ def check_visits(con, today):
         ef = payrun.visit_effects(con, ym, people)
         for x in ef["pending"]:
             yield _f(f"visit:{x['rid']}", "visit", "mid", f"Візит без пояснення оплати: {x['staff']}, {_d(x['day'])}",
-                     f"{x['services']}: оплачено {x['paid']:,.0f} із {x['first']:,.0f} ₴. Допишіть у коментарі Alteg: #сертифікат, #бали, #бонуси, #переробка Прізвище, #подарунок або Рикова25.",
+                     f"{x['services']}: оплачено {x['paid']:,.0f} із {x['first']:,.0f} ₴." + (f" Коментар в Alteg: «{x['comment']}» (програма не розпізнала причину)." if x["comment"] else " Коментаря в Alteg немає.") + f" Допишіть у коментарі Alteg: #сертифікат, #бали, #бонуси, #переробка Прізвище, #подарунок або Рикова25.",
                      f"/payrun?month={ym}", round(max(x["first"] - x["paid"], 0) * 100))
         for b in ef["unresolved"]:
             yield _f(f"visitbad:{b['rid']}", "visit", "mid", f"Мітку в коментарі не застосовано: {b['staff']}, {_d(b['day'])}", f"{b['why']}. Коментар: «{b['comment']}»", f"/payrun?month={ym}")
