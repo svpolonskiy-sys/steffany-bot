@@ -1065,7 +1065,8 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     assert payrun.parse_mark("сертифікат є, зняття зв лак", people)["kind"] == "cert"
     r = payrun.parse_mark("переробка Іванов", people)
     assert r["kind"] == "rework" and r["other"]["name"] == "Іванов Іван"
-    assert payrun.parse_mark("переробка", people)["other"] is None                      # master unknown -> shown in Control, nothing applied
+    assert payrun.parse_mark("переробка", people)["other"] == "self"                     # nobody named: redone after herself
+    assert payrun.parse_mark("переробка після Ксенії", people)["other"] is None         # a name that is not found -> shown in Control
     assert payrun.parse_mark("блогер (по бартеру)", people)["kind"] == "barter" and payrun.parse_mark("відмовився оплачувати", people)["kind"] == "refuse"
     for rid, who, com, first, paid in ((20, "Нонік Анна", "блогер (по бартеру )", 180000, 0), (21, "Нонік Анна", "відмовився оплачувати", 50000, 0)):
         main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(?,?,?,1,?,?,?,0,'x')", (rid, "2026-09-15", who, com, first, paid))
@@ -1081,3 +1082,7 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     main.con.execute("INSERT INTO alteg_loyalty(id,created,visit_id,record_id,type_id,type_title,amount) VALUES(2,'2026-09-16T10:00:00',1,9999,8,'Debit from gift card',777)")   # other salon of the chain
     ef = payrun.visit_effects(main.con, "2026-09", people)
     assert ef["per"]["Нонік Анна"] == 700 + 1800 + 1000 and not [x for x in ef["pending"] if x["rid"] == 40]       # certificate from the loyalty block, no comment needed
+
+    main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(50,'2026-09-17','Нонік Анна',1,'переробка',100000,0,0,'Манікюр 1000→0')")
+    ef = payrun.visit_effects(main.con, "2026-09", people)
+    assert ef["per"]["Нонік Анна"] == 700 + 1800 + 1000 and not [x for x in ef["pending"] + ef["unresolved"] if x["rid"] == 50]   # self-rework: nothing moves, nothing flagged

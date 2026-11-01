@@ -287,6 +287,8 @@ def parse_mark(comment: str, people: list[dict]):
     if kind == "rework":
         m = re.search(r"після\s+(.{0,40})", low) or re.search(r"переробк\w*(.{0,40})", low)
         other = _find_person(m.group(1), people) if m else None
+        if other is None and not any(len(w) >= 4 for w in re.findall(r"[^\W\d_]+", m.group(1) if m else "")):
+            other = "self"                          # "переробка" with nobody named: the master redoes her own work
     return dict(kind=kind, amount=_mark_amount(low), other=other)
 
 
@@ -364,6 +366,9 @@ def visit_effects(con, ym: str, people: list[dict]) -> dict:
             per[who] = per.get(who, 0) + amt
             lines.append(dict(base, kind=m["kind"], amount=amt, other="", effect=f"+{amt:,.0f} до каси {who}"))
         else:
+            if m["other"] == "self" or (m["other"] and m["other"]["name"] == who):
+                lines.append(dict(base, kind="rework", amount=0, other="", effect=f"переробка після себе: {who} працює безкоштовно, % не нараховується"))
+                continue
             if m["other"] is None:
                 bad.append(dict(base, why="у переробці не вказано або не знайдено майстра, після якого переробляли"))
                 continue
