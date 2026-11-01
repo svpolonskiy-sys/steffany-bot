@@ -1760,6 +1760,9 @@ async def payrun_adjust(request: Request, u=Depends(pay_edit)):
         note = str(form.get(f"{p['id']}_fines_note", "")).strip()
         if note:
             d["fines_note"] = note[:200]
+        cn = str(form.get(f"{p['id']}_cash_adj_note", "")).strip()
+        if cn:
+            d["cash_adj_note"] = cn[:200]
         if d:
             adj[f"{p['name']}|{p['section']}"] = d
     try:

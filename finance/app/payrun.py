@@ -506,6 +506,7 @@ def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: 
         row = dict(person=p, section=p["section"], name=p["name"], kind=p["kind"], alteg=sd["alteg"], notes=[])
         mk = (marks or {}).get("per", {}).get(p["name"], 0.0)
         row["marks"] = mk
+        row["cash_note"] = ad.get("cash_adj_note", "") if ad.get("cash_adj") else ""
         retail = _num(ad["retail"]) if "retail" in ad else sd["goods"] / 100
         row["retail_base"] = retail
         row["retail"] = rnd(retail * RETAIL_PCT)
