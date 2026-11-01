@@ -1,16 +1,16 @@
 {% if taxes is not none %}
 <h2 id="taxes">Податки: що саме сплачено <span class="mut" style="font-size:12px;font-weight:400">за датою оплати · {{ d_from }} — {{ d_to }}</span></h2>
 <div class="card dr">
-<div class="dr-head"><div><div class="k mut">Усього податків сплачено</div><div class="dr-tot num">{{ taxes.total|money }}</div></div>
-<div class="dr-sub"><div class="kv"><span>за працівників (ЄСВ, ПДФО, військовий збір)</span><b>{{ taxes.staff|money }}</b></div>
-<div class="kv"><span>власні податки ФОП</span><b>{{ taxes.own|money }}</b></div>
-{% set cmp = [comp, taxes.staff]|min %}{% if cmp and taxes.staff %}<div class="kv"><span>з ПДФО та ВЗ компенсували працівники (за таблицею)</span><b>− {{ cmp|money }}</b></div>
-<div class="kv"><span><b>Чиста вартість податків для компанії</b></span><b>{{ (taxes.total-cmp)|money }}</b></div>{% endif %}</div></div>
+<div class="dr-head"><div><div class="k mut">Усього перераховано до бюджету</div><div class="dr-tot num">{{ taxes.total|money }}</div></div>
+<div class="dr-sub"><div class="kv"><span><b>Податки за рахунок компанії</b> (ЄСВ за працівників + власні податки ФОП)</span><b>{{ taxes.company|money }}</b></div>
+<div class="kv"><span>&nbsp;&nbsp;з них ЄСВ за працівників</span><b>{{ taxes.employer|money }}</b></div>
+<div class="kv"><span>&nbsp;&nbsp;з них власні податки ФОП</span><b>{{ taxes.own|money }}</b></div>
+<div class="kv"><span><b>ПДФО та військовий збір з зарплат</b>: утримані з працівників, компанія лише перераховує їх до бюджету</span><b>{{ taxes.withheld|money }}</b></div></div></div>
 {% for g in taxes.groups %}<details class="drg"><summary><span class="dn">{{ g.name }}</span><span class="dc mut">{{ g.rows|length }} {{ 'платіж' if g.rows|length==1 else 'платежі' if g.rows|length<5 else 'платежів' }}</span><b class="num">{{ g.total|money }}</b></summary>
 <table class="dtab"><tr><th>Дата</th><th>Період</th><th>Рахунок</th><th>Призначення</th><th class="r">Сума</th></tr>
 {% for i in g.rows %}<tr><td class="num"><a href="/transactions/{{ i.id }}">{{ i.date[8:10] }}.{{ i.date[5:7] }}.{{ i.date[:4] }}</a></td><td>{{ i.period or '—' }}</td><td>{{ i.acc }}</td><td class="mut">{{ i.text }}</td><td class="r num">{{ i.amount|money }}</td></tr>{% endfor %}</table></details>
 {% else %}<p class="mut" style="margin:10px 0 0">За цей період податки не сплачувались.</p>{% endfor %}
-<p class="mut" style="font-size:12.5px;margin:8px 0 0">Натисніть на вид податку, щоб побачити кожен платіж. ПДФО та військовий збір з зарплат компанія перераховує до бюджету, але утримує їх із працівників (майстри компенсують їх у зарплатній таблиці), тому у витрати компанії вони не входять повністю.</p></div>
+<p class="mut" style="font-size:12.5px;margin:8px 0 0">Натисніть на вид податку, щоб побачити кожен платіж. ПДФО та військовий збір з зарплат сплачують самі працівники: компанія утримує їх із зарплати й перераховує до бюджету, тому у витратах компанії (P&L) вони не враховуються. Витратою компанії є ЄСВ за працівників і власні податки ФОП.</p></div>
 {% endif %}
 {% if owner is not none %}
 <h2 id="owner">Виведення грошей з бізнесу <span class="mut" style="font-size:12px;font-weight:400">{{ d_from }} — {{ d_to }}</span></h2>

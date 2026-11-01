@@ -54,8 +54,11 @@ def taxes(con, lo: str, hi: str) -> dict:
         g["rows"].append(it)
     out = sorted(groups.values(), key=lambda g: g["order"])
     total = sum(g["total"] for g in out)
-    return dict(total=total, groups=out, count=sum(len(g["rows"]) for g in out),
-                staff=sum(g["total"] for g in out if g["side"] == "staff"), own=sum(g["total"] for g in out if g["side"] == "own"))
+    withheld = sum(g["total"] for g in out if g["order"] in (2, 3))        # ПДФО, ВЗ: taken from the employee's pay, only passed on
+    employer = sum(g["total"] for g in out if g["order"] == 1)             # ЄСВ: the employer's own cost
+    own = sum(g["total"] for g in out if g["side"] == "own")
+    return dict(total=total, groups=out, count=sum(len(g["rows"]) for g in out), staff=employer + withheld, own=own,
+                withheld=withheld, employer=employer, company=employer + own)
 
 
 def owner_draws(con, lo: str, hi: str) -> dict:

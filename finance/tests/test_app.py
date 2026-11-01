@@ -908,7 +908,7 @@ def test_tax_and_owner_breakdown_in_reports(client):
     assert o["total"] == 3000000 and len(o["rows"]) == 1
     for u in ("/pl?date_from=2026-10-01&date_to=2026-10-31&preset=", "/reports?date_from=2026-10-01&date_to=2026-10-31"):
         page = client.get(u).text
-        assert "Усього податків сплачено" in page and "ЄСВ за працівників" in page and "Виведення грошей з бізнесу" in page and "Усього виведено власником" in page
+        assert "Усього перераховано до бюджету" in page and "ЄСВ за працівників" in page and "Виведення грошей з бізнесу" in page and "Усього виведено власником" in page
 
 
 def test_half_filled_sheet_section_is_estimated_not_trusted(client):
