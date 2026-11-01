@@ -67,3 +67,23 @@ def owner_draws(con, lo: str, hi: str) -> dict:
     for it in rows:
         by_month[it["date"][:7]] = by_month.get(it["date"][:7], 0) + it["amount"]
     return dict(total=sum(i["amount"] for i in rows), rows=rows, by_month=sorted(by_month.items()))
+
+
+def transfers(con, lo: str, hi: str, account_id: int | None = None) -> dict:
+    """Transfers between own accounts in the period, grouped by direction (from -> to)."""
+    q = ("SELECT t.id, t.occurred_at, t.amount, t.description, a.name acc, a2.name acc2 FROM transactions t "
+         "JOIN accounts a ON a.id=t.account_id LEFT JOIN accounts a2 ON a2.id=t.to_account_id "
+         "WHERE t.deleted_at IS NULL AND t.kind='transfer' AND t.occurred_at BETWEEN ? AND ?")
+    args = [lo + "T00:00:00", hi + "T23:59:59"]
+    if account_id:
+        q += " AND (t.account_id=? OR t.to_account_id=?)"
+        args += [account_id, account_id]
+    groups: dict[str, dict] = {}
+    for r in con.execute(q + " ORDER BY t.occurred_at, t.id", args):
+        name = f"{r['acc']} → {r['acc2'] or 'інший рахунок'}"
+        g = groups.setdefault(name, dict(name=name, total=0, rows=[]))
+        g["total"] += r["amount"]
+        g["rows"].append(dict(id=r["id"], date=r["occurred_at"][:10], time=r["occurred_at"][11:16], amount=r["amount"],
+                              text=(r["description"] or "")[:120]))
+    out = sorted(groups.values(), key=lambda g: -g["total"])
+    return dict(total=sum(g["total"] for g in out), groups=out, count=sum(len(g["rows"]) for g in out))

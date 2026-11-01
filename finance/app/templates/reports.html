@@ -6,7 +6,18 @@
 <div class="stats" style="margin-top:12px"><div class="card stat"><div class="k">Надходження</div><div class="v in">{{ rep.income|money }}</div></div>
 <div class="card stat"><div class="k">Витрати</div><div class="v out">{{ rep.expense|money }}</div></div>
 <div class="card stat"><div class="k">Результат</div><div class="v">{{ rep.net|money(true) }}</div></div>
-<div class="card stat"><div class="k">Перекази між касами</div><div class="v" style="color:var(--mut)">{{ rep.transfers_total|money }}</div><div class="s">не входять у доходи й витрати</div></div></div>
+<a class="card stat clk" href="#transfers" id="trcard" title="Показати, куди й коли були перекази"><div class="k">Перекази між касами</div><div class="v" style="color:var(--mut)">{{ rep.transfers_total|money }}</div><div class="s">не входять у доходи й витрати · <b class="lnk">деталізація ↓</b></div></a></div>
+<h2 id="transfers">Перекази між рахунками <span class="mut" style="font-size:12px;font-weight:400">{{ d_from }} — {{ d_to }}</span></h2>
+<div class="card dr">
+<div class="tx-top"><div><div class="k mut">Усього переказано</div><div class="dr-tot num">{{ tr.total|money }}</div></div><div class="tx-co"><div class="k mut">Операцій</div><div class="tx-co-v num" style="color:var(--ink)">{{ tr.count }}</div></div></div>
+{% for g in tr.groups %}<details class="drg"><summary><span class="dn">{{ g.name }}</span><span class="dc mut">{{ g.rows|length }} {{ 'переказ' if g.rows|length==1 else 'перекази' if g.rows|length<5 else 'переказів' }}</span><b class="num">{{ g.total|money }}</b></summary>
+<table class="dtab dcard"><tr><th>Дата</th><th>Опис</th><th class="r">Сума</th></tr>
+{% for i in g.rows %}<tr><td class="num cd"><a href="/transactions/{{ i.id }}">{{ i.date[8:10] }}.{{ i.date[5:7] }}.{{ i.date[:4] }}</a> <span class="mut">{{ i.time }}</span></td><td class="mut ct">{{ i.text or '—' }}</td><td class="r num cs">{{ i.amount|money }}</td></tr>{% endfor %}</table></details>
+{% else %}<p class="mut" style="margin:12px 0 0">За цей період переказів не було.</p>{% endfor %}
+<p class="mut" style="font-size:12.5px;margin:8px 0 0">Переказ — це рух грошей між вашими рахунками (каса → сейф, зняття з карти в сейф тощо). Він не є ні доходом, ні витратою.</p></div>
+<script>(function(){function openT(){var d=document.querySelector('#transfers ~ .card details');if(d)d.open=true}
+document.getElementById('trcard').addEventListener('click',function(e){e.preventDefault();var h=document.getElementById('transfers');h.scrollIntoView({behavior:'smooth',block:'start'});history.replaceState(null,'','#transfers');openT()});
+if(location.hash==='#transfers')openT()})();</script>
 {% for kind,title in [('income','Надходження за категоріями'),('expense','Витрати за категоріями')] %}<h2>{{ title }}</h2>
 <table><tr><th>Категорія</th><th class="r">К-сть</th><th class="r">Сума</th><th class="r">%</th></tr>
 {% set tot = rep.income if kind=='income' else rep.expense %}{% for c in rep.by_category if c.kind==kind %}

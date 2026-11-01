@@ -1026,7 +1026,7 @@ def reports_page(request: Request, u=Depends(current_user)):
     c = get_con()
     show = has_perm(u, "analytics")
     return render(request, "reports.html", u, rep=reports.build(c, a, b, acc), d_from=a, d_to=b, preset=pr,
-                  acc=acc, taxes=drill.taxes(c, a, b) if show else None, owner=drill.owner_draws(c, a, b) if show else None,
+                  acc=acc, tr=drill.transfers(c, a, b, acc), taxes=drill.taxes(c, a, b) if show else None, owner=drill.owner_draws(c, a, b) if show else None,
                   comp=payroll.compensation(c, date.fromisoformat(a), date.fromisoformat(b)) if show else 0, **lists(c))
 
 

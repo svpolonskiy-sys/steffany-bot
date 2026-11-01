@@ -400,3 +400,7 @@ tr.pl-note td{color:var(--mut);font-size:13px}tr.pl-note td:first-child{font-sty
  table.dcard td.cp{grid-column:1/3;grid-row:2;font-size:13px}table.dcard td.ca{grid-column:1/3;grid-row:3;font-size:13px;color:var(--mut)}table.dcard td.ct{grid-column:1/3;grid-row:4;font-size:12.5px;word-break:break-word}
  .dtab{margin:0 4px 6px;width:calc(100% - 8px)}.tx-co{text-align:left}
 }
+
+a.card.stat.clk{color:inherit;text-decoration:none;cursor:pointer;position:relative;border-color:color-mix(in srgb,var(--acc2) 55%,var(--line))}
+a.card.stat.clk:hover{transform:translateY(-3px);border-color:var(--acc)}a.card.stat.clk .lnk{color:var(--acc)}
+#transfers,#taxes,#owner{scroll-margin-top:84px}

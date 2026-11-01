@@ -931,3 +931,14 @@ def test_half_filled_sheet_section_is_estimated_not_trusted(client):
     assert "Перукарі" in ex["partial"].get(ym, []) and ym in ex["est"]
     assert ex["total"]["Перукарі"] > 400000                       # estimate, not the half-filled 4 000 ₴ of the sheet
     assert payroll.fill_status(main.con, ym)["rows"] == 2 and not payroll.is_final(main.con, ym)
+
+
+def test_transfer_breakdown_in_reports(client):
+    from app import drill
+    cash, safe, fop = accid("Каса салон"), accid("Сейф"), accid("ФОП 1")
+    for d, a, b, amt in (("2026-10-05T11:00", cash, safe, "1000"), ("2026-10-12T11:00", cash, safe, "500"), ("2026-10-07T08:00", fop, safe, "2000")):
+        client.post("/transactions/new", data=dict(kind="transfer", account_id=a, to_account_id=b, amount=amt, occurred_at=d, description="Інкасація"))
+    t = drill.transfers(main.con, "2026-10-01", "2026-10-31")
+    assert t["total"] == 350000 and t["count"] == 3 and [g["name"] for g in t["groups"]] == ["ФОП 1 → Сейф", "Каса салон → Сейф"]
+    page = client.get("/reports?date_from=2026-10-01&date_to=2026-10-31").text
+    assert 'id="transfers"' in page and "Каса салон → Сейф" in page and 'href="#transfers"' in page
