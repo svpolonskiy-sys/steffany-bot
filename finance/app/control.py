@@ -16,7 +16,7 @@ log = logging.getLogger("control")
 
 SEV = {"high": "Високий", "mid": "Середній", "low": "Низький"}
 KINDS = {"pay": "Виплати ЗП", "dup": "Дублі платежів", "susp": "Підозрілі платежі", "bal": "Залишки й синхронізація",
-         "edit": "Зміни в обліку", "cat": "Категорії"}
+         "edit": "Зміни в обліку", "cat": "Категорії", "visit": "Коментарі до візитів"}
 SKIP_CATS = ("Зарплата", "Податки", "Кредит", "Комісія за обслуговування рахунку", "Виведення грошей з бізнесу")
 
 BIG_UNCATEGORISED = 500000      # kopecks
@@ -109,6 +109,21 @@ def check_suspicious(con):
                  f"/transactions/{t['id']}", t["amount"], (t["id"],))
 
 
+def check_visits(con, today):
+    """Visits paid far below the price (or not at all) need a comment in Alteg: the payroll accrual reads it."""
+    from . import payrun
+    people = payrun.roster(con)
+    first = today.replace(day=1)
+    for ym in ((first - timedelta(days=1)).strftime("%Y-%m"), first.strftime("%Y-%m")):
+        ef = payrun.visit_effects(con, ym, people)
+        for x in ef["pending"]:
+            yield _f(f"visit:{x['rid']}", "visit", "mid", f"Візит без пояснення оплати: {x['staff']}, {_d(x['day'])}",
+                     f"{x['services']}: оплачено {x['paid']:,.0f} із {x['first']:,.0f} ₴. Допишіть у коментарі Alteg: #сертифікат, #бали, #бонуси, #переробка Прізвище, #подарунок або Рикова25.",
+                     f"/payrun?month={ym}", round(max(x["first"] - x["paid"], 0) * 100))
+        for b in ef["unresolved"]:
+            yield _f(f"visitbad:{b['rid']}", "visit", "mid", f"Мітку в коментарі не застосовано: {b['staff']}, {_d(b['day'])}", f"{b['why']}. Коментар: «{b['comment']}»", f"/payrun?month={ym}")
+
+
 def check_audit(con, today):
     since = (today - timedelta(days=30)).isoformat()
     for a in con.execute(
@@ -152,7 +167,7 @@ def detect(con, today=None):
     today = today or datetime.now(config.KYIV).date()
     out = []
     for fn in (lambda: check_payroll(con, today), lambda: check_duplicates(con), lambda: check_suspicious(con),
-               lambda: check_audit(con, today), lambda: check_accounts(con)):
+               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today)):
         try:
             out += list(fn())
         except Exception:

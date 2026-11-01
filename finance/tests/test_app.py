@@ -1055,3 +1055,9 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     assert d["kind"] == "discount" and d["pct"] == 25 and payrun.parse_mark("Рикова", people) is None
     main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(9,'2026-09-14','Іванов Іван',1,'Рикова25',100000,75000,0,'x')")
     assert payrun.visit_effects(main.con, "2026-09", people)["per"]["Іванов Іван"] == -700 + 300 + 250          # 750 paid -> counted as 1000
+
+    assert payrun.parse_mark("#бонуси 120", people)["kind"] == "points"
+    from app import control
+    from datetime import date
+    keys = [f["key"] for f in control.check_visits(main.con, date(2026, 10, 5))]
+    assert "visit:3" in keys and "visit:4" not in keys and "visit:1" not in keys          # unmarked free visit flagged, no-show and marked visits not

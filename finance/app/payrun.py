@@ -184,7 +184,7 @@ def cash_advances(con, ym: str, people: list[dict]) -> dict:
 # The master's till is built from money paid. Some visits are paid not with money (certificate, points) or are redone
 # free of charge by another master; the salon's rule then moves the percentage to the master who did the work.
 # The administrator tells the program about it in the visit comment in Alteg:
-#   #сертифікат 880   /  #бали 880      – paid by certificate / points: the amount counts to this master's till
+#   #сертифікат 880   /  #бали 880  /  #бонуси 880 – paid by certificate / points / bonuses: the amount counts to this master's till
 #   #переробка Середнюк 900              – this master redid the work after Середнюк: 900 moves from Середнюк to him
 #   #подарунок                           – free on purpose: nothing is added
 #   Рикова25                             – the client has a 25% discount, the master is still paid from the full price
@@ -239,7 +239,7 @@ def parse_mark(comment: str, people: list[dict]):
     tags = re.findall(r"#\s*([\w'’]+)", low)
     kind = None
     for t in tags:
-        kind = ("rework" if t.startswith("переробк") else "cert" if t.startswith("сертиф") else "points" if t.startswith("бал")
+        kind = ("rework" if t.startswith("переробк") else "cert" if t.startswith("сертиф") else "points" if t.startswith(("бал", "бонус"))
                 else "gift" if t.startswith("подарун") else None) or kind
     if kind is None and re.search(r"переробк\w*\s+після", low):          # plain phrase, no '#'
         kind = "rework"
@@ -270,7 +270,7 @@ def visit_effects(con, ym: str, people: list[dict]) -> dict:
         who = hit[0]["name"] if hit else v["staff_name"]
         short = max(v["first_cost"] - v["paid"], 0) / 100
         m = parse_mark(v["comment"], people)
-        base = dict(day=v["day"], staff=who, comment=v["comment"][:140].replace("\n", " "), services=v["services"])
+        base = dict(rid=v["record_id"], day=v["day"], staff=who, comment=v["comment"][:140].replace("\n", " "), services=v["services"])
         if m is None:
             if v["first_cost"] > 0 and v["paid"] < v["first_cost"] * FREE_RATIO and not (hit and hit[0]["kind"] == "cosm"):   # cosmetology has its own promo prices
                 pending.append(dict(base, first=v["first_cost"] / 100, paid=v["paid"] / 100))
