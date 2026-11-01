@@ -1024,3 +1024,29 @@ def test_payrun_reads_accountants_excel_and_exports(client):
     x = client.get(f"/payrun/{rid}/xlsx")
     assert x.status_code == 200 and x.content[:2] == b"PK"
     assert "Нарахування ЗП за вересень 2026" in client.get(f"/payrun/{rid}").text and "Самоперевірка" in client.get(f"/payrun/{rid}").text
+
+
+def test_payrun_visit_marks_move_money_between_masters(client):
+    from app import payrun
+    _payrun_setup()
+    people = payrun.roster(main.con)
+    assert payrun.parse_mark("#сертифікат 880", people)["kind"] == "cert" and payrun.parse_mark("#сертифікат 880", people)["amount"] == 880
+    assert payrun.parse_mark("#бали", people)["amount"] is None
+    assert payrun.parse_mark("#подарунок", people)["kind"] == "gift"
+    assert payrun.parse_mark("клієнт чекав 2:30", people) is None
+    m = payrun.parse_mark("900грн переробка після Іванова", people)
+    assert m["kind"] == "rework" and m["amount"] == 900 and m["other"]["name"] == "Іванов Іван"
+    m = payrun.parse_mark("#переробка Іванов 700", people)
+    assert m["amount"] == 700 and m["other"]["name"] == "Іванов Іван"
+    visits = [(1, "2026-09-10", "Нонік Анна", 1, "#переробка Іванов 700", 80000, 0), (2, "2026-09-11", "Іванов Іван", 1, "#сертифікат", 50000, 20000),
+              (3, "2026-09-12", "Іванов Іван", 1, "", 90000, 0), (4, "2026-09-13", "Іванов Іван", 0, "", 90000, 0)]
+    for rid, day, who, att, com, first, paid in visits:
+        main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(?,?,?,?,?,?,?,0,'x')",
+                         (rid, day, who, att, com, first, paid))
+    ef = payrun.visit_effects(main.con, "2026-09", people)
+    assert ef["per"] == {"Нонік Анна": 700, "Іванов Іван": -700 + 300}                  # rework moves 700; the certificate adds the unpaid 300
+    assert len(ef["pending"]) == 1 and ef["pending"][0]["day"] == "2026-09-12"           # unmarked free visit is flagged; the no-show is not
+    assert ef["unresolved"] == []
+    payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0)], "file", "t.xlsx", "Бухгалтер")
+    page = client.get("/payrun?month=2026-09")
+    assert page.status_code == 200 and "Потрібен коментар" in page.text and "переробка" in page.text

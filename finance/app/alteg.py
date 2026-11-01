@@ -94,6 +94,19 @@ def _slim_record(r: dict) -> dict:
             "services": [{"id": x.get("id"), "title": x.get("title")} for x in r.get("services") or []]}
 
 
+def _slim_visit(r: dict) -> dict:
+    """Visit with its comment and the list/paid price of each service (for payroll marks: certificates, reworks)."""
+    st = r.get("staff") or {}
+    return {"id": r.get("id"), "day": (r.get("date") or "")[:10], "attendance": r.get("attendance"),
+            "comment": (r.get("comment") or "").strip(), "staff": {"id": st.get("id"), "name": st.get("name")},
+            "services": [{"title": x.get("title"), "first_cost": x.get("first_cost"), "cost_to_pay": x.get("cost_to_pay")}
+                         for x in r.get("services") or []]}
+
+
+def _visits(self, start: str, end: str):
+    return _paged(self, f"/records/{config.ALTEG_LOCATION}", slim=_slim_visit, start_date=start, end_date=end)
+
+
 def _records(self, start: str, end: str):
     return _paged(self, f"/records/{config.ALTEG_LOCATION}", slim=_slim_record, start_date=start, end_date=end)
 
@@ -109,6 +122,7 @@ def _record(self, rid: int):
 
 
 AltegClient.records = _records
+AltegClient.visits = _visits
 AltegClient.record = _record
 AltegClient.services = lambda self: _paged(self, f"/services/{config.ALTEG_LOCATION}")
 AltegClient.service_categories = lambda self: _paged(self, f"/service_categories/{config.ALTEG_LOCATION}")

@@ -1627,10 +1627,11 @@ def payrun_page(request: Request, u=Depends(need_analytics)):
     inputs = payrun.load_inputs(c, ym)
     alteg = payrun.alteg_month(c, ym)
     adv = payrun.cash_advances(c, ym, people)
+    marks = payrun.visit_effects(c, ym, people)
     preview = []
     for p in people:
         st = [v for v in alteg["staff"].values() if payrun.match_name(v["name"], [p])]
-        preview.append(dict(p=p, key=f"{p['name']}|{p['section']}", cash=sum(v["svc"] for v in st) / 100, goods=sum(v["goods"] for v in st) / 100,
+        preview.append(dict(p=p, key=f"{p['name']}|{p['section']}", cash=sum(v["svc"] for v in st) / 100 + marks["per"].get(p["name"], 0), goods=sum(v["goods"] for v in st) / 100,
                             adv=adv["per"].get(p["name"], 0) / 100 if p["section"] == payrun._primary_section(people, p["name"]) else 0,
                             adj=(inputs["adj"].get(f"{p['name']}|{p['section']}", {}) if inputs else {})))
     today = datetime.now(config.KYIV).date()
@@ -1642,7 +1643,8 @@ def payrun_page(request: Request, u=Depends(need_analytics)):
     return render(request, "payrun.html", u, ym=ym, ym_label=payrun.month_label(ym), months=months, labels={x: payrun.month_label(x) for x in months},
                   inputs=inputs, preview=preview, runs=payrun.list_runs(c), link=get_setting(c, "payrun_f1_url", ""),
                   can_edit=u["role"] in ("owner", "accountant"), sheet_has=bool(c.execute("SELECT 1 FROM payroll WHERE month=?", (ym,)).fetchone()),
-                  adv=adv, alteg_days=len(alteg["days"]), unmatched=[s_ for k, s_ in alteg["staff"].items() if k != "none" and not payrun.match_name(s_["name"], people)
+                  adv=adv, marks=marks, visits_at=(c.execute("SELECT MAX(fetched_at) FROM alteg_visits WHERE day LIKE ?", (ym + "%",)).fetchone()[0]),
+                  alteg_days=len(alteg["days"]), unmatched=[s_ for k, s_ in alteg["staff"].items() if k != "none" and not payrun.match_name(s_["name"], people)
                                                                     and not payrun.norm(s_["role"]).startswith("корпоративна") and (s_["svc"] or s_["goods"])],
                   SECTIONS=payrun.SECTIONS, KIND_LABEL=payrun.KIND_LABEL, labelf=payrun.month_label)
 
@@ -1712,6 +1714,18 @@ def payrun_refresh(request: Request, month: str = Form(...), u=Depends(pay_edit)
         flash(request, "Посилання ще не збережено")
     else:
         _link_import(request, c, month, url, u)
+    return RedirectResponse(f"/payrun?month={month}", status_code=303)
+
+
+@app.post("/payrun/visits")
+def payrun_visits(request: Request, month: str = Form(...), u=Depends(pay_edit)):
+    try:
+        with lock():
+            n = payrun.sync_visits(get_con(), month)
+        flash(request, f"Коментарі до візитів оновлено з Alteg: {n} візитів")
+        log_act(request, u, "нарахування ЗП: коментарі до візитів з Alteg", month)
+    except Exception as e:
+        flash(request, f"Не вдалося завантажити візити з Alteg: {e}")
     return RedirectResponse(f"/payrun?month={month}", status_code=303)
 
 

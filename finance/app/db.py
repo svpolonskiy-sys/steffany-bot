@@ -67,6 +67,11 @@ CREATE TABLE IF NOT EXISTS alteg_pay(
   record_id INTEGER, staff_id INTEGER, staff_name TEXT NOT NULL DEFAULT '', staff_role TEXT NOT NULL DEFAULT '',
   service_title TEXT NOT NULL DEFAULT '', category_title TEXT NOT NULL DEFAULT '', item_type TEXT NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS ix_pay_date ON alteg_pay(occurred_at);
+CREATE TABLE IF NOT EXISTS alteg_visits(
+  record_id INTEGER PRIMARY KEY, day TEXT NOT NULL, staff_id INTEGER, staff_name TEXT NOT NULL DEFAULT '', attendance INTEGER,
+  comment TEXT NOT NULL DEFAULT '', first_cost INTEGER NOT NULL DEFAULT 0, paid INTEGER NOT NULL DEFAULT 0, zero_cost INTEGER NOT NULL DEFAULT 0,
+  services TEXT NOT NULL DEFAULT '', fetched_at TEXT);
+CREATE INDEX IF NOT EXISTS ix_visit_day ON alteg_visits(day);
 CREATE TABLE IF NOT EXISTS payroll(
   id INTEGER PRIMARY KEY, month TEXT NOT NULL, section TEXT NOT NULL, name TEXT NOT NULL,
   gross INTEGER NOT NULL DEFAULT 0, vacation INTEGER NOT NULL DEFAULT 0, sick INTEGER NOT NULL DEFAULT 0,

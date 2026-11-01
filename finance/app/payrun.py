@@ -180,6 +180,119 @@ def cash_advances(con, ym: str, people: list[dict]) -> dict:
     return dict(per=per, total=total, unmatched=unmatched)
 
 
+# ------------------------------------------------------------------ visit comments ("marks")
+# The master's till is built from money paid. Some visits are paid not with money (certificate, points) or are redone
+# free of charge by another master; the salon's rule then moves the percentage to the master who did the work.
+# The administrator tells the program about it in the visit comment in Alteg:
+#   #сертифікат 880   /  #бали 880      – paid by certificate / points: the amount counts to this master's till
+#   #переробка Середнюк 900              – this master redid the work after Середнюк: 900 moves from Середнюк to him
+#   #подарунок                           – free on purpose: nothing is added
+# A plain phrase "переробка після Середнюк, 900грн" is understood as well.
+FREE_RATIO = 0.6          # a service paid below 60% of the list price without a mark is shown as "needs a comment"
+
+
+def sync_visits(con, ym: str, client=None) -> int:
+    """Loads the month's visits with their comments from Alteg (replaces what was stored for the month)."""
+    from . import alteg
+    lo, hi = month_bounds(ym)
+    client = client or alteg.AltegClient()
+    rows = client.visits(lo.isoformat(), hi.isoformat())
+    stamp = now_local()
+    con.execute("DELETE FROM alteg_visits WHERE day BETWEEN ? AND ?", (lo.isoformat(), hi.isoformat()))
+    for r in rows:
+        sv = r.get("services") or []
+        first = sum(round((x.get("first_cost") or 0) * 100) for x in sv)
+        paid = sum(round((x.get("cost_to_pay") or 0) * 100) for x in sv)
+        zero = sum(round((x.get("first_cost") or 0) * 100) for x in sv if (x.get("first_cost") or 0) > 0 and not (x.get("cost_to_pay") or 0))
+        con.execute("INSERT OR REPLACE INTO alteg_visits(record_id,day,staff_id,staff_name,attendance,comment,first_cost,paid,zero_cost,services,fetched_at) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                    (r["id"], r["day"], (r.get("staff") or {}).get("id"), (r.get("staff") or {}).get("name") or "", r.get("attendance"),
+                     r.get("comment") or "", first, paid, zero,
+                     "; ".join(f"{x.get('title')} {x.get('first_cost')}→{x.get('cost_to_pay')}" for x in sv), stamp))
+    con.commit()
+    return len(rows)
+
+
+def _find_person(text: str, people: list[dict]):
+    for w in re.findall(r"[\w'’]+", text):
+        if len(w) < 4 or w.isdigit():
+            continue
+        for cand in (w, w[:-1], w[:-2]):
+            if len(cand) >= 4:
+                hit = match_name(cand, people)
+                if hit:
+                    return hit[0]
+    return None
+
+
+def _mark_amount(text: str):
+    m = re.search(r"(\d+(?:[.,]\d+)?)\s*(?:грн|₴|uah)", text, re.I) or re.search(r"#\s*[\w'’]+[^\d\n#]{0,40}?(\d+(?:[.,]\d+)?)", text)
+    return float(m.group(1).replace(",", ".")) if m else None
+
+
+def parse_mark(comment: str, people: list[dict]):
+    """-> dict(kind, amount|None, other|None) or None. Kinds: cert, points, rework, gift."""
+    low = (comment or "").lower()
+    if not low.strip():
+        return None
+    tags = re.findall(r"#\s*([\w'’]+)", low)
+    kind = None
+    for t in tags:
+        kind = ("rework" if t.startswith("переробк") else "cert" if t.startswith("сертиф") else "points" if t.startswith("бал")
+                else "gift" if t.startswith("подарун") else None) or kind
+    if kind is None and re.search(r"переробк\w*\s+після", low):          # plain phrase, no '#'
+        kind = "rework"
+    if kind is None:
+        return None
+    other = None
+    if kind == "rework":
+        m = re.search(r"після\s+(.{0,40})", low) or re.search(r"#\s*переробк\w*(.{0,40})", low)
+        other = _find_person(m.group(1), people) if m else None
+    return dict(kind=kind, amount=_mark_amount(low), other=other)
+
+
+MARK_LABEL = {"cert": "сертифікат", "points": "бали", "rework": "переробка", "gift": "подарунок"}
+
+
+def visit_effects(con, ym: str, people: list[dict]) -> dict:
+    """What the visit comments change in the masters' tills: per person (UAH), the lines for the report, visits that still need a comment."""
+    lo, hi = month_bounds(ym)
+    rows = con.execute("SELECT * FROM alteg_visits WHERE day BETWEEN ? AND ? AND attendance=1 ORDER BY day, record_id",
+                       (lo.isoformat(), hi.isoformat())).fetchall()
+    per: dict[str, float] = {}
+    lines, pending, bad = [], [], []
+    for v in rows:
+        hit = match_name(v["staff_name"], people)
+        who = hit[0]["name"] if hit else v["staff_name"]
+        short = max(v["first_cost"] - v["paid"], 0) / 100
+        m = parse_mark(v["comment"], people)
+        base = dict(day=v["day"], staff=who, comment=v["comment"][:140].replace("\n", " "), services=v["services"])
+        if m is None:
+            if v["first_cost"] > 0 and v["paid"] < v["first_cost"] * FREE_RATIO and not (hit and hit[0]["kind"] == "cosm"):   # cosmetology has its own promo prices
+                pending.append(dict(base, first=v["first_cost"] / 100, paid=v["paid"] / 100))
+            continue
+        if not hit:
+            bad.append(dict(base, why="майстра немає у списку співробітників"))
+            continue
+        amt = m["amount"] if m["amount"] is not None else short
+        if m["kind"] == "gift":
+            lines.append(dict(base, kind="gift", amount=0, other="", effect="без змін: подарунок"))
+        elif m["kind"] in ("cert", "points"):
+            per[who] = per.get(who, 0) + amt
+            lines.append(dict(base, kind=m["kind"], amount=amt, other="", effect=f"+{amt:,.0f} до каси {who}"))
+        else:
+            if m["other"] is None:
+                bad.append(dict(base, why="у переробці не вказано або не знайдено майстра, після якого переробляли"))
+                continue
+            src = m["other"]["name"]
+            if amt:
+                per[who] = per.get(who, 0) + amt
+                per[src] = per.get(src, 0) - amt
+            lines.append(dict(base, kind="rework", amount=amt, other=src,
+                              effect=(f"{amt:,.0f} ₴ переходить від {src} до {who}" if amt else "клієнт оплатив майстру, переносу немає")))
+    return dict(per=per, lines=lines, pending=pending, unresolved=bad, visits=len(rows))
+
+
 def bank_waves(con, ym: str) -> dict:
     """Salary payments made through the bank for the month (ledger): advance and the Ф-1 settlement."""
     from .pl import accrual_date
@@ -333,7 +446,7 @@ def _adj(adj: dict, p: dict) -> dict:
     return adj.get(f"{p['name']}|{p['section']}") or adj.get(p["name"]) or {}
 
 
-def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: dict, advances: dict) -> dict:
+def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: dict, advances: dict, marks: dict | None = None) -> dict:
     """The accrual itself. Amounts in whole UAH (as in the sheet)."""
     by_person_staff: dict[str, dict] = {}
     unmatched_staff = []
@@ -381,20 +494,22 @@ def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: 
         sd = by_person_staff.get(p["name"], dict(svc=0, goods=0, cats={}, alteg=[]))
         ad = _adj(adj, p)
         row = dict(person=p, section=p["section"], name=p["name"], kind=p["kind"], alteg=sd["alteg"], notes=[])
+        mk = (marks or {}).get("per", {}).get(p["name"], 0.0)
+        row["marks"] = mk
         retail = _num(ad["retail"]) if "retail" in ad else sd["goods"] / 100
         row["retail_base"] = retail
         row["retail"] = rnd(retail * RETAIL_PCT)
         extra = p["extra"] / 100 + _num(ad.get("extra", 0))
         row["extra"] = extra
         if p["kind"] == "master":
-            cash = sd["svc"] / 100 + _num(ad.get("cash_adj", 0))
+            cash = sd["svc"] / 100 + _num(ad.get("cash_adj", 0)) + mk
             pct = p["pct"] or 0.4
             row.update(cash=cash, pct=pct, accrual=rnd(cash * pct))
             row["gross"] = rnd(row["accrual"] + extra + row["retail"])
         else:
             cats = {c: sd["cats"].get(c, 0) / 100 for c in COSM_CATS}
             cats["Ін'єкційна косметологія"] -= _num(ad.get("inj_cost", 0))        # drugs are deducted from injections
-            cats["Косметологія"] += _num(ad.get("cash_adj", 0))
+            cats["Косметологія"] += _num(ad.get("cash_adj", 0)) + mk
             cash = sum(cats.values())
             accr = rnd(sum(cats[c] * COSM_CATS[c] for c in COSM_CATS))
             row.update(cash=cash, pct=None, accrual=accr, cats=cats)
@@ -462,7 +577,7 @@ def uah(v) -> str:
     return f"{v:,.2f}".replace(",", " ").replace(".", ",") + " ₴"
 
 
-def run_checks(con, ym: str, people: list[dict], inputs: dict, alteg: dict, calc: dict, advances: dict) -> list[dict]:
+def run_checks(con, ym: str, people: list[dict], inputs: dict, alteg: dict, calc: dict, advances: dict, marks: dict | None = None) -> list[dict]:
     out = []
     lo, hi = month_bounds(ym)
     today = datetime.now(config.KYIV).date()
@@ -530,7 +645,8 @@ def run_checks(con, ym: str, people: list[dict], inputs: dict, alteg: dict, calc
     unattr = alteg["total_svc"] - attributed
     excl = sum(st["svc"] for st in calc["excluded"])
     used = sum(r["cash"] for r in rows if r["kind"] in ("master", "cosm")) * 100
-    adj_total = used - (attributed - excl - sum(st["svc"] for st in calc["unmatched_staff"]))
+    mk_total = sum(r.get("marks", 0) for r in rows if r["kind"] in ("master", "cosm")) * 100
+    adj_total = used - mk_total - (attributed - excl - sum(st["svc"] for st in calc["unmatched_staff"]))
     out.append(_chk("D", "D1", "Усі майстри з Alteg є у списку співробітників", "ok" if not calc["unmatched_staff"] else "error",
                     ("Немає у списку: " + ", ".join(f"{s['name']} ({uah(s['svc'] / 100)})" for s in calc["unmatched_staff"])) if calc["unmatched_staff"] else "Кожен майстер з продажами знайдений",
                     [s["name"] for s in calc["unmatched_staff"]]))
@@ -538,6 +654,20 @@ def run_checks(con, ym: str, people: list[dict], inputs: dict, alteg: dict, calc
                     f"Послуги Alteg {uah(alteg['total_svc'] / 100)}: майстрам {uah(attributed / 100)}, корпоративні {uah(excl / 100)}, без майстра {uah(unattr / 100)}"))
     out.append(_chk("D", "D3", "Коригування каси (ручні) прозорі", "ok" if abs(adj_total) < 100 else "warn",
                     f"Різниця між Alteg і підставленою в розрахунок кассою: {uah(adj_total / 100)}" + ("" if abs(adj_total) < 100 else " (внесено вручну в «Додаткових даних»)")))
+    marks = marks or dict(per={}, lines=[], pending=[], unresolved=[], visits=0)
+    if not marks["visits"]:
+        out.append(_chk("D", "D6", "Коментарі до візитів з Alteg завантажено", "warn",
+                        "Візитів із Alteg за місяць немає: переробки та оплата сертифікатами/балами не враховані. Натисніть «Оновити коментарі з Alteg»."))
+    else:
+        applied = [f"{l['day'][8:10]}.{l['day'][5:7]} {l['staff']}: {MARK_LABEL[l['kind']]} — {l['effect']}" for l in marks["lines"]]
+        out.append(_chk("D", "D6", "Мітки в коментарях Alteg враховані", "ok",
+                        f"Перевірено {marks['visits']} візитів; міток: {len(marks['lines'])}" + (" (" + "; ".join(applied) + ")" if applied else ""), applied))
+        if marks["unresolved"]:
+            out.append(_chk("D", "D7", "Мітки зрозумілі програмі", "warn", "Не вдалося застосувати: " + "; ".join(f"{b['day']} {b['staff']} — {b['why']}" for b in marks["unresolved"]),
+                            [f"{b['day']} {b['staff']}: {b['comment']}" for b in marks["unresolved"]]))
+        pend = [f"{x['day'][8:10]}.{x['day'][5:7]} {x['staff']}: {x['services']} — оплачено {x['paid']:,.0f} із {x['first']:,.0f} ₴" + (f" («{x['comment']}»)" if x["comment"] else "") for x in marks["pending"]]
+        out.append(_chk("D", "D8", "Візити без грошової оплати мають пояснення в коментарі", "ok" if not pend else "warn",
+                        "Усі пояснені" if not pend else f"{len(pend)} візитів оплачено менш ніж на 60% від прайсу, але без мітки (#сертифікат, #бали, #переробка, #подарунок) — каса майстра може бути занижена, дописати коментар в Alteg і оновити коментарі", pend))
     bw = bank_waves(con, ym)
     f1_adv, f1_sal = sum(r["adv_card"] for r in rows), sum(r["sal_card"] for r in rows)
     d_adv, d_sal = f1_adv - bw["adv"] / 100, f1_sal - bw["sal"] / 100
@@ -648,8 +778,13 @@ def create_run(con, ym: str, user: str) -> int:
     people = roster(con)
     alteg = alteg_month(con, ym)
     advances = cash_advances(con, ym, people)
-    calc = compute(con, ym, people, alteg, inputs["f1"], inputs["adj"], advances)
-    checks = run_checks(con, ym, people, inputs, alteg, calc, advances)
+    try:
+        sync_visits(con, ym)
+    except Exception:       # Alteg unavailable: use what was loaded last time (the check below says if nothing is there)
+        pass
+    marks = visit_effects(con, ym, people)
+    calc = compute(con, ym, people, alteg, inputs["f1"], inputs["adj"], advances, marks)
+    checks = run_checks(con, ym, people, inputs, alteg, calc, advances, marks)
     status = overall(checks)
     rows = calc["rows"]
     t = totals(rows)
@@ -657,7 +792,7 @@ def create_run(con, ym: str, user: str) -> int:
     result = dict(rows=_plain(rows), totals=t, pool_base=calc["pool_base"], total_shifts=calc["total_shifts"],
                   alteg=dict(total_svc=alteg["total_svc"], total_goods=alteg["total_goods"], days=len(alteg["days"])),
                   bank=bank_waves(con, ym), advances=dict(total=advances["total"], unmatched=advances["unmatched"]),
-                  compare=sheet_compare(con, ym, rows))
+                  compare=sheet_compare(con, ym, rows), marks=dict(lines=marks["lines"], pending=marks["pending"], unresolved=marks["unresolved"], visits=marks["visits"]))
     cur = con.execute("INSERT INTO pay_runs(ym,version,created_at,created_by,status,total_cost,result,checks,inputs) VALUES(?,?,?,?,?,?,?,?,?)",
                       (ym, ver, now_local(), user, status, int(round(t["cost"] * 100)), json.dumps(result, ensure_ascii=False),
                        json.dumps(checks, ensure_ascii=False), json.dumps(dict(source=inputs["source"], src_name=inputs["src_name"], loaded_at=inputs["loaded_at"],
