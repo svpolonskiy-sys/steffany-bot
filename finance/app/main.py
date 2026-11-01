@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import categorize as cat, config, control, counterparties as cps, payroll, pl, privat, reports, sync
+from . import categorize as cat, config, control, counterparties as cps, drill, payroll, pl, privat, reports, sync
 from .db import (account_balances, add_audit, connect, get_setting, insert_tx, lock, now_local, set_setting,
                  update_tx)
 from .security import encrypt, hash_password, verify_password
@@ -871,6 +871,8 @@ def pl_page(request: Request, u=Depends(need_analytics)):
     a, b, pr = _pl_period(request)
     acc = request.query_params.get("accrual", "1") == "1"
     return render(request, "pl.html", u, rep=pl.build(get_con(), a, b, acc), d_from=a, d_to=b, preset=pr, accrual=acc,
+                  taxes=drill.taxes(get_con(), a, b), owner=drill.owner_draws(get_con(), a, b),
+                  comp=payroll.compensation(get_con(), date.fromisoformat(a), date.fromisoformat(b)),
                   pay_error=get_setting(get_con(), "pay_sync_error", ""),
                   closed=get_con().execute("SELECT * FROM pl_closed ORDER BY month DESC").fetchall(), payroll_months=payroll.covered_months(get_con()), payroll_at=get_setting(get_con(), "payroll_synced_at"),
                   payroll_err=get_setting(get_con(), "payroll_error", ""), can_payroll=u["role"] in ("owner", "accountant"))
@@ -1022,8 +1024,10 @@ def reports_page(request: Request, u=Depends(current_user)):
     a, b, pr = _period(request)
     acc = int(request.query_params.get("account") or 0) or None
     c = get_con()
+    show = has_perm(u, "analytics")
     return render(request, "reports.html", u, rep=reports.build(c, a, b, acc), d_from=a, d_to=b, preset=pr,
-                  acc=acc, **lists(c))
+                  acc=acc, taxes=drill.taxes(c, a, b) if show else None, owner=drill.owner_draws(c, a, b) if show else None,
+                  comp=payroll.compensation(c, date.fromisoformat(a), date.fromisoformat(b)) if show else 0, **lists(c))
 
 
 @app.get("/reports/export.xlsx")

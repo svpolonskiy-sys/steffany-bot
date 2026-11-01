@@ -371,3 +371,11 @@ nav.open .burger span:nth-child(1){top:20px;transform:rotate(45deg)}nav.open .bu
  nav.topnav .menu>a.l.on,nav.topnav .menu .ddb.on,.menu .dd.open>.ddb,nav.topnav .menu>a.l:hover,nav.topnav .menu .ddb:hover{color:#fff}
 }
 @media (prefers-reduced-motion:reduce){.menu .ind{transition:none}}
+
+/* drill-downs */
+.dr-head{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}.dr-tot{font-family:var(--fs);font-size:clamp(26px,4vw,34px);line-height:1.1}
+.dr-sub{flex:1 1 320px;max-width:520px}.dr-sub .kv{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px dashed var(--line)}.dr-sub .kv span{color:var(--mut)}
+.drg{border:1px solid var(--line);border-radius:12px;margin-top:8px;background:var(--card)}.drg>summary{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;list-style:none;border-radius:12px}
+.drg>summary::-webkit-details-marker{display:none}.drg>summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--acc);border-bottom:2px solid var(--acc);transform:rotate(-45deg);transition:transform .2s;flex:none}
+.drg[open]>summary::before{transform:rotate(45deg)}.drg>summary:hover{background:color-mix(in srgb,var(--acc2) 12%,transparent)}.drg .dn{flex:1;min-width:0;font-weight:500}.drg .dc{font-size:12.5px}
+.dtab{margin:0 8px 8px;width:calc(100% - 16px)}.dtab td{vertical-align:top}

@@ -7,7 +7,8 @@
 <div><label>Облік витрат</label><select name="accrual"><option value="1" {{ 'selected' if accrual }}>за місяцем нарахування (рекомендовано)</option><option value="0" {{ 'selected' if not accrual }}>за датою оплати</option></select></div>
 <div style="flex:0 0 auto"><button>Сформувати</button></div><div style="flex:0 0 auto"><a class="btn sec" href="/pl/export.xlsx?date_from={{ d_from }}&date_to={{ d_to }}&accrual={{ 1 if accrual else 0 }}">Excel ↓</a></div></div></form>
 
-{% if rep.empty %}<div class="card" style="margin-top:12px"><b>За цей період немає даних.</b><div class="mut">Облік у системі ведеться з 01.09.2026.</div></div>{% else %}
+{% if rep.empty %}<div class="card" style="margin-top:12px"><b>За цей період немає даних.</b><div class="mut">Облік у системі ведеться з 01.09.2026.</div></div>
+{% include "_drill.html" %}{% else %}
 <div class="stats" style="margin-top:12px">
 <div class="card stat hero"><div class="k">Чистий прибуток · {{ d_from }} — {{ d_to }} · <span class="tag {{ '' if rep.status=='final' else 'auto' }}">{{ 'фінальний' if rep.status=='final' else 'попередній' }}</span></div><div class="v {{ 'in' if rep.cur.net>=0 else 'out' }}">{{ rep.cur.net|money(true) }}</div><div class="s">маржа {{ k.net_margin if k.net_margin is not none else '—' }}%{% if rep.prev_ok %} · було {{ rep.prev_net|money }}{% endif %}</div></div>
 <div class="card stat"><div class="k">Виручка</div><div class="v">{{ rep.cur.revenue|money }}</div><div class="s">{{ k.rev_per_day|money }} на день · сер. чек {{ k.avg_check|money }}</div></div>
@@ -37,6 +38,7 @@
 {% if closed %}<h2>Закриті місяці <span class="mut" style="font-size:12px;font-weight:400">(звіт фіксується 8 числа, після виплати зарплати 7-го)</span></h2>
 <table><tr><th>Місяць</th><th class="r">Виручка</th><th class="r hm">Оплата праці</th><th class="r">EBITDA</th><th class="r">Чистий прибуток</th><th class="r hm">Маржа</th><th class="hm">Закрито</th></tr>
 {% for c in closed %}<tr><td><a href="/pl?date_from={{ c.month }}-01&date_to={{ c.month }}-28&preset=">{{ c.month }}</a></td><td class="r num">{{ c.revenue|money }}</td><td class="r num hm">{{ c.labour|money }}</td><td class="r num">{{ c.ebitda|money }}</td><td class="r num"><b class="{{ 'in' if c.net>=0 else 'out' }}">{{ c.net|money(true) }}</b></td><td class="r hm mut">{{ ((c.net*100/c.revenue)|round(1)) if c.revenue else '—' }}%</td><td class="hm mut">{{ c.closed_at }}</td></tr>{% endfor %}</table>{% endif %}
+{% include "_drill.html" %}
 {% if rep.memo %}<h2>Поза P&amp;L (довідково)</h2><table><tr><th>Стаття</th><th class="r">Сума</th></tr>{% for label,v in rep.memo %}<tr><td>{{ label }}</td><td class="r num">{{ v|money }}</td></tr>{% endfor %}</table>{% endif %}
 {% if k.bep %}<div class="card" style="margin-top:14px"><div class="k mut" style="font-size:12px">Точка беззбитковості</div><div class="v num" style="font-size:22px;font-weight:700">{{ k.bep|money }}</div><div class="mut" style="font-size:12.5px">{{ k.bep_note }}.</div></div>{% endif %}
 <div id="tip" class="tip"></div>

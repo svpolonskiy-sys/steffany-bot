@@ -888,3 +888,24 @@ def test_credit_block_lists_only_repayments_not_cash_withdrawals(client):
         client.post("/transactions/new", data=dict(kind="expense", account_id=a, amount="1000", occurred_at=d, description=desc, category_id=kr))
     page = client.get("/credits").text
     assert "Погашення заборгованості за кредитним договором" in page and "Зняття готівки" not in page
+
+
+def test_tax_and_owner_breakdown_in_reports(client):
+    fop = accid("ФОП 1")
+    tax = cat.get_or_create_category(main.con, "Податки", "expense")
+    own = cat.get_or_create_category(main.con, "Виведення грошей з бізнесу", "expense")
+    for d, desc, amt in (("2026-10-01T10:00", "101 ЄСВ / з/п за вересень 2026", "5000"), ("2026-10-01T10:00", "101 ПДФО / з/п за вересень 2026", "3000"),
+                         ("2026-10-01T10:00", "101 ВІЙСЬКОВИЙ ЗБІР з/п за вересень 2026", "700"), ("2026-10-16T10:00", "101 Єдиний податок за вересень 2026 року", "1500"),
+                         ("2026-10-16T10:00", "ЄСВ для ФОП за вересень 2026 року", "1900")):
+        client.post("/transactions/new", data=dict(kind="expense", account_id=fop, amount=amt, occurred_at=d, description=desc, category_id=tax))
+    client.post("/transactions/new", data=dict(kind="expense", account_id=fop, amount="30000", occurred_at="2026-10-02T08:29", description="Переказ власних коштів", category_id=own))
+    from app import drill
+    t = drill.taxes(main.con, "2026-10-01", "2026-10-31")
+    assert t["total"] == 1210000 and t["staff"] == 870000 and t["own"] == 340000
+    assert [g["name"] for g in t["groups"]][:3] == ["ЄСВ за працівників (роботодавець)", "ПДФО з зарплат (утримується з працівників)", "Військовий збір з зарплат (утримується з працівників)"]
+    assert t["groups"][0]["rows"][0]["period"] == "за вересень 2026"
+    o = drill.owner_draws(main.con, "2026-10-01", "2026-10-31")
+    assert o["total"] == 3000000 and len(o["rows"]) == 1
+    for u in ("/pl?date_from=2026-10-01&date_to=2026-10-31&preset=", "/reports?date_from=2026-10-01&date_to=2026-10-31"):
+        page = client.get(u).text
+        assert "Усього податків сплачено" in page and "ЄСВ за працівників" in page and "Виведення грошей з бізнесу" in page and "Усього виведено власником" in page
