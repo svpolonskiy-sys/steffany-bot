@@ -1050,3 +1050,8 @@ def test_payrun_visit_marks_move_money_between_masters(client):
     payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0, vacation=0, sick=0, maternity=0)], "file", "t.xlsx", "Бухгалтер")
     page = client.get("/payrun?month=2026-09")
     assert page.status_code == 200 and "Потрібен коментар" in page.text and "переробка" in page.text
+
+    d = payrun.parse_mark("Рикова25, постійна клієнтка", people)
+    assert d["kind"] == "discount" and d["pct"] == 25 and payrun.parse_mark("Рикова", people) is None
+    main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(9,'2026-09-14','Іванов Іван',1,'Рикова25',100000,75000,0,'x')")
+    assert payrun.visit_effects(main.con, "2026-09", people)["per"]["Іванов Іван"] == -700 + 300 + 250          # 750 paid -> counted as 1000

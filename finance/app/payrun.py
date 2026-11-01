@@ -187,6 +187,7 @@ def cash_advances(con, ym: str, people: list[dict]) -> dict:
 #   #сертифікат 880   /  #бали 880      – paid by certificate / points: the amount counts to this master's till
 #   #переробка Середнюк 900              – this master redid the work after Середнюк: 900 moves from Середнюк to him
 #   #подарунок                           – free on purpose: nothing is added
+#   Рикова25                             – the client has a 25% discount, the master is still paid from the full price
 # A plain phrase "переробка після Середнюк, 900грн" is understood as well.
 FREE_RATIO = 0.6          # a service paid below 60% of the list price without a mark is shown as "needs a comment"
 
@@ -243,6 +244,9 @@ def parse_mark(comment: str, people: list[dict]):
     if kind is None and re.search(r"переробк\w*\s+після", low):          # plain phrase, no '#'
         kind = "rework"
     if kind is None:
+        d = re.search(r"рикова\s*[-_]?\s*(\d{1,2})\b", low)
+        if d and 0 < int(d.group(1)) < 100:
+            return dict(kind="discount", amount=None, other=None, pct=int(d.group(1)))
         return None
     other = None
     if kind == "rework":
@@ -251,7 +255,7 @@ def parse_mark(comment: str, people: list[dict]):
     return dict(kind=kind, amount=_mark_amount(low), other=other)
 
 
-MARK_LABEL = {"cert": "сертифікат", "points": "бали", "rework": "переробка", "gift": "подарунок"}
+MARK_LABEL = {"cert": "сертифікат", "points": "бали", "rework": "переробка", "gift": "подарунок", "discount": "знижка (ЗП з повної суми)"}
 
 
 def visit_effects(con, ym: str, people: list[dict]) -> dict:
@@ -275,7 +279,13 @@ def visit_effects(con, ym: str, people: list[dict]) -> dict:
             bad.append(dict(base, why="майстра немає у списку співробітників"))
             continue
         amt = m["amount"] if m["amount"] is not None else short
-        if m["kind"] == "gift":
+        if m["kind"] == "discount":
+            pct = m["pct"]
+            amt = round(v["paid"] / 100 * pct / (100 - pct), 2)       # what the client was not charged: the master is paid from the full price
+            if amt:
+                per[who] = per.get(who, 0) + amt
+            lines.append(dict(base, kind="discount", amount=amt, other="", effect=(f"знижка {pct}%: +{amt:,.0f} до каси {who}, ЗП з повної суми" if amt else f"знижка {pct}%, але оплати немає")))
+        elif m["kind"] == "gift":
             lines.append(dict(base, kind="gift", amount=0, other="", effect="без змін: подарунок"))
         elif m["kind"] in ("cert", "points"):
             per[who] = per.get(who, 0) + amt
