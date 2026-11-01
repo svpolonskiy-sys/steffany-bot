@@ -1,25 +1,30 @@
 {% if taxes is not none %}
 <h2 id="taxes">Податки: що саме сплачено <span class="mut" style="font-size:12px;font-weight:400">за датою оплати · {{ d_from }} — {{ d_to }}</span></h2>
 <div class="card dr">
-<div class="dr-head"><div><div class="k mut">Усього перераховано до бюджету</div><div class="dr-tot num">{{ taxes.total|money }}</div></div>
-<div class="dr-sub"><div class="kv"><span><b>Податки за рахунок компанії</b> (ЄСВ за працівників + власні податки ФОП)</span><b>{{ taxes.company|money }}</b></div>
-<div class="kv"><span>&nbsp;&nbsp;з них ЄСВ за працівників</span><b>{{ taxes.employer|money }}</b></div>
-<div class="kv"><span>&nbsp;&nbsp;з них власні податки ФОП</span><b>{{ taxes.own|money }}</b></div>
-<div class="kv"><span><b>ПДФО та військовий збір з зарплат</b>: утримані з працівників, компанія лише перераховує їх до бюджету</span><b>{{ taxes.withheld|money }}</b></div></div></div>
+<div class="tx-top"><div><div class="k mut">Усього перераховано до бюджету</div><div class="dr-tot num">{{ taxes.total|money }}</div></div>
+<div class="tx-co"><div class="k mut">Витрата компанії</div><div class="tx-co-v num">{{ taxes.company|money }}</div><div class="mut" style="font-size:12px">{{ (taxes.company*100/taxes.total)|round(0)|int if taxes.total else 0 }}% від суми</div></div></div>
+{% if taxes.total %}<div class="tbar" role="img" aria-label="Структура податків">
+<i class="s1" style="width:{{ taxes.employer*100/taxes.total }}%" title="ЄСВ за працівників"></i><i class="s2" style="width:{{ taxes.own*100/taxes.total }}%" title="Власні податки ФОП"></i><i class="s3" style="width:{{ taxes.withheld*100/taxes.total }}%" title="Утримано з працівників"></i></div>{% endif %}
+<div class="tiles3">
+<div class="tl t1"><div class="tl-h"><i></i>ЄСВ за працівників</div><div class="tl-v num">{{ taxes.employer|money }}</div><div class="tl-s">за рахунок компанії</div></div>
+<div class="tl t2"><div class="tl-h"><i></i>Власні податки ФОП</div><div class="tl-v num">{{ taxes.own|money }}</div><div class="tl-s">єдиний податок, військовий збір, ЄСВ ФОП</div></div>
+<div class="tl t3"><div class="tl-h"><i></i>ПДФО та військовий збір</div><div class="tl-v num">{{ taxes.withheld|money }}</div><div class="tl-s">утримано з працівників, компанія лише перераховує</div></div></div>
+<div class="dr-lbl">Розшифровка за видами податків</div>
 {% for g in taxes.groups %}<details class="drg"><summary><span class="dn">{{ g.name }}</span><span class="dc mut">{{ g.rows|length }} {{ 'платіж' if g.rows|length==1 else 'платежі' if g.rows|length<5 else 'платежів' }}</span><b class="num">{{ g.total|money }}</b></summary>
-<table class="dtab"><tr><th>Дата</th><th>Період</th><th>Рахунок</th><th>Призначення</th><th class="r">Сума</th></tr>
-{% for i in g.rows %}<tr><td class="num"><a href="/transactions/{{ i.id }}">{{ i.date[8:10] }}.{{ i.date[5:7] }}.{{ i.date[:4] }}</a></td><td>{{ i.period or '—' }}</td><td>{{ i.acc }}</td><td class="mut">{{ i.text }}</td><td class="r num">{{ i.amount|money }}</td></tr>{% endfor %}</table></details>
+<table class="dtab dcard"><tr><th>Дата</th><th>Період</th><th>Рахунок</th><th>Призначення</th><th class="r">Сума</th></tr>
+{% for i in g.rows %}<tr><td class="num cd"><a href="/transactions/{{ i.id }}">{{ i.date[8:10] }}.{{ i.date[5:7] }}.{{ i.date[:4] }}</a></td><td class="cp">{{ i.period or '—' }}</td><td class="ca">{{ i.acc }}</td><td class="mut ct">{{ i.text }}</td><td class="r num cs">{{ i.amount|money }}</td></tr>{% endfor %}</table></details>
 {% else %}<p class="mut" style="margin:10px 0 0">За цей період податки не сплачувались.</p>{% endfor %}
 <p class="mut" style="font-size:12.5px;margin:8px 0 0">Натисніть на вид податку, щоб побачити кожен платіж. ПДФО та військовий збір з зарплат сплачують самі працівники: компанія утримує їх із зарплати й перераховує до бюджету, тому у витратах компанії (P&L) вони не враховуються. Витратою компанії є ЄСВ за працівників і власні податки ФОП.</p></div>
 {% endif %}
 {% if owner is not none %}
 <h2 id="owner">Виведення грошей з бізнесу <span class="mut" style="font-size:12px;font-weight:400">{{ d_from }} — {{ d_to }}</span></h2>
 <div class="card dr">
-<div class="dr-head"><div><div class="k mut">Усього виведено власником</div><div class="dr-tot num">{{ owner.total|money }}</div></div>
-<div class="dr-sub">{% for m,v in owner.by_month %}<div class="kv"><span>{{ m[5:7] }}.{{ m[:4] }}</span><b>{{ v|money }}</b></div>{% endfor %}</div></div>
+<div class="tx-top"><div><div class="k mut">Усього виведено власником</div><div class="dr-tot num">{{ owner.total|money }}</div></div>
+<div class="chips">{% for m,v in owner.by_month %}<div class="chip"><span>{{ m[5:7] }}.{{ m[:4] }}</span><b class="num">{{ v|money }}</b></div>{% endfor %}</div></div>
+<div class="dr-lbl">Усі виведення</div>
 {% if owner.rows %}<details class="drg" open><summary><span class="dn">Усі виведення</span><span class="dc mut">{{ owner.rows|length }}</span><b class="num">{{ owner.total|money }}</b></summary>
-<table class="dtab"><tr><th>Дата</th><th>Рахунок</th><th>Призначення</th><th class="r">Сума</th></tr>
-{% for i in owner.rows %}<tr><td class="num"><a href="/transactions/{{ i.id }}">{{ i.date[8:10] }}.{{ i.date[5:7] }}.{{ i.date[:4] }}</a></td><td>{{ i.acc }}</td><td class="mut">{{ i.text }}</td><td class="r num">{{ i.amount|money }}</td></tr>{% endfor %}</table></details>
+<table class="dtab dcard"><tr><th>Дата</th><th>Рахунок</th><th>Призначення</th><th class="r">Сума</th></tr>
+{% for i in owner.rows %}<tr><td class="num cd"><a href="/transactions/{{ i.id }}">{{ i.date[8:10] }}.{{ i.date[5:7] }}.{{ i.date[:4] }}</a></td><td class="ca">{{ i.acc }}</td><td class="mut ct">{{ i.text }}</td><td class="r num cs">{{ i.amount|money }}</td></tr>{% endfor %}</table></details>
 {% else %}<p class="mut" style="margin:10px 0 0">За цей період виведень не було.</p>{% endif %}
 <p class="mut" style="font-size:12.5px;margin:8px 0 0">Сюди потрапляють операції в категорії «Виведення грошей з бізнесу». Переказ між своїми рахунками (каса, сейф, карта) виведенням не вважається.</p></div>
 {% endif %}
