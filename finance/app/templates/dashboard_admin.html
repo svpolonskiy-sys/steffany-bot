@@ -4,5 +4,5 @@
 <div class="stats"><div class="card stat"><div class="k">Каса за сьогодні</div><div class="v in">{{ takings.total|money }}</div>
 <div class="kv"><span>готівка</span><b>{{ takings.cash|money }}</b></div><div class="kv"><span>безготівка</span><b>{{ takings.cashless|money }}</b></div></div></div>
 <p><a class="btn" href="/transactions/new?kind=expense">+ Витрата</a> <a class="btn sec" href="/transactions/new?kind=income">+ Надходження</a> <a class="btn sec" href="/transactions/new?kind=transfer">Інкасація в сейф</a></p>
-<h2>Операції за сьогодні й вчора</h2>{% if recent %}{% include "tx_table.html" %}{% else %}<div class="card mut">Операцій ще немає.</div>{% endif %}
+<h2>Операції за сьогодні й вчора <span class="mut" style="font-size:14px">(за 60 днів: «Усі операції»)</span></h2>{% if recent %}{% include "tx_table.html" %}{% else %}<div class="card mut">Операцій ще немає.</div>{% endif %}
 <p><a class="btn sec" href="/transactions">Усі операції →</a></p>{% endblock %}

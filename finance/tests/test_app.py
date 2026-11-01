@@ -1130,7 +1130,8 @@ def test_administrator_is_limited_and_deletions_reach_control(client):
         assert a.get(path, follow_redirects=False).status_code == 403, path
     a.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "100", "occurred_at": "2026-11-01T10:00", "description": "Мої витрати тест"})
     mine = c0.execute("SELECT id FROM transactions WHERE description='Мої витрати тест'").fetchone()["id"]
-    assert a.post("/transactions/new", data={"kind": "expense", "account_id": accid("ФОП 1"), "amount": "5", "occurred_at": "2026-11-01T10:00", "description": "x"}).status_code == 403
+    a.post("/transactions/new", data={"kind": "expense", "account_id": accid("ФОП 1"), "amount": "5", "occurred_at": "2026-11-01T10:00", "description": "x"})
+    assert c0.execute("SELECT COUNT(*) FROM transactions WHERE description='x'").fetchone()[0] == 0          # not from a bank account
     client.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "50", "occurred_at": "2026-11-01T11:00", "description": "Чужа операція"})
     other = c0.execute("SELECT id FROM transactions WHERE description='Чужа операція'").fetchone()["id"]
     assert a.post(f"/transactions/{other}/delete", data={"reason": "не моє, але видалю"}).status_code == 403
@@ -1141,3 +1142,12 @@ def test_administrator_is_limited_and_deletions_reach_control(client):
     fs = [f for f in control.check_admin_deletes(c0)]
     assert fs and fs[0]["sev"] == "high" and "помилково внесла" in fs[0]["detail"]
     assert a.post(f"/transactions/{mine}/restore", data={"reason": "повернути назад"}).status_code == 403    # only the owner restores
+    from datetime import timedelta
+    for days, text in ((30, "Давня операція 30"), (70, "Давня операція 70")):
+        client.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "20", "occurred_at": (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%dT10:00"), "description": text})
+    lst = a.get("/transactions").text
+    assert "Давня операція 30" in lst and "Давня операція 70" not in lst                              # 60 days of history
+    old = c0.execute("SELECT id FROM transactions WHERE description='Давня операція 30'").fetchone()["id"]
+    assert a.post(f"/transactions/{old}/delete", data={"reason": "спроба видалити"}).status_code == 403
+    a.post("/transactions/new", data={"kind": "transfer", "account_id": safe, "to_account_id": till, "amount": "300", "occurred_at": "2026-11-01T12:00", "description": "Поповнення каси"})
+    assert c0.execute("SELECT COUNT(*) FROM transactions WHERE description='Поповнення каси' AND to_account_id=?", (till,)).fetchone()[0] == 1   # money into the till is allowed

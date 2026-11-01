@@ -481,7 +481,7 @@ def tx_list(request: Request, u=Depends(current_user)):
         till = _till_id(c)
         f["accounts"] = [till] if till else [0]
         f["deleted"] = False
-        f["date_from"] = max(f["date_from"] or "", (datetime.now(config.KYIV).date() - timedelta(days=1)).isoformat())
+        f["date_from"] = max(f["date_from"] or "", (datetime.now(config.KYIV).date() - timedelta(days=60)).isoformat())    # view 60 days, edit only own within 24 h
         f["date_to"] = ""
     sql, args = tx_query(f)
     total = c.execute(f"SELECT COUNT(*) FROM ({sql})", args).fetchone()[0]
@@ -588,11 +588,10 @@ def tx_new(request: Request, kind: str = "expense", from_acc: int | None = None,
     if kind == "transfer" and not from_acc:      # the usual transfer is cash desk -> safe, never the first bank account
         from_acc, to_acc = find("каса салон") or find("каса"), to_acc or find("сейф")
     L = lists(c)
-    if is_limited(u):
+    if is_limited(u):                          # names only (no balances); the server allows only the till as source, or a transfer into the till
         till = _till_id(c)
-        L["accounts"] = [a for a in L["accounts"] if a["id"] == till]
-        presets = [p for p in presets if p[1] == till and "сейф" in p[0].lower()]
-        from_acc = till
+        presets = [p for p in presets if p[1] == till]
+        from_acc = from_acc or till
     return render(request, "tx_form.html", u, t=None, kind=kind, history=[], presets=presets,
                   pre=dict(from_acc=from_acc, to_acc=to_acc, desc=desc),
                   default_dt=datetime.now(config.KYIV).strftime("%Y-%m-%dT%H:%M"), **L)
@@ -605,8 +604,10 @@ def tx_create(request: Request, kind: str = Form(...), account_id: int = Form(..
               u=Depends(current_user)):
     c = get_con()
     d = _tx_form_data(kind, account_id, to_account_id, amount, occurred_at, description, counterparty, category_id)
-    if is_limited(u) and d["account_id"] != _till_id(c):
-        raise HTTPException(403, "Адміністратор вносить операції лише по «Каса салон»")
+    till = _till_id(c)
+    if is_limited(u) and d["account_id"] != till and not (d["kind"] == "transfer" and d["to_account_id"] == till):
+        flash(request, "Адміністратор може вносити операції лише по «Каса салон»: витрати, надходження, інкасацію та поповнення каси переказом.")
+        return RedirectResponse("/transactions/new", status_code=303)
     with lock():
         cps.ensure(c, d["counterparty"])
         insert_tx(c, user_id=u["id"], source="manual", **d)
