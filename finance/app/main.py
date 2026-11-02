@@ -2093,6 +2093,40 @@ def payrun_view(request: Request, rid: int, u=Depends(need_analytics)):
                   can_edit=u["role"] in ("owner", "accountant", "director"), can_approve=u["role"] == "owner", KIND_LABEL=payrun.KIND_LABEL)
 
 
+@app.post("/payrun/{rid}/delete")
+def payrun_delete(request: Request, rid: int, u=Depends(owner_only)):
+    """Owner only; an approved version cannot be deleted (the payment basis stays). Every deletion is logged."""
+    c = get_con()
+    run = payrun.get_run(c, rid)
+    if not run:
+        raise HTTPException(404)
+    if run["approved_by"]:
+        flash(request, "Затверджене нарахування видалити не можна.")
+        return RedirectResponse(f"/payrun?month={run['ym']}", status_code=303)
+    with lock():
+        c.execute("DELETE FROM pay_runs WHERE id=?", (rid,))
+        c.commit()
+    log_act(request, u, "нарахування ЗП: видалено звіт", f"{run['ym']}, версія {run['version']}, витрата {run['total_cost'] / 100:,.2f} ₴, сформував {run['created_by']}")
+    flash(request, f"Видалено: {payrun.month_label(run['ym'])}, версія {run['version']}")
+    return RedirectResponse(f"/payrun?month={run['ym']}", status_code=303)
+
+
+@app.post("/payrun/cleanup")
+def payrun_cleanup(request: Request, month: str = Form(...), u=Depends(owner_only)):
+    """Deletes every old, not approved version of the month; the latest one and any approved one stay."""
+    c = get_con()
+    latest = c.execute("SELECT MAX(version) FROM pay_runs WHERE ym=?", (month,)).fetchone()[0]
+    rows = c.execute("SELECT id, version FROM pay_runs WHERE ym=? AND version<? AND approved_by=''", (month, latest or 0)).fetchall()
+    with lock():
+        for r in rows:
+            c.execute("DELETE FROM pay_runs WHERE id=?", (r["id"],))
+        c.commit()
+    if rows:
+        log_act(request, u, "нарахування ЗП: очищено старі звіти", f"{month}: видалено версій {len(rows)} ({', '.join('v' + str(r['version']) for r in rows)})")
+    flash(request, f"Видалено старих версій: {len(rows)}. Остання та затверджені залишились." if rows else "Старих незатверджених версій немає.")
+    return RedirectResponse(f"/payrun?month={month}", status_code=303)
+
+
 @app.post("/payrun/{rid}/approve")
 def payrun_approve(request: Request, rid: int, u=Depends(owner_only)):
     c = get_con()

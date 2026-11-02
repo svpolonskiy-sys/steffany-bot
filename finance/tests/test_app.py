@@ -1244,3 +1244,22 @@ def test_payrun_deduction_for_purchases_and_cosmetologist_certificate(client):
     assert by["Іванов Іван"]["deduct"] == 450 and by["Іванов Іван"]["to_pay"] == by["Іванов Іван"]["gross"] - 450 and by["Іванов Іван"]["cost"] == by["Іванов Іван"]["gross"]
     assert by["Косметолог Тест"]["cash"] == 2000 and by["Косметолог Тест"]["gross"] == 700            # 1000 + 1000 certificate, 35% of cosmetology
     assert client.get(f"/payrun/{rid}").status_code == 200
+
+
+def test_owner_can_delete_unapproved_payroll_runs(client):
+    from app import payrun
+    _payrun_setup()
+    payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0, vacation=0, sick=0, maternity=0)], "file", "t.xlsx", "Бухгалтер")
+    ids = [payrun.create_run(main.con, "2026-09", "Бухгалтер") for _ in range(4)]
+    client.post(f"/payrun/{ids[3]}/approve")
+    client.post(f"/payrun/{ids[0]}/delete")
+    assert main.con.execute("SELECT COUNT(*) FROM pay_runs WHERE id=?", (ids[0],)).fetchone()[0] == 0
+    client.post(f"/payrun/{ids[3]}/delete")                                                           # approved: stays
+    assert main.con.execute("SELECT COUNT(*) FROM pay_runs WHERE id=?", (ids[3],)).fetchone()[0] == 1
+    client.post("/payrun/cleanup", data={"month": "2026-09"})                                           # ids[1], ids[2] are old and not approved
+    left = {r[0] for r in main.con.execute("SELECT id FROM pay_runs")}
+    assert left == {ids[3]}
+    adm = TestClient(main.app, base_url="http://testserver")
+    main.con.execute("INSERT INTO users(email,name,role,pw_hash) VALUES('acc@x.ua','Бух','accountant',?)", (main.hash_password("Accountant12x"),)); main.con.commit()
+    adm.post("/login", data={"email": "acc@x.ua", "password": "Accountant12x"})
+    assert adm.post(f"/payrun/{ids[3]}/delete").status_code == 403 and adm.post("/payrun/cleanup", data={"month": "2026-09"}).status_code == 403
