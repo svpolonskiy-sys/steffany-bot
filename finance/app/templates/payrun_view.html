@@ -6,7 +6,7 @@
 {% if can_approve %}<form method="post" action="/payrun/{{ run.id }}/unapprove" style="display:inline;margin-left:8px" onsubmit="return confirm('Зняти затвердження? Звіт знову стане «очікує затвердження», його можна буде видалити.')"><button class="sm sec">Зняти затвердження</button></form>{% endif %}{% else %}<span class="chip2 warnc">Очікує затвердження власника</span> <span class="mut">директор і бухгалтер формують нарахування, остаточно «до виплати» затверджує власник.</span>
 {% if can_approve %}<form method="post" action="/payrun/{{ run.id }}/approve" style="display:inline;margin-left:8px" onsubmit="return confirm('Затвердити це нарахування до виплати?')"><button class="sm">Затвердити до виплати</button></form>{% endif %}{% endif %}</div>
 {% set cnt={'ok':0,'warn':0,'error':0} %}{% for c in run.checks %}{% if cnt.update({c.status: cnt[c.status]+1}) %}{% endif %}{% endfor %}
-<div class="card ver {{ run.status }}"><div class="vrd"><span class="chip2 {{ {'ok':'okc','warn':'warnc','error':'errc'}[run.status] }}" style="font-size:14px">{{ {'ok':'✓ Усі перевірки пройдено','warn':'⚠ Є попередження','error':'✗ Є помилки: звіт не можна вважати остаточним'}[run.status] }}</span>
+<div class="card ver {{ run.status }}"><div class="vrd"><a href="#checks" style="text-decoration:none"><span class="chip2 {{ {'ok':'okc','warn':'warnc','error':'errc'}[run.status] }}" style="font-size:14px">{{ {'ok':'✓ Усі перевірки пройдено','warn':'⚠ Є попередження','error':'✗ Є помилки: звіт не можна вважати остаточним'}[run.status] }}{% if run.status!='ok' %} ↓{% endif %}</span></a>
 <span class="mut">перевірок: {{ run.checks|length }} · ✓ {{ cnt.ok }} · ⚠ {{ cnt.warn }} · ✗ {{ cnt.error }}</span></div></div>
 <div class="tiles3 pr-tiles" style="margin-top:12px">
 <div class="tl t1"><div class="tl-h"><i></i>Нараховано зарплати</div><div class="tl-v num">{{ m(t.gross) }}</div><div class="tl-s">відпускні {{ m(t.vacation) }} · лікарняні {{ m(t.sick) }}{% if t.maternity %} · декретні {{ m(t.maternity) }}{% endif %}</div></div>
@@ -28,7 +28,7 @@
 
 <h2>Самоперевірка <span class="mut" style="font-size:12px;font-weight:400">багато рівнів: дані → вхідні суми → розрахунок → звірка джерел → розумність → порівняння з таблицею</span></h2>
 {% set lv={'A':'Дані','B':'Вхідні суми','C':'Розрахунок','D':'Звірка джерел','E':'Розумність','F':'Порівняння з таблицею'} %}
-{% for L in ['A','B','C','D','E','F'] %}{% set cs=run.checks|selectattr('level','equalto',L)|list %}{% if cs %}<div class="dr-lbl">{{ L }} · {{ lv[L] }}</div>
+<div id="checks" style="scroll-margin-top:70px"></div>{% for L in ['A','B','C','D','E','F'] %}{% set cs=run.checks|selectattr('level','equalto',L)|list %}{% if cs %}<div class="dr-lbl">{{ L }} · {{ lv[L] }}</div>
 {% for c in cs %}<details class="drg ck {{ c.status }}" {{ 'open' if c.status!='ok' }}><summary><span class="ico2 {{ c.status }}">{{ {'ok':'✓','warn':'!','error':'✗'}[c.status] }}</span><span class="dn">{{ c.title }}</span><span class="dc mut">{{ c.code }}</span></summary>
 <div class="ckd">{{ c.detail }}{% if c.lines %}<ul>{% for i in c.lines %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}</div></details>{% endfor %}{% endif %}{% endfor %}
 

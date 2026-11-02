@@ -1027,7 +1027,15 @@ def get_run(con, rid: int) -> dict | None:
 
 
 def list_runs(con) -> list[dict]:
-    return [dict(r) for r in con.execute("SELECT id, ym, version, created_at, created_by, status, total_cost, approved_by, approved_at FROM pay_runs ORDER BY ym DESC, version DESC")]
+    out = []
+    for r in con.execute("SELECT id, ym, version, created_at, created_by, status, total_cost, approved_by, approved_at, checks FROM pay_runs ORDER BY ym DESC, version DESC"):
+        d = dict(r)
+        try:
+            d["issues"] = [dict(code=c["code"], title=c["title"], status=c["status"], detail=c["detail"]) for c in json.loads(d.pop("checks") or "[]") if c["status"] != "ok"]
+        except (ValueError, KeyError):
+            d["issues"] = []
+        out.append(d)
+    return out
 
 
 # ------------------------------------------------------------------ Excel
