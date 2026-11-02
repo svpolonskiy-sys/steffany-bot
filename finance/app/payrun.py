@@ -431,10 +431,62 @@ def norm_f1(rows: list[dict]) -> list[dict]:
     return rows
 
 
+def _accountant_tabs(wb) -> tuple[list[dict], dict] | None:
+    """The accountant's own file: one tab per sole proprietor, each with an advance table on top and the salary table below
+    (header «Працівник … Аванс … З/п до виплати», a sub-header row with «податки з/п / відпустка / лікарняні»).
+    Payments are what was really paid by card: advance, the second payment, withheld taxes on the salary part, vacation, sick pay."""
+    out, tabs = [], []
+    sec_by_post = (("адмін", "Адміністратори"), ("перукар", "Перукарі"), ("манікюр", "Майстри манікюру"), ("педикюр", "Подолог"), ("бровіст", "Бровісти"))
+    for ws in wb.worksheets:
+        rows = [tuple(("" if c is None else c) for c in r) for r in ws.iter_rows(values_only=True)]
+        for ri, r in enumerate(rows):
+            low = [norm(str(c)) for c in r]
+            if not (any(c.startswith("працівник") for c in low) and any(c.startswith("з/п до виплати") for c in low)):
+                continue
+            idx = {}
+            for i, c in enumerate(low):
+                for key, test in (("name", c.startswith("працівник")), ("post", c == "посада"), ("vac", c == "відпустка"), ("sick", c.startswith("лікарн")),
+                                  ("pdfo", c.startswith("пдфо")), ("vz", c.startswith("вз")), ("adv", c.startswith("аванс")), ("sal", c.startswith("з/п до виплати"))):
+                    if test and key not in idx:
+                        idx[key] = i
+            sub_ = [norm(str(c)) for c in rows[ri + 1]] if ri + 1 < len(rows) else []
+            tv = next((i for i, c in enumerate(sub_) if "податки відпуст" in c), None)
+            tsk = next((i for i, c in enumerate(sub_) if "податки лікарн" in c), None)
+            fss = next((i for i, c in enumerate(sub_) if c.startswith("фсс")), None)
+            n = 0
+            for r2 in rows[ri + 2:]:
+                nm = str(r2[idx["name"]]).strip()
+                first = norm(" ".join(str(c) for c in r2[:3]))
+                if first.startswith("всього"):
+                    break
+                if not nm or nm.startswith("%"):
+                    continue
+                g = lambda k: _num(r2[idx[k]]) if k in idx and idx[k] < len(r2) else 0.0
+                tax = g("pdfo") + g("vz") - (_num(r2[tv]) if tv is not None and tv < len(r2) else 0.0) - (_num(r2[tsk]) if tsk is not None and tsk < len(r2) else 0.0)
+                sick = g("sick") + (_num(r2[fss]) if fss is not None and fss < len(r2) else 0.0)
+                post = norm(str(r2[idx["post"]])) if "post" in idx else ""
+                rec = dict(name=nm, adv_card=round(g("adv"), 2), sal_card=round(g("sal"), 2), taxes=round(tax, 2), vacation=round(g("vac"), 2),
+                           sick=round(sick, 2), maternity=0.0)
+                sec = next((s for k, s in sec_by_post if k in post), None)
+                if sec:
+                    rec["section"] = sec
+                if any(rec[k] for k in ("adv_card", "sal_card", "taxes", "vacation", "sick")):
+                    out.append(rec)
+                    n += 1
+            tabs.append(f"{ws.title}: {n}")
+            break
+    if not out:
+        return None
+    return norm_f1(out), dict(sheet="; ".join(tabs), header=[], found=list(F1_TITLE), missing=[], tabs=tabs)
+
+
 def parse_f1_ex(content: bytes, ym: str):
     """Reads the accountant's table. Header row has a name column and some of: Аванс, ЗП Ф-1, Податки, Відпускні, Лікарняні.
     Understands a flat list or the salon's own multi-section payroll tab for the month."""
     wb = load_workbook(io.BytesIO(content), data_only=True)
+    acc = _accountant_tabs(wb)
+    if acc:
+        return acc
     y, m = map(int, ym.split("-"))
     stems = {1: "січ", 2: "лют", 3: "берез", 4: "квіт", 5: "трав", 6: "черв", 7: "лип", 8: "серп", 9: "верес", 10: "жовт", 11: "листоп", 12: "груд"}
     ws = next((w for w in wb.worksheets if stems[m] in norm(w.title) and (str(y) in w.title or not re.search(r"20\d\d", w.title))), None) or wb.worksheets[0]
