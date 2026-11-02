@@ -1159,3 +1159,21 @@ def test_payrun_page_survives_file_without_some_columns(client):
     payrun.save_f1(main.con, "2026-10", [dict(name="Іванов Іван", taxes=810.0)], "file", "x.xlsx", "Бухгалтер")        # a file that has only a taxes column
     page = client.get("/payrun?month=2026-10")
     assert page.status_code == 200 and "Іванов" not in "" and payrun.load_inputs(main.con, "2026-10")["f1"][0]["adv_card"] == 0
+
+
+def test_admin_hours_form_keeps_other_extra_data(client):
+    from app import payrun
+    _payrun_setup()
+    payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0, vacation=0, sick=0, maternity=0)], "file", "t.xlsx", "Бухгалтер")
+    pid = main.con.execute("SELECT id FROM pay_people WHERE name='Петрова Ольга'").fetchone()["id"]
+    iid = main.con.execute("SELECT id FROM pay_people WHERE name='Іванов Іван'").fetchone()["id"]
+    client.post("/payrun/adjust", data={"month": "2026-09", f"{iid}_fines": "50", f"{iid}_fines_note": "запізнення"})
+    page = client.get("/payrun?month=2026-09")
+    assert "Години й зміни адміністраторів" in page.text and "потрібно заповнити" in page.text
+    client.post("/payrun/admins", data={"month": "2026-09", f"{pid}_hours": "136", f"{pid}_shifts": "14"})
+    adj = payrun.load_inputs(main.con, "2026-09")["adj"]
+    assert adj["Петрова Ольга|Адміністратори"] == {"hours": 136.0, "shifts": 14.0} and adj["Іванов Іван|Перукарі"]["fines"] == 50.0
+    client.post("/payrun/adjust", data={"month": "2026-09", f"{iid}_fines": "70"})                       # the big form must not wipe the hours
+    adj = payrun.load_inputs(main.con, "2026-09")["adj"]
+    assert adj["Петрова Ольга|Адміністратори"]["hours"] == 136.0 and adj["Іванов Іван|Перукарі"]["fines"] == 70.0
+    assert "заповнено" in client.get("/payrun?month=2026-09").text

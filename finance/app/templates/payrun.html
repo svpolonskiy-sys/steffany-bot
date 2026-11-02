@@ -15,6 +15,14 @@
 {% else %}<p class="mut">Завантажувати дані може власник або бухгалтер.</p>{% endif %}</div>
 
 {% if inputs and inputs.f1 %}
+{% set adm=preview|selectattr('p.kind','equalto','admin')|list %}{% if adm %}<div class="card pr-step" id="stepa"><div class="pr-h"><span class="pr-n">2</span><div><b>Години й зміни адміністраторів</b><div class="mut" style="font-size:13px">за {{ ym_label }} · потрібні для зарплати: 70 ₴ за годину + частка 4% від послуг салону за змінами</div></div>
+<span class="chip2 {{ 'okc' if adm|selectattr('adj.hours','defined')|list|length==adm|length else 'errc' }}">{{ 'заповнено' if adm|selectattr('adj.hours','defined')|list|length==adm|length else 'потрібно заповнити' }}</span></div>
+<form method="post" action="/payrun/admins"><input type="hidden" name="month" value="{{ ym }}"><div class="pr-scroll"><table class="prt adjt"><tr><th>Адміністратор</th><th>Відпрацьовано годин</th><th>Відпрацьовано змін</th><th>Роздріб Alteg</th><th>Роздріб (вручну)</th></tr>
+{% for r in adm %}{% set p=r.p %}{% set a=r.adj %}<tr><td><b>{{ p.name }}</b></td><td><input class="sm-in" name="{{ p.id }}_hours" value="{{ a.hours if 'hours' in a else '' }}" inputmode="decimal" placeholder="напр. 136"></td><td><input class="sm-in" name="{{ p.id }}_shifts" value="{{ a.shifts if 'shifts' in a else '' }}" inputmode="decimal" placeholder="напр. 14"></td>
+<td class="r num">{{ (r.goods*100)|round|int|money if r.goods else '—' }}</td><td><input class="sm-in" name="{{ p.id }}_retail" value="{{ a.retail if 'retail' in a else '' }}" placeholder="{{ r.goods if r.goods else '' }}" inputmode="decimal"></td></tr>{% endfor %}</table></div>
+<p class="mut" style="font-size:12.5px;margin:8px 0">Години й зміни беруться з графіка змін. Роздріб: 10% від особистих продажів товару; якщо поле порожнє, береться з Alteg.</p>
+{% if can_edit %}<button>Зберегти години адміністраторів</button>{% endif %}</form></div>{% endif %}
+
 <div class="card pr-step" id="step2"><div class="pr-h"><span class="pr-n">2</span><div><b>Додаткові дані за місяць</b><div class="mut" style="font-size:13px">години й зміни адміністраторів, штрафи, разові доплати, готівкові аванси · каса й роздріб підтягнуті з Alteg ({{ alteg_days }} днів із даними)</div></div></div>
 {% if unmatched %}<div class="flash warn">В Alteg є працівники, яких немає у списку: {% for s in unmatched %}<b>{{ s.name }}</b> ({{ (s.svc+s.goods)|money }}){{ ', ' if not loop.last }}{% endfor %}. <a href="/payrun/people">Додайте їх у список співробітників</a>, інакше нарахування покаже помилку.</div>{% endif %}
 <form method="post" action="/payrun/adjust"><input type="hidden" name="month" value="{{ ym }}">
@@ -22,9 +30,9 @@
 {% for sec in SECTIONS %}{% set grp=preview|selectattr('p.section','equalto',sec)|list %}{% if grp %}<tr class="sec"><td colspan="12">{{ sec }}</td></tr>
 {% for r in grp %}{% set p=r.p %}{% set a=r.adj %}<tr><td><b>{{ p.name }}</b>{% if not p.active %} <span class="tag">неактивний</span>{% endif %}<div class="mut" style="font-size:11.5px">{{ KIND_LABEL[p.kind] }}</div></td>
 <td class="r num">{{ (r.cash*100)|round|int|money if r.cash else '—' }}</td><td class="r num">{{ (r.goods*100)|round|int|money if r.goods else '—' }}</td>
-<td>{% if p.kind=='admin' %}<input class="sm-in" name="{{ p.id }}_hours" value="{{ a.hours if 'hours' in a else '' }}" inputmode="decimal">{% endif %}</td>
-<td>{% if p.kind=='admin' %}<input class="sm-in" name="{{ p.id }}_shifts" value="{{ a.shifts if 'shifts' in a else '' }}" inputmode="decimal">{% endif %}</td>
-<td>{% if p.kind in ('admin','master','cosm') %}<input class="sm-in" name="{{ p.id }}_retail" value="{{ a.retail if 'retail' in a else '' }}" placeholder="{{ r.goods if r.goods else '' }}" inputmode="decimal">{% endif %}</td>
+<td>{% if p.kind=='admin' %}<span class="mut">{{ a.hours|int if 'hours' in a else '—' }}</span>{% endif %}</td>
+<td>{% if p.kind=='admin' %}<span class="mut">{{ a.shifts|int if 'shifts' in a else '—' }}</span>{% endif %}</td>
+<td>{% if p.kind in ('master','cosm') %}<input class="sm-in" name="{{ p.id }}_retail" value="{{ a.retail if 'retail' in a else '' }}" placeholder="{{ r.goods if r.goods else '' }}" inputmode="decimal">{% endif %}</td>
 <td><input class="sm-in" name="{{ p.id }}_fines" value="{{ a.fines if 'fines' in a else '' }}" inputmode="decimal"></td><td><input class="md-in" name="{{ p.id }}_fines_note" value="{{ a.fines_note or '' }}"></td>
 <td><input class="sm-in" name="{{ p.id }}_extra" value="{{ a.extra if 'extra' in a else '' }}" placeholder="{{ (p.extra/100)|int if p.extra else '' }}" inputmode="decimal"></td>
 <td>{% if p.kind in ('master','cosm') %}<input class="sm-in" name="{{ p.id }}_cash_adj" value="{{ a.cash_adj if 'cash_adj' in a else '' }}" inputmode="decimal"><input class="md-in" name="{{ p.id }}_cash_adj_note" value="{{ a.cash_adj_note or '' }}" placeholder="причина">{% endif %}</td>

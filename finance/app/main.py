@@ -1937,11 +1937,50 @@ def payrun_import_sheet(request: Request, month: str = Form(...), u=Depends(pay_
     return RedirectResponse(f"/payrun?month={month}", status_code=303)
 
 
+@app.post("/payrun/admins")
+async def payrun_admins(request: Request, u=Depends(pay_edit)):
+    """Hours, shifts and personal retail of the administrators: a small form of their own, the other extra data stays untouched."""
+    form = await request.form()
+    month = form.get("month", "")
+    c = get_con()
+    inp = payrun.load_inputs(c, month)
+    if not inp:
+        flash(request, "Спочатку завантажте дані від бухгалтера")
+        return RedirectResponse(f"/payrun?month={month}", status_code=303)
+    adj = inp["adj"]
+    for p in payrun.roster(c):
+        if p["kind"] != "admin":
+            continue
+        key = f"{p['name']}|{p['section']}"
+        d = dict(adj.get(key) or {})
+        for fld in ("hours", "shifts", "retail"):
+            v = str(form.get(f"{p['id']}_{fld}", "")).strip()
+            if v == "":
+                d.pop(fld, None)
+                continue
+            try:
+                d[fld] = float(v.replace(" ", "").replace(",", "."))
+            except ValueError:
+                flash(request, f"Некоректне число для {p['name']}")
+                return RedirectResponse(f"/payrun?month={month}", status_code=303)
+        if d:
+            adj[key] = d
+        else:
+            adj.pop(key, None)
+    with lock():
+        payrun.save_adj(c, month, adj)
+    log_act(request, u, "нарахування ЗП: години адміністраторів", month)
+    flash(request, "Години й зміни адміністраторів збережено")
+    return RedirectResponse(f"/payrun?month={month}#stepa", status_code=303)
+
+
 @app.post("/payrun/adjust")
 async def payrun_adjust(request: Request, u=Depends(pay_edit)):
     form = await request.form()
     month = form.get("month", "")
     c = get_con()
+    old_inp = payrun.load_inputs(c, month)
+    old_adj = old_inp["adj"] if old_inp else {}
     adj = {}
     for p in payrun.roster(c):
         d = {}
@@ -1959,6 +1998,10 @@ async def payrun_adjust(request: Request, u=Depends(pay_edit)):
         cn = str(form.get(f"{p['id']}_cash_adj_note", "")).strip()
         if cn:
             d["cash_adj_note"] = cn[:200]
+        if p["kind"] == "admin":                  # entered in the administrators' own form
+            for fld in ("hours", "shifts", "retail"):
+                if fld in (old_adj.get(f"{p['name']}|{p['section']}") or {}):
+                    d[fld] = old_adj[f"{p['name']}|{p['section']}"][fld]
         if d:
             adj[f"{p['name']}|{p['section']}"] = d
     try:
