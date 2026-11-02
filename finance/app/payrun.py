@@ -1063,7 +1063,7 @@ def export_xlsx(run: dict) -> bytes:
     cols = [("Співробітник", "name", 32), ("Каса за місяць", "cash", 14), ("Нарахування", "accrual", 14), ("Доплати", "extra", 12), ("Продажі 10%", "retail", 12),
             ("Нараховано (зарплата)", "gross", 16), ("Відпускні", "vacation", 12), ("Лікарняні", "sick", 12), ("Декретні", "maternity", 12), ("Штраф", "fines", 11),
             ("Утримання (покупки)", "deduct", 13), ("ПДФО+ВЗ", "taxes", 13), ("Аванс Ф-1 (карта)", "adv_card", 14), ("ЗП Ф-1 (карта)", "sal_card", 14),
-            ("Аванс готівкою", "adv_cash", 13), ("До виплати готівкою", "to_pay", 16), ("Примітки", "note", 52)]
+            ("Аванс готівкою", "adv_cash", 13), ("До виплати готівкою", "to_pay", 16)]
     n = len(cols)
     last = get_column_letter(n)
     status_txt = {"ok": "усі перевірки пройдено", "warn": "є попередження", "error": "є помилки"}[run["status"]]
@@ -1074,30 +1074,8 @@ def export_xlsx(run: dict) -> bytes:
     ws["A1"].fill = PatternFill("solid", fgColor=PURPLE)
     ws["A1"].alignment = Alignment(horizontal="left", vertical="center", indent=1)
     ws.row_dimensions[1].height = 38
-    ws.merge_cells(f"A2:{last}2")
-    ws["A2"] = f"Версія {run['version']}  ·  сформовано {_fmt_dt(run['created_at'])}  ·  {run['created_by']}  ·  перевірки: {status_txt}  ·  {appr}"
-    ws["A2"].font = Font(name="Calibri", size=11, color="5B4A6B")
-    ws["A2"].fill = PatternFill("solid", fgColor=LILAC)
-    ws["A2"].alignment = Alignment(horizontal="left", vertical="center", indent=1)
-    ws.row_dimensions[2].height = 24
-    ws.row_dimensions[3].height = 8
-    # summary strip: four tiles
-    tiles = [("Нараховано зарплати", t["gross"]), ("Витрата компанії (без ЄСВ)", t["cost"]), ("На карту (Ф-1)", t["card"]), ("Готівкою всього", t["cash"])]
-    spans = [(1, 2), (3, 6), (7, 11), (12, 16)]
-    for (lbl, v), (a, b) in zip(tiles, spans):
-        ws.merge_cells(start_row=4, start_column=a, end_row=4, end_column=b)
-        ws.merge_cells(start_row=5, start_column=a, end_row=5, end_column=b)
-        c1, c2 = ws.cell(4, a, lbl), ws.cell(5, a, v)
-        c1.font, c2.font = Font(name="Calibri", size=10, color="7A6A8A"), Font(name="Calibri", bold=True, size=18, color=PURPLE)
-        c2.number_format = '#,##0.00 "₴"'
-        for r_ in (4, 5):
-            for cc in range(a, b + 1):
-                ws.cell(r_, cc).fill = PatternFill("solid", fgColor=MIST)
-        c1.alignment = c2.alignment = Alignment(horizontal="left", vertical="center", indent=1)
-    ws.row_dimensions[4].height = 18
-    ws.row_dimensions[5].height = 30
-    ws.row_dimensions[6].height = 10
-    hr = 7
+    ws.row_dimensions[2].height = 8
+    hr = 3
     for i, (lbl, _, w) in enumerate(cols, 1):
         c = ws.cell(hr, i, lbl)
         c.font, c.fill, c.border = Font(name="Calibri", bold=True, color="FFFFFF", size=11), PatternFill("solid", fgColor=PURPLE), box
@@ -1136,7 +1114,7 @@ def export_xlsx(run: dict) -> bytes:
         ws.row_dimensions[row].height = 22
         first = row + 1
         for k, r in enumerate(srows):
-            vals = [note_of(r) if key == "note" else (r["name"] if key == "name" else r.get(key, 0)) for _, key, _ in cols]
+            vals = [(r["name"] if key == "name" else r.get(key, 0)) for _, key, _ in cols]
             ws.append(vals)
             rr = ws.max_row
             for cc in range(1, n + 1):
@@ -1144,48 +1122,39 @@ def export_xlsx(run: dict) -> bytes:
                 c.font, c.border = base, box
                 if k % 2:
                     c.fill = PatternFill("solid", fgColor="FBF9FD")
-                if 2 <= cc <= n - 1:
+                if 2 <= cc <= n:
                     c.number_format = NUM_FMT
                     c.alignment = Alignment(horizontal="right", vertical="center")
             ws.cell(rr, 1).alignment = Alignment(vertical="center", indent=1)
-            ws.cell(rr, n).alignment = Alignment(wrap_text=True, vertical="center", indent=1)
-            ws.cell(rr, n).font = Font(name="Calibri", size=10, color="6B5B7B")
             ws.cell(rr, 6).font = Font(name="Calibri", bold=True, color=INK)
-            tp = ws.cell(rr, n - 1)
+            tp = ws.cell(rr, n)
             tp.font = Font(name="Calibri", bold=True, color="D0405F" if r["to_pay"] < 0 else "1F7A68")
-            ws.row_dimensions[rr].height = 22 if len(note_of(r)) < 60 else 34
+            ws.row_dimensions[rr].height = 22
         lastr = ws.max_row
-        ws.append(["Разом: " + sec.lower()] + [f"=SUM({get_column_letter(i)}{first}:{get_column_letter(i)}{lastr})" for i in range(2, n)] + [""])
+        ws.append(["Разом: " + sec.lower()] + [f"=SUM({get_column_letter(i)}{first}:{get_column_letter(i)}{lastr})" for i in range(2, n + 1)])
         rr = ws.max_row
         grand_rows.append(rr)
         for cc in range(1, n + 1):
             c = ws.cell(rr, cc)
             c.font, c.fill = Font(name="Calibri", bold=True, color=PURPLE), PatternFill("solid", fgColor=LILAC)
             c.border = Border(top=Side(style="medium", color=PURPLE), bottom=thin)
-            if 2 <= cc <= n - 1:
+            if 2 <= cc <= n:
                 c.number_format = NUM_FMT
                 c.alignment = Alignment(horizontal="right")
         ws.cell(rr, 1).alignment = Alignment(indent=1)
         ws.row_dimensions[rr].height = 22
     ws.append([" "])
     ws.row_dimensions[ws.max_row].height = 8
-    ws.append(["ВСЬОГО"] + [("=" + "+".join(f"{get_column_letter(i)}{r_}" for r_ in grand_rows)) if grand_rows else 0 for i in range(2, n)] + [""])
+    ws.append(["ВСЬОГО"] + [("=" + "+".join(f"{get_column_letter(i)}{r_}" for r_ in grand_rows)) if grand_rows else 0 for i in range(2, n + 1)])
     rr = ws.max_row
     for cc in range(1, n + 1):
         c = ws.cell(rr, cc)
         c.font, c.fill = Font(name="Calibri", bold=True, size=12, color="FFFFFF"), PatternFill("solid", fgColor=PURPLE)
-        if 2 <= cc <= n - 1:
+        if 2 <= cc <= n:
             c.number_format = NUM_FMT
             c.alignment = Alignment(horizontal="right", vertical="center")
     ws.cell(rr, 1).alignment = Alignment(indent=1, vertical="center")
     ws.row_dimensions[rr].height = 28
-    ws.append([" "])
-    ws.append(["Нараховано = відсоток від каси (або ставка × години + 4% від послуг салону за змінами) + доплати + 10% від продажів товару. "
-               "До виплати готівкою = нараховано − ПДФО та ВЗ − виплати по картках − готівкові аванси − штрафи − утримання. Відпускні й лікарняні виплачуються через банк."])
-    ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=n)
-    ws.cell(ws.max_row, 1).font = Font(name="Calibri", italic=True, size=10, color="7A6A8A")
-    ws.cell(ws.max_row, 1).alignment = Alignment(wrap_text=True, vertical="top")
-    ws.row_dimensions[ws.max_row].height = 30
     ws.freeze_panes = ws.cell(hr + 1, 2)
     ws.page_setup.orientation, ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = "landscape", 1, 0
     ws.sheet_properties.pageSetUpPr.fitToPage = True
