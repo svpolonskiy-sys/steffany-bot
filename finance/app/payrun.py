@@ -1031,79 +1031,214 @@ def list_runs(con) -> list[dict]:
 
 
 # ------------------------------------------------------------------ Excel
+def _fmt_dt(v: str) -> str:
+    try:
+        return datetime.fromisoformat(v).strftime("%d.%m.%Y %H:%M")
+    except (TypeError, ValueError):
+        return v or ""
+
+
+NUM_FMT = '#,##0.00;-#,##0.00;"–"'
+PURPLE, LILAC, MIST, INK = "6B2F6E", "EDE6F5", "F7F3FB", "2B2433"
+
+
 def export_xlsx(run: dict) -> bytes:
+    """A readable workbook: summary strip, one table per section, notes next to every person, checks and comparison on their own sheets."""
     wb = Workbook()
     ws = wb.active
     ws.title = "Нарахування ЗП"
-    res = run["result"]
-    thin = Side(style="thin", color="DDDDDD")
-    head_fill = PatternFill("solid", fgColor="6B2F6E")
-    sec_fill = PatternFill("solid", fgColor="EDE6F5")
-    ws.append([f"Нарахування заробітної плати за {month_label(run['ym'])}"])
-    ws["A1"].font = Font(bold=True, size=15, color="6B2F6E")
-    ws.append([f"Версія {run['version']} · сформовано {run['created_at']} · {run['created_by']} · статус перевірок: {({'ok': 'усе гаразд', 'warn': 'є попередження', 'error': 'є помилки'})[run['status']]}"])
-    ws.append([])
-    cols = [("Співробітник", "name"), ("Каса за місяць", "cash"), ("Нарахування", "accrual"), ("Доплати", "extra"), ("Роздріб 10%", "retail"),
-            ("Нараховано (зарплата)", "gross"), ("Відпускні", "vacation"), ("Лікарняні", "sick"), ("Декретні", "maternity"), ("Штраф", "fines"), ("Утримання (покупки)", "deduct"),
-            ("ПДФО+ВЗ", "taxes"), ("Аванс Ф-1 (карта)", "adv_card"), ("ЗП Ф-1 (карта)", "sal_card"), ("Аванс готівкою", "adv_cash"), ("До виплати готівкою", "to_pay")]
-    ws.append([c[0] for c in cols])
-    hr = ws.max_row
-    for i in range(1, len(cols) + 1):
-        c = ws.cell(hr, i)
-        c.font, c.fill, c.alignment = Font(bold=True, color="FFFFFF"), head_fill, Alignment(wrap_text=True, horizontal="center", vertical="center")
-    ws.row_dimensions[hr].height = 34
+    ws.sheet_view.showGridLines = False
+    res, t = run["result"], run["result"]["totals"]
+    thin = Side(style="thin", color="D9D2E3")
+    box = Border(left=thin, right=thin, top=thin, bottom=thin)
+    base = Font(name="Calibri", size=11, color=INK)
+    cols = [("Співробітник", "name", 32), ("Каса за місяць", "cash", 14), ("Нарахування", "accrual", 14), ("Доплати", "extra", 12), ("Продажі 10%", "retail", 12),
+            ("Нараховано (зарплата)", "gross", 16), ("Відпускні", "vacation", 12), ("Лікарняні", "sick", 12), ("Декретні", "maternity", 12), ("Штраф", "fines", 11),
+            ("Утримання (покупки)", "deduct", 13), ("ПДФО+ВЗ", "taxes", 13), ("Аванс Ф-1 (карта)", "adv_card", 14), ("ЗП Ф-1 (карта)", "sal_card", 14),
+            ("Аванс готівкою", "adv_cash", 13), ("До виплати готівкою", "to_pay", 16), ("Примітки", "note", 52)]
+    n = len(cols)
+    last = get_column_letter(n)
+    status_txt = {"ok": "усі перевірки пройдено", "warn": "є попередження", "error": "є помилки"}[run["status"]]
+    appr = f"затверджено до виплати: {run.get('approved_by')}, {_fmt_dt(run.get('approved_at'))}" if run.get("approved_by") else "очікує затвердження власника"
+    ws.merge_cells(f"A1:{last}1")
+    ws["A1"] = f"Нарахування заробітної плати за {month_label(run['ym'])}"
+    ws["A1"].font = Font(name="Calibri", bold=True, size=20, color="FFFFFF")
+    ws["A1"].fill = PatternFill("solid", fgColor=PURPLE)
+    ws["A1"].alignment = Alignment(horizontal="left", vertical="center", indent=1)
+    ws.row_dimensions[1].height = 38
+    ws.merge_cells(f"A2:{last}2")
+    ws["A2"] = f"Версія {run['version']}  ·  сформовано {_fmt_dt(run['created_at'])}  ·  {run['created_by']}  ·  перевірки: {status_txt}  ·  {appr}"
+    ws["A2"].font = Font(name="Calibri", size=11, color="5B4A6B")
+    ws["A2"].fill = PatternFill("solid", fgColor=LILAC)
+    ws["A2"].alignment = Alignment(horizontal="left", vertical="center", indent=1)
+    ws.row_dimensions[2].height = 24
+    ws.row_dimensions[3].height = 8
+    # summary strip: four tiles
+    tiles = [("Нараховано зарплати", t["gross"]), ("Витрата компанії (без ЄСВ)", t["cost"]), ("На карту (Ф-1)", t["card"]), ("Готівкою всього", t["cash"])]
+    spans = [(1, 2), (3, 6), (7, 11), (12, 16)]
+    for (lbl, v), (a, b) in zip(tiles, spans):
+        ws.merge_cells(start_row=4, start_column=a, end_row=4, end_column=b)
+        ws.merge_cells(start_row=5, start_column=a, end_row=5, end_column=b)
+        c1, c2 = ws.cell(4, a, lbl), ws.cell(5, a, v)
+        c1.font, c2.font = Font(name="Calibri", size=10, color="7A6A8A"), Font(name="Calibri", bold=True, size=18, color=PURPLE)
+        c2.number_format = '#,##0.00 "₴"'
+        for r_ in (4, 5):
+            for cc in range(a, b + 1):
+                ws.cell(r_, cc).fill = PatternFill("solid", fgColor=MIST)
+        c1.alignment = c2.alignment = Alignment(horizontal="left", vertical="center", indent=1)
+    ws.row_dimensions[4].height = 18
+    ws.row_dimensions[5].height = 30
+    ws.row_dimensions[6].height = 10
+    hr = 7
+    for i, (lbl, _, w) in enumerate(cols, 1):
+        c = ws.cell(hr, i, lbl)
+        c.font, c.fill, c.border = Font(name="Calibri", bold=True, color="FFFFFF", size=11), PatternFill("solid", fgColor=PURPLE), box
+        c.alignment = Alignment(wrap_text=True, horizontal="center", vertical="center")
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.row_dimensions[hr].height = 44
+
+    def note_of(r):
+        out = []
+        if r.get("kind") == "admin":
+            out.append(f"{int(r.get('hours', 0))} год, {int(r.get('shifts', 0))} змін; частка 4%: {r.get('pool_share', 0):,.0f} ₴".replace(",", " "))
+        elif r.get("pct"):
+            out.append(f"{round(r['pct'] * 100, 1):g}% від каси")
+        if r.get("fines_note") and r.get("fines"):
+            out.append("штраф: " + r["fines_note"])
+        if r.get("deduct_note") and r.get("deduct"):
+            out.append("утримання: " + r["deduct_note"])
+        if r.get("cash_note"):
+            out.append("каса скоригована: " + r["cash_note"])
+        return "; ".join(out)
+
+    grand_rows = []
     for sec in SECTIONS:
         srows = [r for r in res["rows"] if r["section"] == sec]
         if not srows:
             continue
-        ws.append([sec.upper()])
-        for i in range(1, len(cols) + 1):
-            ws.cell(ws.max_row, i).fill = sec_fill
-        ws.cell(ws.max_row, 1).font = Font(bold=True)
-        for r in srows:
-            ws.append([r.get(k, "") if k != "name" else r["name"] for _, k in cols])
-        first, last = ws.max_row - len(srows) + 1, ws.max_row
-        ws.append(["Разом " + sec.lower()] + [f"=SUM({get_column_letter(i)}{first}:{get_column_letter(i)}{last})" for i in range(2, len(cols) + 1)])
-        for i in range(1, len(cols) + 1):
-            ws.cell(ws.max_row, i).font = Font(bold=True)
-    t = res["totals"]
-    ws.append([])
-    ws.append(["ВСЬОГО", sum(r.get("cash", 0) for r in res["rows"]), sum(r.get("accrual", 0) for r in res["rows"]), t["extra"], t["retail"], t["gross"], t["vacation"], t["sick"],
-               t["maternity"], t["fines"], t.get("deduct", 0), t["taxes"], t["adv_card"], t["sal_card"], t["adv_cash"], t["to_pay"]])
-    for i in range(1, len(cols) + 1):
-        c = ws.cell(ws.max_row, i)
-        c.font, c.fill = Font(bold=True, color="FFFFFF"), head_fill
-    for row in ws.iter_rows(min_row=hr + 1, min_col=2, max_col=len(cols)):
-        for c in row:
-            c.number_format = '# ##0.00'
-    ws.column_dimensions["A"].width = 30
-    for i in range(2, len(cols) + 1):
-        ws.column_dimensions[get_column_letter(i)].width = 15
+        ws.append([" "])
+        ws.row_dimensions[ws.max_row].height = 8
+        ws.append([" "])
+        row = ws.max_row
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=n)
+        ws.cell(row, 1, sec.upper()).font = Font(name="Calibri", bold=True, size=12, color=PURPLE)
+        for cc in range(1, n + 1):
+            ws.cell(row, cc).fill = PatternFill("solid", fgColor=LILAC)
+        ws.cell(row, 1).alignment = Alignment(vertical="center", indent=1)
+        ws.row_dimensions[row].height = 22
+        first = row + 1
+        for k, r in enumerate(srows):
+            vals = [note_of(r) if key == "note" else (r["name"] if key == "name" else r.get(key, 0)) for _, key, _ in cols]
+            ws.append(vals)
+            rr = ws.max_row
+            for cc in range(1, n + 1):
+                c = ws.cell(rr, cc)
+                c.font, c.border = base, box
+                if k % 2:
+                    c.fill = PatternFill("solid", fgColor="FBF9FD")
+                if 2 <= cc <= n - 1:
+                    c.number_format = NUM_FMT
+                    c.alignment = Alignment(horizontal="right", vertical="center")
+            ws.cell(rr, 1).alignment = Alignment(vertical="center", indent=1)
+            ws.cell(rr, n).alignment = Alignment(wrap_text=True, vertical="center", indent=1)
+            ws.cell(rr, n).font = Font(name="Calibri", size=10, color="6B5B7B")
+            ws.cell(rr, 6).font = Font(name="Calibri", bold=True, color=INK)
+            tp = ws.cell(rr, n - 1)
+            tp.font = Font(name="Calibri", bold=True, color="D0405F" if r["to_pay"] < 0 else "1F7A68")
+            ws.row_dimensions[rr].height = 22 if len(note_of(r)) < 60 else 34
+        lastr = ws.max_row
+        ws.append(["Разом: " + sec.lower()] + [f"=SUM({get_column_letter(i)}{first}:{get_column_letter(i)}{lastr})" for i in range(2, n)] + [""])
+        rr = ws.max_row
+        grand_rows.append(rr)
+        for cc in range(1, n + 1):
+            c = ws.cell(rr, cc)
+            c.font, c.fill = Font(name="Calibri", bold=True, color=PURPLE), PatternFill("solid", fgColor=LILAC)
+            c.border = Border(top=Side(style="medium", color=PURPLE), bottom=thin)
+            if 2 <= cc <= n - 1:
+                c.number_format = NUM_FMT
+                c.alignment = Alignment(horizontal="right")
+        ws.cell(rr, 1).alignment = Alignment(indent=1)
+        ws.row_dimensions[rr].height = 22
+    ws.append([" "])
+    ws.row_dimensions[ws.max_row].height = 8
+    ws.append(["ВСЬОГО"] + [("=" + "+".join(f"{get_column_letter(i)}{r_}" for r_ in grand_rows)) if grand_rows else 0 for i in range(2, n)] + [""])
+    rr = ws.max_row
+    for cc in range(1, n + 1):
+        c = ws.cell(rr, cc)
+        c.font, c.fill = Font(name="Calibri", bold=True, size=12, color="FFFFFF"), PatternFill("solid", fgColor=PURPLE)
+        if 2 <= cc <= n - 1:
+            c.number_format = NUM_FMT
+            c.alignment = Alignment(horizontal="right", vertical="center")
+    ws.cell(rr, 1).alignment = Alignment(indent=1, vertical="center")
+    ws.row_dimensions[rr].height = 28
+    ws.append([" "])
+    ws.append(["Нараховано = відсоток від каси (або ставка × години + 4% від послуг салону за змінами) + доплати + 10% від продажів товару. "
+               "До виплати готівкою = нараховано − ПДФО та ВЗ − виплати по картках − готівкові аванси − штрафи − утримання. Відпускні й лікарняні виплачуються через банк."])
+    ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=n)
+    ws.cell(ws.max_row, 1).font = Font(name="Calibri", italic=True, size=10, color="7A6A8A")
+    ws.cell(ws.max_row, 1).alignment = Alignment(wrap_text=True, vertical="top")
+    ws.row_dimensions[ws.max_row].height = 30
     ws.freeze_panes = ws.cell(hr + 1, 2)
+    ws.page_setup.orientation, ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = "landscape", 1, 0
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.print_title_rows = f"{hr}:{hr}"
+
+    def style_table(sh, widths, header_row=1):
+        for i, w in enumerate(widths, 1):
+            sh.column_dimensions[get_column_letter(i)].width = w
+        for c in sh[header_row]:
+            c.font, c.fill, c.border = Font(name="Calibri", bold=True, color="FFFFFF"), PatternFill("solid", fgColor=PURPLE), box
+            c.alignment = Alignment(wrap_text=True, horizontal="center", vertical="center")
+        sh.row_dimensions[header_row].height = 32
+        sh.sheet_view.showGridLines = False
+        sh.freeze_panes = sh.cell(header_row + 1, 1)
+
     s2 = wb.create_sheet("Зведення")
     s2.append(["Показник", "Сума, ₴"])
-    for lbl, v in (("Нараховано зарплати", t["gross"]), ("Відпускні", t["vacation"]), ("Лікарняні", t["sick"]), ("Декретні", t["maternity"]), ("Штрафи", -t["fines"]), ("Утримання за покупки (не зменшують витрату)", t.get("deduct", 0)),
-                   ("Витрата компанії (без ЄСВ)", t["cost"]), ("ПДФО та військовий збір (утримано)", t["taxes"]), ("Виплата на карту (Ф-1)", t["card"]),
-                   ("Готівкою: аванси", t["adv_cash"]), ("Готівкою: до виплати 7 числа", t["to_pay"]), ("Готівкою всього", t["cash"])):
+    lines = (("Нараховано зарплати", t["gross"]), ("Відпускні", t["vacation"]), ("Лікарняні", t["sick"]), ("Декретні", t["maternity"]), ("Штрафи", -t["fines"]),
+             ("Утримання за покупки (не зменшують витрату)", t.get("deduct", 0)), ("Витрата компанії (без ЄСВ)", t["cost"]), ("ПДФО та військовий збір (утримано)", t["taxes"]),
+             ("Виплата на карту (Ф-1)", t["card"]), ("Готівкою: аванси", t["adv_cash"]), ("Готівкою: до виплати 7 числа", t["to_pay"]), ("Готівкою всього", t["cash"]))
+    for lbl, v in lines:
         s2.append([lbl, v])
-    s2.column_dimensions["A"].width = 44
-    s2.column_dimensions["B"].width = 18
-    for r in s2.iter_rows(min_row=2, min_col=2, max_col=2):
-        r[0].number_format = '# ##0.00'
+    style_table(s2, (52, 20))
+    for k, r in enumerate(s2.iter_rows(min_row=2, max_col=2), 0):
+        for c in r:
+            c.font, c.border = base, box
+            if k % 2:
+                c.fill = PatternFill("solid", fgColor="FBF9FD")
+        r[1].number_format = NUM_FMT
+        r[1].alignment = Alignment(horizontal="right")
+        if r[0].value in ("Витрата компанії (без ЄСВ)", "Готівкою: до виплати 7 числа"):
+            r[0].font = r[1].font = Font(name="Calibri", bold=True, color=PURPLE)
     s3 = wb.create_sheet("Перевірки")
     s3.append(["Рівень", "Код", "Перевірка", "Результат", "Деталі"])
+    colr = {"ok": ("1F7A68", "E3F5F0"), "warn": ("B7791F", "FFF4DC"), "error": ("D0405F", "FCE4EA")}
     for c in run["checks"]:
         s3.append([c["level"], c["code"], c["title"], {"ok": "✓ ОК", "warn": "⚠ увага", "error": "✗ помилка"}[c["status"]], c["detail"]])
-        s3.cell(s3.max_row, 4).font = Font(bold=True, color={"ok": "1F9A85", "warn": "B7791F", "error": "D0405F"}[c["status"]])
-    for col, w in zip("ABCDE", (8, 7, 60, 14, 110)):
-        s3.column_dimensions[col].width = w
+        r = s3.max_row
+        for cc in range(1, 6):
+            x = s3.cell(r, cc)
+            x.font, x.border, x.alignment = base, box, Alignment(wrap_text=True, vertical="top", horizontal="center" if cc in (1, 2, 4) else "left")
+        s3.cell(r, 4).font = Font(name="Calibri", bold=True, color=colr[c["status"]][0])
+        s3.cell(r, 4).fill = PatternFill("solid", fgColor=colr[c["status"]][1])
+        s3.row_dimensions[r].height = max(20, 15 * (1 + len(str(c["detail"])) // 95))
+    style_table(s3, (9, 8, 52, 16, 100))
     if res.get("compare"):
         s4 = wb.create_sheet("Порівняння з таблицею")
-        s4.append(["Співробітник", "Розділ", "Нараховано (програма)", "Нараховано (таблиця)", "Різниця", "Каса (Alteg/програма)", "Каса (таблиця)", "До виплати (програма)", "До виплати (таблиця)"])
+        s4.append(["Співробітник", "Розділ", "Нараховано (програма)", "Нараховано (таблиця)", "Різниця", "Каса (програма)", "Каса (таблиця)", "До виплати (програма)", "До виплати (таблиця)"])
         for c in res["compare"]:
             s4.append([c["name"], c["section"], c["gross"], c["sheet_gross"], round(c["gross"] - c["sheet_gross"], 2), c["cash"], c["sheet_cash"], c["to_pay"], c["sheet_to_pay"]])
-        s4.column_dimensions["A"].width = 28
-        s4.column_dimensions["B"].width = 18
+            r = s4.max_row
+            for cc in range(1, 10):
+                x = s4.cell(r, cc)
+                x.font, x.border = base, box
+                if cc >= 3:
+                    x.number_format = NUM_FMT
+                    x.alignment = Alignment(horizontal="right")
+            if abs(c["gross"] - c["sheet_gross"]) > 1:
+                s4.cell(r, 5).font = Font(name="Calibri", bold=True, color="D0405F")
+                s4.cell(r, 5).fill = PatternFill("solid", fgColor="FCE4EA")
+        style_table(s4, (30, 20, 16, 16, 12, 16, 16, 16, 16))
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
