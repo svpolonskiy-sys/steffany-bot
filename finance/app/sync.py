@@ -334,8 +334,9 @@ def sync_all(con, force=False):
             for ym in ((today - timedelta(days=1)).strftime("%Y-%m"), today.strftime("%Y-%m")):     # visit comments feed the payroll accrual
                 try:
                     payrun.sync_visits(con, ym)
+                    payrun.sync_goods(con, ym)
                 except Exception:
-                    log.exception("visit comments sync failed")
+                    log.exception("visit comments / goods sync failed")
             from . import pl as _pl
             _pl.close_months(con)
             from . import control

@@ -1177,3 +1177,15 @@ def test_admin_hours_form_keeps_other_extra_data(client):
     adj = payrun.load_inputs(main.con, "2026-09")["adj"]
     assert adj["Петрова Ольга|Адміністратори"]["hours"] == 136.0 and adj["Іванов Іван|Перукарі"]["fines"] == 70.0
     assert "заповнено" in client.get("/payrun?month=2026-09").text
+
+
+def test_goods_sales_by_seller_exclude_certificates_and_feed_retail(client):
+    from app import payrun
+    _payrun_setup()
+    main.con.execute("INSERT INTO pay_people(name,section,kind,alias) VALUES('Банцер Мирослава','Адміністратори','admin','мирослава')")
+    for i, (who, title, cost, cert) in enumerate((("Іванов Іван", "Шампунь", 100000, 0), ("Мирослава", "Спрей", 50000, 0), ("Мирослава", "СЕРТИФИКАТ на 1000 грн", 100000, 1), ("Напомнить", "Крем", 30000, 0))):
+        main.con.execute("INSERT INTO alteg_goods(id,day,master_name,title,qty,cost,certificate) VALUES(?,?,?,?,1,?,?)", (i + 1, "2026-09-10", who, title, cost, cert))
+    people = payrun.roster(main.con)
+    s = payrun.seller_sales(main.con, "2026-09", people)
+    assert s["Іванов Іван"] == 1000 and s["Банцер Мирослава"] == 500 and s["__unknown__"] == {"Напомнить": 300}      # certificate not counted
+    assert payrun.seller_sales(main.con, "2026-08", people) is None                                                  # month not loaded: old behaviour

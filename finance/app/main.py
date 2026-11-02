@@ -1820,10 +1820,11 @@ def payrun_page(request: Request, u=Depends(need_analytics)):
     alteg = payrun.alteg_month(c, ym)
     adv = payrun.cash_advances(c, ym, people)
     marks = payrun.visit_effects(c, ym, people)
+    sellers = payrun.seller_sales(c, ym, people)
     preview = []
     for p in people:
         st = [v for v in alteg["staff"].values() if payrun.match_name(v["name"], [p])]
-        preview.append(dict(p=p, key=f"{p['name']}|{p['section']}", cash=sum(v["svc"] for v in st) / 100 + marks["per"].get(p["name"], 0), goods=sum(v["goods"] for v in st) / 100,
+        preview.append(dict(p=p, key=f"{p['name']}|{p['section']}", cash=sum(v["svc"] for v in st) / 100 + marks["per"].get(p["name"], 0), goods=(sellers.get(p["name"], 0.0) if sellers is not None else sum(v["goods"] for v in st) / 100),
                             adv=adv["per"].get(p["name"], 0) / 100 if p["section"] == payrun._primary_section(people, p["name"]) else 0,
                             adj=(inputs["adj"].get(f"{p['name']}|{p['section']}", {}) if inputs else {})))
     today = datetime.now(config.KYIV).date()
@@ -1915,13 +1916,19 @@ def payrun_refresh(request: Request, month: str = Form(...), u=Depends(pay_edit)
 
 @app.post("/payrun/visits")
 def payrun_visits(request: Request, month: str = Form(...), u=Depends(pay_edit)):
-    try:
-        with lock():
-            n = payrun.sync_visits(get_con(), month)
-        flash(request, f"Коментарі до візитів оновлено з Alteg: {n} візитів")
-        log_act(request, u, "нарахування ЗП: коментарі до візитів з Alteg", month)
-    except Exception as e:
-        flash(request, f"Не вдалося завантажити візити з Alteg: {e}")
+    """Comments, loyalty and goods sales of the month; the goods part walks through all storage movements, so it runs in the background."""
+    import threading
+
+    def job():
+        try:
+            with lock():
+                payrun.sync_visits(get_con(), month)
+                payrun.sync_goods(get_con(), month)
+        except Exception:
+            log.exception("payrun visits refresh failed")
+    threading.Thread(target=job, daemon=True).start()
+    log_act(request, u, "нарахування ЗП: оновлення коментарів і продажів з Alteg", month)
+    flash(request, "Оновлення з Alteg запущено (коментарі, лояльність, продажі товару). Оновіть сторінку приблизно за 1–2 хвилини.")
     return RedirectResponse(f"/payrun?month={month}", status_code=303)
 
 

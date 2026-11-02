@@ -233,6 +233,42 @@ def sync_loyalty(con, ym: str, client=None) -> int:
     return len(rows)
 
 
+def sync_goods(con, ym: str, client=None) -> int:
+    """Product sales of the month by seller (certificates sold at the desk are stored but never count as sales of goods)."""
+    from . import alteg
+    lo, hi = month_bounds(ym)
+    client = client or alteg.AltegClient()
+    rows = client.storage_sales(lo.isoformat(), hi.isoformat())
+    con.execute("DELETE FROM alteg_goods WHERE day BETWEEN ? AND ?", (lo.isoformat(), hi.isoformat()))
+    for t in rows:
+        title = (t.get("good") or {}).get("title") or ""
+        cert = 1 if (t.get("loyalty_certificate_id") or "сертиф" in title.lower()) else 0
+        m = t.get("master") or {}
+        con.execute("INSERT OR REPLACE INTO alteg_goods(id,day,master_id,master_name,title,qty,cost,certificate) VALUES(?,?,?,?,?,?,?,?)",
+                    (t["id"], (t.get("create_date") or "")[:10], m.get("id"), m.get("title") or "", title, abs(float(t.get("amount") or 1)),
+                     round(float(t.get("cost") or 0) * 100), cert))
+    con.commit()
+    return len(rows)
+
+
+def seller_sales(con, ym: str, people: list[dict]) -> dict | None:
+    """Goods sold by each person in the month (UAH), certificates excluded. None when the month was not loaded yet."""
+    lo, hi = month_bounds(ym)
+    rows = con.execute("SELECT master_name, SUM(cost) s FROM alteg_goods WHERE day BETWEEN ? AND ? AND certificate=0 GROUP BY 1", (lo.isoformat(), hi.isoformat())).fetchall()
+    if not con.execute("SELECT 1 FROM alteg_goods WHERE day BETWEEN ? AND ? LIMIT 1", (lo.isoformat(), hi.isoformat())).fetchone():
+        return None
+    out: dict[str, float] = {}
+    unknown: dict[str, float] = {}
+    for r in rows:
+        hit = [p for p in match_name(r["master_name"], people) if p["kind"] in ("admin", "master", "cosm")]
+        if hit:
+            out[hit[0]["name"]] = out.get(hit[0]["name"], 0) + r["s"] / 100
+        else:
+            unknown[r["master_name"] or "без продавця"] = r["s"] / 100
+    out["__unknown__"] = unknown
+    return out
+
+
 LOYALTY_PAID = {8: "сертифікатом", 3: "бонусами / карткою лояльності"}      # money was taken earlier (sale of the certificate); the master earns on use
 
 
@@ -607,6 +643,7 @@ def _adj(adj: dict, p: dict) -> dict:
 
 def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: dict, advances: dict, marks: dict | None = None) -> dict:
     """The accrual itself. Amounts in whole UAH (as in the sheet)."""
+    sellers = seller_sales(con, ym, people)
     by_person_staff: dict[str, dict] = {}
     unmatched_staff = []
     excluded = []
@@ -656,7 +693,7 @@ def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: 
         mk = (marks or {}).get("per", {}).get(p["name"], 0.0)
         row["marks"] = mk
         row["cash_note"] = ad.get("cash_adj_note", "") if ad.get("cash_adj") else ""
-        retail = _num(ad["retail"]) if "retail" in ad else sd["goods"] / 100
+        retail = _num(ad["retail"]) if "retail" in ad else (sellers.get(p["name"], 0.0) if sellers is not None else sd["goods"] / 100)
         row["retail_base"] = retail
         row["retail"] = rnd(retail * RETAIL_PCT)
         extra = p["extra"] / 100 + _num(ad.get("extra", 0))
@@ -689,7 +726,7 @@ def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: 
         if p["kind"] == "admin":
             hours, shifts = _num(ad.get("hours", 0)), _num(ad.get("shifts", 0))
             rate = (p["rate"] / 100) or HOURLY
-            retail = _num(ad.get("retail", 0))
+            retail = _num(ad["retail"]) if "retail" in ad else (sellers.get(p["name"], 0.0) if sellers is not None else 0.0)
             share = rnd(pool_base * ADMIN_POOL * shifts / total_shifts) if total_shifts else 0
             row.update(hours=hours, shifts=shifts, rate=rate, base=rnd(rate * hours), pool_share=share,
                        retail_base=retail, retail=rnd(retail * RETAIL_PCT), cash=0, pct=None)
@@ -719,7 +756,8 @@ def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: 
         r["adv_cash"] = _num(ad["adv_cash"]) if "adv_cash" in ad else auto_adv
         r["to_pay"] = rnd(r["gross"] - r["taxes"] - r["sal_card"] - r["adv_card"] - r["adv_cash"] - r["fines"])
         r["cost"] = r["gross"] + r["vacation"] + r["sick"] + r["maternity"] - r["fines"]
-    return dict(rows=rows, pool_base=pool_base, total_shifts=total_shifts, unmatched_staff=unmatched_staff, excluded=excluded,
+    calc_unknown_sellers = (sellers or {}).get("__unknown__", {})
+    return dict(rows=rows, unknown_sellers=calc_unknown_sellers, pool_base=pool_base, total_shifts=total_shifts, unmatched_staff=unmatched_staff, excluded=excluded,
                 f1_unknown=f1_unknown, f1_dups=f1_dups, f1_matched=len(f1_by))
 
 

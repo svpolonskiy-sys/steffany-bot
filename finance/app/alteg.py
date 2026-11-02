@@ -139,6 +139,24 @@ def _loyalty(self, start: str, end: str):
 
 
 AltegClient.loyalty = _loyalty
+def _storage_sales(self, start: str, end: str):
+    """Product sales with the seller (the person who sold it at the desk or in a visit); other storage movements are skipped."""
+    if not self.user_token:
+        self.login()
+    out, page = [], 1
+    while True:
+        d = self._call(self.s.get, f"{API}/storages/transactions/{config.ALTEG_LOCATION}", headers=self._h(), timeout=60,
+                       params={"start_date": start, "end_date": end, "count": 200, "page": page}).json()
+        if not d.get("success"):
+            raise AltegError(f"Alteg (склад): {d.get('meta', {}).get('message')}")
+        rows = d.get("data") or []
+        out += [t for t in rows if t.get("type_id") == 1]
+        if len(rows) < 200 or page > 300:
+            return out
+        page += 1
+
+
+AltegClient.storage_sales = _storage_sales
 AltegClient.records = _records
 AltegClient.visits = _visits
 AltegClient.record = _record
