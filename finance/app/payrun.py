@@ -416,6 +416,22 @@ def _num(v) -> float:
 
 
 def parse_f1(content: bytes, ym: str) -> list[dict]:
+    return parse_f1_ex(content, ym)[0]
+
+
+F1_BASE = ("adv_card", "sal_card", "taxes", "vacation", "sick", "maternity")
+F1_TITLE = {"adv_card": "Аванс", "sal_card": "ЗП Ф-1", "taxes": "Податки", "vacation": "Відпускні", "sick": "Лікарняні"}
+
+
+def norm_f1(rows: list[dict]) -> list[dict]:
+    """Every row carries every payment field (a column missing in the accountant's file means 0)."""
+    for r in rows:
+        for k in F1_BASE:
+            r.setdefault(k, 0.0)
+    return rows
+
+
+def parse_f1_ex(content: bytes, ym: str):
     """Reads the accountant's table. Header row has a name column and some of: Аванс, ЗП Ф-1, Податки, Відпускні, Лікарняні.
     Understands a flat list or the salon's own multi-section payroll tab for the month."""
     wb = load_workbook(io.BytesIO(content), data_only=True)
@@ -424,12 +440,14 @@ def parse_f1(content: bytes, ym: str) -> list[dict]:
     ws = next((w for w in wb.worksheets if stems[m] in norm(w.title) and (str(y) in w.title or not re.search(r"20\d\d", w.title))), None) or wb.worksheets[0]
     out: list[dict] = []
     hdr = None
+    hdr_cells: list[str] = []
     for row in ws.iter_rows(values_only=True):
         cells = [("" if c is None else str(c).replace("\n", " ").strip()) for c in row]
         low = [norm(c) for c in cells]
         name_idx = next((i for i, c in enumerate(low) if c.startswith(("прізвище", "піб", "співробітник", "працівник", "прiзвище"))), None)
         if name_idx is not None and sum(1 for c in low if c) >= 3:
             hdr = {"name": name_idx}
+            hdr_cells = [c for c in cells if c]
             used = {name_idx}
             for key, stems_ in F1_COLS:
                 for i, c in enumerate(low):
@@ -453,7 +471,8 @@ def parse_f1(content: bytes, ym: str) -> list[dict]:
                 rec[key] = _num(row[hdr[key]])
         if any(v for k, v in rec.items() if k != "name"):
             out.append(rec)
-    return out
+    found = [k for k in F1_TITLE if hdr and k in hdr]
+    return norm_f1(out), dict(sheet=ws.title, header=hdr_cells, found=found, missing=[F1_TITLE[k] for k in F1_TITLE if k not in found])
 
 
 def fetch_link(url: str) -> bytes:
@@ -478,7 +497,7 @@ def load_inputs(con, ym: str) -> dict | None:
     if not r:
         return None
     return dict(ym=ym, source=r["source"], src_name=r["src_name"], loaded_at=r["loaded_at"], loaded_by=r["loaded_by"],
-                f1=json.loads(r["f1"] or "[]"), adj=json.loads(r["adj"] or "{}"))
+                f1=norm_f1(json.loads(r["f1"] or "[]")), adj=json.loads(r["adj"] or "{}"))
 
 
 def save_f1(con, ym: str, rows: list[dict], source: str, src_name: str, user: str):

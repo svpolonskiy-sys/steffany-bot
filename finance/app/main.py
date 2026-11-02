@@ -1853,18 +1853,22 @@ async def payrun_upload(request: Request, month: str = Form(...), file: UploadFi
         flash(request, "Потрібен файл Excel (.xlsx) розміром до 12 МБ")
         return RedirectResponse(f"/payrun?month={month}", status_code=303)
     try:
-        rows = payrun.parse_f1(data, month)
+        rows, info = payrun.parse_f1_ex(data, month)
     except Exception:
         log.exception("f1 parse failed")
-        rows = []
+        rows, info = [], {}
     if not rows:
         flash(request, "У файлі не знайдено таблицю виплат: потрібні колонка з прізвищем та колонки «Аванс», «ЗП Ф-1», «Відпускні», «Лікарняні»")
         return RedirectResponse(f"/payrun?month={month}", status_code=303)
     with lock():
         payrun.save_f1(get_con(), month, rows, "file", file.filename or "файл", u["name"])
+        get_con().execute("INSERT INTO pay_files(ym,name,data,at) VALUES(?,?,?,?) ON CONFLICT(ym) DO UPDATE SET name=excluded.name, data=excluded.data, at=excluded.at",
+                          (month, file.filename or "", data, now_local()))
+        get_con().commit()
     log_act(request, u, "нарахування ЗП: завантажено файл Ф-1", f"{month}: {file.filename}, {len(rows)} рядків")
     sm = _f1_summary(rows)
-    flash(request, f"Файл прийнято: {sm['n']} працівників, аванс {money(round(sm['adv'] * 100))}, ЗП Ф-1 {money(round(sm['sal'] * 100))}.")
+    warn = f" Увага: у файлі не знайдено колонки: {', '.join(info['missing'])} (аркуш «{info['sheet']}»). Перевірте файл, при потребі завантажте інший." if info.get("missing") else ""
+    flash(request, f"Файл прийнято: {sm['n']} працівників, аванс {money(round(sm['adv'] * 100))}, ЗП Ф-1 {money(round(sm['sal'] * 100))}." + warn)
     return RedirectResponse(f"/payrun?month={month}", status_code=303)
 
 

@@ -1016,7 +1016,7 @@ def test_payrun_reads_accountants_excel_and_exports(client):
     buf = io.BytesIO()
     wb.save(buf)
     rows = payrun.parse_f1(buf.getvalue(), "2026-09")
-    assert rows == [dict(name="Іванов Іван", adv_card=3000.0, sal_card=3500.0, vacation=1200.0, sick=0.0)]
+    assert rows == [dict(name="Іванов Іван", adv_card=3000.0, sal_card=3500.0, vacation=1200.0, sick=0.0, taxes=0.0, maternity=0.0)]
     r = client.post("/payrun/upload", data={"month": "2026-09"}, files={"file": ("f1.xlsx", buf.getvalue(), "application/octet-stream")}, follow_redirects=True)
     assert "Файл прийнято" in r.text and payrun.load_inputs(main.con, "2026-09")["f1"][0]["vacation"] == 1200.0
     _payrun_setup()
@@ -1151,3 +1151,11 @@ def test_administrator_is_limited_and_deletions_reach_control(client):
     assert a.post(f"/transactions/{old}/delete", data={"reason": "спроба видалити"}).status_code == 403
     a.post("/transactions/new", data={"kind": "transfer", "account_id": safe, "to_account_id": till, "amount": "300", "occurred_at": "2026-11-01T12:00", "description": "Поповнення каси"})
     assert c0.execute("SELECT COUNT(*) FROM transactions WHERE description='Поповнення каси' AND to_account_id=?", (till,)).fetchone()[0] == 1   # money into the till is allowed
+
+
+def test_payrun_page_survives_file_without_some_columns(client):
+    from app import payrun
+    _payrun_setup()
+    payrun.save_f1(main.con, "2026-10", [dict(name="Іванов Іван", taxes=810.0)], "file", "x.xlsx", "Бухгалтер")        # a file that has only a taxes column
+    page = client.get("/payrun?month=2026-10")
+    assert page.status_code == 200 and "Іванов" not in "" and payrun.load_inputs(main.con, "2026-10")["f1"][0]["adv_card"] == 0
