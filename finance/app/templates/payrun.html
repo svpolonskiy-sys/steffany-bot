@@ -58,7 +58,7 @@
 <h2>Збережені звіти</h2>
 <table><tr><th>Місяць</th><th>Версія</th><th>Сформовано</th><th>Перевірки</th><th class="r">Витрата компанії</th><th></th></tr>
 {% for r in runs %}<tr><td><b>{{ labelf(r.ym) }}</b></td><td>v{{ r.version }}</td><td class="num">{{ r.created_at|dt }}<div class="mut" style="font-size:12px">{{ r.created_by }}</div></td>
-<td><span class="chip2 {{ {'ok':'okc','warn':'warnc','error':'errc'}[r.status] }}">{{ {'ok':'✓ усе гаразд','warn':'⚠ є попередження','error':'✗ є помилки'}[r.status] }}</span></td><td class="r num">{{ r.total_cost|money }}</td>
+<td><span class="chip2 {{ {'ok':'okc','warn':'warnc','error':'errc'}[r.status] }}">{{ {'ok':'✓ усе гаразд','warn':'⚠ є попередження','error':'✗ є помилки'}[r.status] }}</span></td><td class="r num">{{ r.total_cost|money }}<div class="mut" style="font-size:12px">{% if r.approved_by %}✓ затверджено: {{ r.approved_by }}{% else %}очікує затвердження власника{% endif %}</div></td>
 <td style="white-space:nowrap"><a class="btn sm sec" href="/payrun/{{ r.id }}">Відкрити</a> <a class="btn sm sec" href="/payrun/{{ r.id }}/xlsx">Excel ↓</a></td></tr>
 {% else %}<tr><td colspan="6" class="mut">Звітів ще немає</td></tr>{% endfor %}</table>
 <script>document.querySelectorAll('.opt').forEach(function(b){b.onclick=function(){document.querySelectorAll('.opt').forEach(function(x){x.classList.toggle('on',x===b)});document.querySelectorAll('.optp').forEach(function(p){p.style.display=p.id===b.dataset.p?'block':'none'})}});

@@ -1015,11 +1015,12 @@ def get_run(con, rid: int) -> dict | None:
     if not r:
         return None
     return dict(id=r["id"], ym=r["ym"], version=r["version"], created_at=r["created_at"], created_by=r["created_by"], status=r["status"],
-                total_cost=r["total_cost"], result=json.loads(r["result"]), checks=json.loads(r["checks"]), inputs=json.loads(r["inputs"]))
+                total_cost=r["total_cost"], result=json.loads(r["result"]), checks=json.loads(r["checks"]), inputs=json.loads(r["inputs"]),
+                approved_by=r["approved_by"], approved_at=r["approved_at"])
 
 
 def list_runs(con) -> list[dict]:
-    return [dict(r) for r in con.execute("SELECT id, ym, version, created_at, created_by, status, total_cost FROM pay_runs ORDER BY ym DESC, version DESC")]
+    return [dict(r) for r in con.execute("SELECT id, ym, version, created_at, created_by, status, total_cost, approved_by, approved_at FROM pay_runs ORDER BY ym DESC, version DESC")]
 
 
 # ------------------------------------------------------------------ Excel

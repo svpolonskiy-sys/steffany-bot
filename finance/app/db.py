@@ -9,10 +9,13 @@ from . import config
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users(
   id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
-  role TEXT NOT NULL CHECK(role IN ('owner','accountant','admin')),
+  role TEXT NOT NULL CHECK(role IN ('owner','accountant','admin','director')),
   pw_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1,
   title TEXT NOT NULL DEFAULT '', perms TEXT NOT NULL DEFAULT '', must_change INTEGER NOT NULL DEFAULT 0,
   last_login TEXT, last_ip TEXT, sess_ver INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS del_requests(
+  id INTEGER PRIMARY KEY, tx_id INTEGER NOT NULL, user_id INTEGER NOT NULL, reason TEXT NOT NULL DEFAULT '', at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending');
 CREATE TABLE IF NOT EXISTS reg_requests(
   id INTEGER PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL, login TEXT NOT NULL, email TEXT NOT NULL, pw_hash TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')), created_at TEXT NOT NULL, ip TEXT NOT NULL DEFAULT '',
@@ -148,12 +151,27 @@ def connect(path: str | None = None) -> sqlite3.Connection:
     tcols = {r[1] for r in con.execute("PRAGMA table_info(transactions)")}
     if "parent_id" not in tcols:   # parts of a split payment point at the first part
         con.execute("ALTER TABLE transactions ADD COLUMN parent_id INTEGER")
+    usql = con.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'").fetchone()[0]
+    if "'director'" not in usql:          # the role list is a CHECK constraint: rebuild the table once to allow «Директор»
+        cols_ = [r[1] for r in con.execute("PRAGMA table_info(users)")]
+        con.commit()
+        con.execute("PRAGMA foreign_keys=OFF")
+        con.executescript(SCHEMA.split("CREATE TABLE IF NOT EXISTS users(")[1].split("CREATE TABLE IF NOT EXISTS accounts(")[0].join(["CREATE TABLE users_new(", ""]))
+        con.execute(f"INSERT INTO users_new({','.join(cols_)}) SELECT {','.join(cols_)} FROM users")
+        con.execute("DROP TABLE users")
+        con.execute("ALTER TABLE users_new RENAME TO users")
+        con.execute("PRAGMA foreign_keys=ON")
+        con.commit()
     ucols = {r[1] for r in con.execute("PRAGMA table_info(users)")}
     for c_, d_ in (("title", "TEXT NOT NULL DEFAULT ''"), ("perms", "TEXT NOT NULL DEFAULT ''"), ("must_change", "INTEGER NOT NULL DEFAULT 0"),
                    ("last_login", "TEXT"), ("last_ip", "TEXT"), ("sess_ver", "INTEGER NOT NULL DEFAULT 0"),
                    ("login", "TEXT"), ("phone", "TEXT NOT NULL DEFAULT ''")):
         if c_ not in ucols:
             con.execute(f"ALTER TABLE users ADD COLUMN {c_} {d_}")
+    rcols = {r[1] for r in con.execute("PRAGMA table_info(pay_runs)")}
+    for c_ in ("approved_by", "approved_at"):
+        if c_ not in rcols:
+            con.execute(f"ALTER TABLE pay_runs ADD COLUMN {c_} TEXT NOT NULL DEFAULT ''")
     con.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_users_login ON users(login) WHERE login IS NOT NULL AND login<>''")
     pcols = {r[1] for r in con.execute("PRAGMA table_info(payroll)")}
     for c_, t_ in (("hours", "REAL"), ("shifts", "REAL"), ("rate", "INTEGER"), ("retail", "INTEGER"), ("adv_card", "INTEGER"),

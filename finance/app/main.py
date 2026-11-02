@@ -34,9 +34,9 @@ def _oi(v):
         raise HTTPException(400, "Некоректне значення поля")
 
 
-ROLES = {"owner": "Власник", "accountant": "Бухгалтер", "admin": "Адміністратор"}
+ROLES = {"owner": "Власник", "accountant": "Бухгалтер", "director": "Директор", "admin": "Адміністратор"}
 PERMS = {"analytics": "P&L, Зарплата, Кредити", "categories": "Керувати категоріями й правилами"}
-ROLE_DEFAULT_PERMS = {"owner": "analytics,categories", "accountant": "analytics,categories", "admin": ""}
+ROLE_DEFAULT_PERMS = {"owner": "analytics,categories", "accountant": "analytics,categories", "director": "analytics", "admin": ""}
 KINDS = {"income": "Надходження", "expense": "Витрата", "transfer": "Переказ"}
 ACC_KINDS = {"fop": "Рахунок ФОП", "cash": "Готівкова каса", "card": "Приватна картка", "credit": "Кредитна лінія"}
 SRC = {"manual": "вручну", "privat": "Приватбанк", "alteg": "Alteg"}
@@ -176,6 +176,13 @@ def full_access(u=Depends(current_user)):
     return u
 
 
+def staff_only(u=Depends(current_user)):
+    """Owner and accountant: the director and administrators may not do this (restoring, splitting, change journals...)."""
+    if u["role"] not in ("owner", "accountant"):
+        raise HTTPException(403, "Ця дія доступна лише власнику та бухгалтеру")
+    return u
+
+
 def _till_id(c):
     r = c.execute("SELECT id FROM accounts WHERE active=1 AND lower(name) LIKE '%каса салон%' ORDER BY id").fetchone()
     return r["id"] if r else None
@@ -183,7 +190,7 @@ def _till_id(c):
 
 def _own_recent(c, u, t) -> bool:
     """An administrator may touch only his own operation made during the last 24 hours."""
-    if not is_limited(u):
+    if not (is_limited(u) or u["role"] == "director"):
         return True
     return bool(t) and t["created_by"] == u["id"] and t["created_at"] >= (datetime.now(config.KYIV) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -711,6 +718,14 @@ def tx_delete(request: Request, tid: int, reason: str = Form(""), u=Depends(curr
     if len(reason) < MIN_REASON:
         flash(request, "Вкажіть причину видалення (щонайменше 5 символів).")
         return RedirectResponse(f"/transactions/{tid}", status_code=303)
+    if u["role"] == "director":                # the director only asks; the owner deletes
+        c = get_con()
+        if not c.execute("SELECT 1 FROM del_requests WHERE tx_id=? AND status='pending'", (tid,)).fetchone():
+            c.execute("INSERT INTO del_requests(tx_id,user_id,reason,at) VALUES(?,?,?,?)", (tid, u["id"], reason, now_local()))
+            c.commit()
+        log_act(request, u, "запит на видалення операції", f"№{tid}: {reason}")
+        flash(request, "Запит на видалення надіслано власнику. Операція лишається, доки власник не вирішить.")
+        return RedirectResponse(f"/transactions/{tid}", status_code=303)
     with lock():
         update_tx(get_con(), tid, u["id"], note="Причина: " + reason, deleted_at=now_local())
         get_con().commit()
@@ -719,7 +734,7 @@ def tx_delete(request: Request, tid: int, reason: str = Form(""), u=Depends(curr
 
 
 @app.post("/transactions/{tid}/restore")
-def tx_restore(request: Request, tid: int, reason: str = Form(""), u=Depends(full_access)):
+def tx_restore(request: Request, tid: int, reason: str = Form(""), u=Depends(staff_only)):
     reason = _reason(reason)
     if len(reason) < MIN_REASON:
         flash(request, "Вкажіть причину відновлення (щонайменше 5 символів).")
@@ -739,7 +754,7 @@ def _split_info(c, t):
 
 
 @app.get("/transactions/{tid}/split", response_class=HTMLResponse)
-def tx_split_page(request: Request, tid: int, u=Depends(full_access)):
+def tx_split_page(request: Request, tid: int, u=Depends(staff_only)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     if not t or t["deleted_at"] or t["kind"] == "transfer":
@@ -748,7 +763,7 @@ def tx_split_page(request: Request, tid: int, u=Depends(full_access)):
 
 
 @app.post("/transactions/{tid}/split")
-async def tx_split(request: Request, tid: int, u=Depends(full_access)):
+async def tx_split(request: Request, tid: int, u=Depends(staff_only)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     if not t or t["deleted_at"] or t["kind"] == "transfer":
@@ -791,7 +806,7 @@ async def tx_split(request: Request, tid: int, u=Depends(full_access)):
 
 
 @app.post("/transactions/{tid}/unsplit")
-def tx_unsplit(request: Request, tid: int, reason: str = Form(""), u=Depends(full_access)):
+def tx_unsplit(request: Request, tid: int, reason: str = Form(""), u=Depends(staff_only)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     reason = _reason(reason)
@@ -943,7 +958,7 @@ def pl_page(request: Request, u=Depends(need_analytics)):
                   comp=payroll.compensation(get_con(), date.fromisoformat(a), date.fromisoformat(b)),
                   pay_error=get_setting(get_con(), "pay_sync_error", ""),
                   closed=get_con().execute("SELECT * FROM pl_closed ORDER BY month DESC").fetchall(), payroll_months=payroll.covered_months(get_con()), payroll_at=get_setting(get_con(), "payroll_synced_at"),
-                  payroll_err=get_setting(get_con(), "payroll_error", ""), can_payroll=u["role"] in ("owner", "accountant"))
+                  payroll_err=get_setting(get_con(), "payroll_error", ""), can_payroll=u["role"] in ("owner", "accountant", "director"))
 
 
 def _payroll_month(request):
@@ -969,7 +984,7 @@ def payroll_page(request: Request, u=Depends(need_analytics)):
     unrecorded = max(plan["cash"] - rec["cash"], 0)
     months = sorted(payroll.covered_months(c), reverse=True)
     return render(request, "payroll.html", u, ym=ym, plan=plan, rec=rec, costs=costs, esv=esv, unrecorded=unrecorded, months=months, fill=payroll.fill_status(c, ym),
-                  accounts=acc, pay_date=(nxt + timedelta(days=6)).isoformat(), can_record=u["role"] in ("owner", "accountant"),
+                  accounts=acc, pay_date=(nxt + timedelta(days=6)).isoformat(), can_record=u["role"] in ("owner", "accountant", "director"),
                   order=payroll.SECTION_ORDER, month_name=ms.strftime("%m.%Y"))
 
 
@@ -1307,7 +1322,7 @@ def counterparty_delete(request: Request, pid: int, u=Depends(staff_cat)):
 
 # ---------- log of edits (who changed what, and why) ----------
 @app.get("/edits", response_class=HTMLResponse)
-def edits_page(request: Request, u=Depends(need_analytics)):
+def edits_page(request: Request, u=Depends(staff_only)):
     import json as _json
     c = get_con()
     q = request.query_params
@@ -1801,8 +1816,8 @@ def control_decide(request: Request, fid: int, action: str = Form(...), note: st
 
 # ---------- payroll accrual run ("Нарахування ЗП") ----------
 def pay_edit(u=Depends(current_user)):
-    if u["role"] not in ("owner", "accountant"):
-        raise HTTPException(403, "Нарахування ЗП доступне власнику та бухгалтеру")
+    if u["role"] not in ("owner", "accountant", "director"):
+        raise HTTPException(403, "Нарахування ЗП доступне власнику, директору та бухгалтеру")
     return u
 
 
@@ -1835,7 +1850,7 @@ def payrun_page(request: Request, u=Depends(need_analytics)):
         months.append(m.strftime("%Y-%m"))
     return render(request, "payrun.html", u, ym=ym, ym_label=payrun.month_label(ym), months=months, labels={x: payrun.month_label(x) for x in months},
                   inputs=inputs, preview=preview, runs=payrun.list_runs(c), link=get_setting(c, "payrun_f1_url", ""),
-                  can_edit=u["role"] in ("owner", "accountant"), sheet_has=bool(c.execute("SELECT 1 FROM payroll WHERE month=?", (ym,)).fetchone()),
+                  can_edit=u["role"] in ("owner", "accountant", "director"), sheet_has=bool(c.execute("SELECT 1 FROM payroll WHERE month=?", (ym,)).fetchone()),
                   adv=adv, marks=marks, visits_at=(c.execute("SELECT MAX(fetched_at) FROM alteg_visits WHERE day LIKE ?", (ym + "%",)).fetchone()[0]),
                   alteg_days=len(alteg["days"]), unmatched=[s_ for k, s_ in alteg["staff"].items() if k != "none" and not payrun.match_name(s_["name"], people)
                                                                     and not payrun.norm(s_["role"]).startswith("корпоративна") and (s_["svc"] or s_["goods"])],
@@ -2043,7 +2058,7 @@ def payrun_people(request: Request, u=Depends(need_analytics)):
 @app.post("/payrun/people")
 def payrun_people_save(request: Request, pid: str = Form(""), name: str = Form(...), section: str = Form(...), kind: str = Form(...), pct: str = Form(""),
                        fixed: str = Form("0"), extra: str = Form("0"), rate: str = Form("0"), alias: str = Form(""), note: str = Form(""), active: str = Form("1"),
-                       u=Depends(pay_edit)):
+                       u=Depends(staff_only)):
     def kop(v):
         try:
             return round(float(v.replace(" ", "").replace(",", ".") or 0) * 100)
@@ -2072,7 +2087,24 @@ def payrun_view(request: Request, rid: int, u=Depends(need_analytics)):
     if not run:
         raise HTTPException(404)
     return render(request, "payrun_view.html", u, run=run, ym_label=payrun.month_label(run["ym"]), SECTIONS=payrun.SECTIONS,
-                  can_edit=u["role"] in ("owner", "accountant"), KIND_LABEL=payrun.KIND_LABEL)
+                  can_edit=u["role"] in ("owner", "accountant", "director"), can_approve=u["role"] == "owner", KIND_LABEL=payrun.KIND_LABEL)
+
+
+@app.post("/payrun/{rid}/approve")
+def payrun_approve(request: Request, rid: int, u=Depends(owner_only)):
+    c = get_con()
+    run = payrun.get_run(c, rid)
+    if not run:
+        raise HTTPException(404)
+    latest = c.execute("SELECT MAX(version) FROM pay_runs WHERE ym=?", (run["ym"],)).fetchone()[0]
+    if run["version"] != latest:
+        flash(request, "Це не остання версія нарахування. Затверджувати можна лише останню.")
+        return RedirectResponse(f"/payrun/{rid}", status_code=303)
+    c.execute("UPDATE pay_runs SET approved_by=?, approved_at=? WHERE id=?", (u["name"], now_local(), rid))
+    c.commit()
+    log_act(request, u, "нарахування ЗП: затверджено до виплати", f"{run['ym']}, версія {run['version']}")
+    flash(request, f"Нарахування за {payrun.month_label(run['ym'])} затверджено до виплати")
+    return RedirectResponse(f"/payrun/{rid}", status_code=303)
 
 
 @app.get("/payrun/{rid}/xlsx")

@@ -16,7 +16,7 @@ log = logging.getLogger("control")
 
 SEV = {"high": "Високий", "mid": "Середній", "low": "Низький"}
 KINDS = {"pay": "Виплати ЗП", "dup": "Дублі платежів", "susp": "Підозрілі платежі", "bal": "Залишки й синхронізація",
-         "edit": "Зміни в обліку", "cat": "Категорії", "visit": "Коментарі до візитів", "reg": "Реєстрації"}
+         "edit": "Зміни в обліку", "cat": "Категорії", "visit": "Коментарі до візитів", "reg": "Реєстрації", "dir": "Дії директора"}
 SKIP_CATS = ("Зарплата", "Податки", "Кредит", "Комісія за обслуговування рахунку", "Виведення грошей з бізнесу")
 
 BIG_UNCATEGORISED = 500000      # kopecks
@@ -148,6 +148,23 @@ def check_registrations(con):
         yield _f(f"reg:{r['id']}", "reg", "mid", f"Запит на реєстрацію: {r['name']}", f"{r['name']} ({r['phone']}, логін {r['login']}) просить доступ адміністратора. Підтвердіть або відхиліть у розділі «Користувачі».", "/users")
 
 
+def check_director(con):
+    """Deletion requests of the director and payroll runs still waiting for the owner's approval."""
+    for r in con.execute("SELECT d.*, u.name uname, t.amount, t.description, t.deleted_at FROM del_requests d JOIN users u ON u.id=d.user_id "
+                         "JOIN transactions t ON t.id=d.tx_id WHERE d.status='pending'"):
+        if r["deleted_at"]:
+            con.execute("UPDATE del_requests SET status='done' WHERE id=?", (r["id"],))
+            con.commit()
+            continue
+        yield _f(f"delreq:{r['id']}", "dir", "high", f"Запит на видалення операції {_m(r['amount'])}",
+                 f"{r['uname']} просить видалити «{(r['description'] or '—')[:60]}». Причина: {(r['reason'] or '')[:140]}. Видаліть в «Операціях», якщо згодні; запит зникне сам.",
+                 f"/transactions/{r['tx_id']}", r["amount"], (r["tx_id"],))
+    for r in con.execute("SELECT p.* FROM pay_runs p WHERE p.version=(SELECT MAX(version) FROM pay_runs WHERE ym=p.ym) AND p.approved_by=''"):
+        yield _f(f"runok:{r['id']}", "dir", "mid", f"Нарахування ЗП за {r['ym']} очікує затвердження",
+                 f"Версія {r['version']} створена {r['created_by']} {r['created_at'][:16].replace('T', ' ')}, статус перевірок: {r['status']}. Перегляньте й затвердіть до виплати.",
+                 f"/payrun/{r['id']}", r["total_cost"])
+
+
 def check_audit(con, today):
     since = (today - timedelta(days=30)).isoformat()
     for a in con.execute(
@@ -205,7 +222,7 @@ def detect(con, today=None):
     today = today or datetime.now(config.KYIV).date()
     out = []
     for fn in (lambda: check_payroll(con, today), lambda: check_duplicates(con), lambda: check_suspicious(con),
-               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today), lambda: check_registrations(con), lambda: check_admin_deletes(con)):
+               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today), lambda: check_registrations(con), lambda: check_admin_deletes(con), lambda: check_director(con)):
         try:
             out += list(fn())
         except Exception:

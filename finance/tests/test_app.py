@@ -1189,3 +1189,41 @@ def test_goods_sales_by_seller_exclude_certificates_and_feed_retail(client):
     s = payrun.seller_sales(main.con, "2026-09", people)
     assert s["Іванов Іван"] == 1000 and s["Банцер Мирослава"] == 500 and s["__unknown__"] == {"Напомнить": 300}      # certificate not counted
     assert payrun.seller_sales(main.con, "2026-08", people) is None                                                  # month not loaded: old behaviour
+
+
+def test_director_role_works_but_cannot_manage(client):
+    from app import payrun, control
+    c0 = main.con
+    till = accid("Каса салон")
+    client.post("/users", data={"name": "Директор Тест", "email": "dir@x.ua", "role": "director", "password": "Direct1234x"})
+    c0.execute("UPDATE users SET must_change=0 WHERE email='dir@x.ua'"); c0.commit()
+    d = TestClient(main.app, base_url="http://testserver")
+    assert d.post("/login", data={"email": "dir@x.ua", "password": "Direct1234x"}, follow_redirects=False).status_code == 303
+    for path in ("/", "/reports", "/cash", "/pl", "/payroll", "/credits", "/control", "/payrun", "/accounts", "/categories"):
+        assert d.get(path, follow_redirects=False).status_code == 200, path          # sees everything, balances of every account included
+    assert "Сейф" in d.get("/").text
+    for path in ("/users", "/activity", "/edits"):
+        assert d.get(path, follow_redirects=False).status_code == 403, path          # but cannot manage
+    assert d.post("/accounts", data={"name": "x", "kind": "cash", "source": "manual"}).status_code == 403
+    assert d.post("/categories", data={"name": "x", "kind": "expense"}).status_code == 403
+    assert d.post("/users/join/new").status_code == 403
+    d.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "10", "occurred_at": "2026-11-01T10:00", "description": "Директорська витрата"})
+    mine = c0.execute("SELECT id FROM transactions WHERE description='Директорська витрата'").fetchone()["id"]
+    client.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "20", "occurred_at": "2026-11-01T11:00", "description": "Чужа"})
+    other = c0.execute("SELECT id FROM transactions WHERE description='Чужа'").fetchone()["id"]
+    assert d.post(f"/transactions/{other}/delete", data={"reason": "не моя операція"}).status_code == 403
+    d.post(f"/transactions/{mine}/delete", data={"reason": "внесла помилково"})
+    assert c0.execute("SELECT deleted_at FROM transactions WHERE id=?", (mine,)).fetchone()["deleted_at"] is None          # not deleted: only a request
+    assert c0.execute("SELECT COUNT(*) FROM del_requests WHERE tx_id=? AND status='pending'", (mine,)).fetchone()[0] == 1
+    fs = {f["key"]: f for f in control.check_director(c0)}
+    assert any(k.startswith("delreq:") for k in fs)
+    client.post(f"/transactions/{mine}/delete", data={"reason": "підтверджую запит"})                                         # the owner deletes
+    assert not list(control.check_director(c0))
+    _payrun_setup()
+    payrun.save_f1(c0, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0, vacation=0, sick=0, maternity=0)], "file", "t.xlsx", "Директор")
+    rid = payrun.create_run(c0, "2026-09", "Директор Тест")
+    assert any(k.startswith("runok:") for k in (f["key"] for f in control.check_director(c0)))        # waits for the owner's approval
+    assert d.post(f"/payrun/{rid}/approve").status_code == 403
+    client.post(f"/payrun/{rid}/approve")
+    assert c0.execute("SELECT approved_by FROM pay_runs WHERE id=?", (rid,)).fetchone()["approved_by"] == "Власник"
+    assert d.post("/payrun/people", data={"name": "Х", "section": "Перукарі", "kind": "master"}).status_code == 403
