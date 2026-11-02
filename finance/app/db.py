@@ -156,7 +156,12 @@ def connect(path: str | None = None) -> sqlite3.Connection:
         cols_ = [r[1] for r in con.execute("PRAGMA table_info(users)")]
         con.commit()
         con.execute("PRAGMA foreign_keys=OFF")
+        con.execute("DROP TABLE IF EXISTS users_new")
         con.executescript(SCHEMA.split("CREATE TABLE IF NOT EXISTS users(")[1].split("CREATE TABLE IF NOT EXISTS accounts(")[0].join(["CREATE TABLE users_new(", ""]))
+        old_info = {r[1]: r for r in con.execute("PRAGMA table_info(users)")}
+        for r in list(old_info.values()):                                # columns added later by migrations (login, phone...) keep their data
+            if r[1] not in {x[1] for x in con.execute("PRAGMA table_info(users_new)")}:
+                con.execute(f"ALTER TABLE users_new ADD COLUMN {r[1]} {r[2] or 'TEXT'}" + (f" NOT NULL DEFAULT {r[4]}" if r[3] and r[4] is not None else ""))
         con.execute(f"INSERT INTO users_new({','.join(cols_)}) SELECT {','.join(cols_)} FROM users")
         con.execute("DROP TABLE users")
         con.execute("ALTER TABLE users_new RENAME TO users")
