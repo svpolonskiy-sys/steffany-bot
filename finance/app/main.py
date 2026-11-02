@@ -2127,6 +2127,19 @@ def payrun_cleanup(request: Request, month: str = Form(...), u=Depends(owner_onl
     return RedirectResponse(f"/payrun?month={month}", status_code=303)
 
 
+@app.post("/payrun/{rid}/unapprove")
+def payrun_unapprove(request: Request, rid: int, u=Depends(owner_only)):
+    c = get_con()
+    run = payrun.get_run(c, rid)
+    if not run:
+        raise HTTPException(404)
+    c.execute("UPDATE pay_runs SET approved_by='', approved_at='' WHERE id=?", (rid,))
+    c.commit()
+    log_act(request, u, "нарахування ЗП: знято затвердження", f"{run['ym']}, версія {run['version']} (було: {run['approved_by']}, {run['approved_at']})")
+    flash(request, "Затвердження знято. Тепер цей звіт можна видалити або замінити новою версією.")
+    return RedirectResponse(f"/payrun/{rid}", status_code=303)
+
+
 @app.post("/payrun/{rid}/approve")
 def payrun_approve(request: Request, rid: int, u=Depends(owner_only)):
     c = get_con()

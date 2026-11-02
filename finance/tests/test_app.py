@@ -1263,3 +1263,8 @@ def test_owner_can_delete_unapproved_payroll_runs(client):
     main.con.execute("INSERT INTO users(email,name,role,pw_hash) VALUES('acc@x.ua','Бух','accountant',?)", (main.hash_password("Accountant12x"),)); main.con.commit()
     adm.post("/login", data={"email": "acc@x.ua", "password": "Accountant12x"})
     assert adm.post(f"/payrun/{ids[3]}/delete").status_code == 403 and adm.post("/payrun/cleanup", data={"month": "2026-09"}).status_code == 403
+
+    client.post(f"/payrun/{ids[3]}/unapprove")                                                         # the owner can withdraw an approval, then delete
+    assert main.con.execute("SELECT approved_by FROM pay_runs WHERE id=?", (ids[3],)).fetchone()["approved_by"] == ""
+    client.post(f"/payrun/{ids[3]}/delete")
+    assert main.con.execute("SELECT COUNT(*) FROM pay_runs").fetchone()[0] == 0
