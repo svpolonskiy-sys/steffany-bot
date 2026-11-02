@@ -1227,3 +1227,20 @@ def test_director_role_works_but_cannot_manage(client):
     client.post(f"/payrun/{rid}/approve")
     assert c0.execute("SELECT approved_by FROM pay_runs WHERE id=?", (rid,)).fetchone()["approved_by"] == "Власник"
     assert d.post("/payrun/people", data={"name": "Х", "section": "Перукарі", "kind": "master"}).status_code == 403
+
+
+def test_payrun_deduction_for_purchases_and_cosmetologist_certificate(client):
+    from app import payrun
+    _payrun_setup()
+    main.con.execute("INSERT INTO pay_people(name,section,kind) VALUES('Косметолог Тест','Косметолог','cosm')")
+    main.con.execute("INSERT INTO alteg_pay(external_id,occurred_at,amount,method,staff_id,staff_name,staff_role,category_title,item_type) VALUES('c1','2026-09-12T12:00:00',100000,'cash',9,'Косметолог Тест','Косметолог','Косметологія','service')")
+    main.con.execute("INSERT INTO alteg_visits(record_id,day,staff_name,attendance,comment,first_cost,paid,zero_cost,services) VALUES(77,'2026-09-13','Косметолог Тест',1,'',100000,0,0,'x')")
+    main.con.execute("INSERT INTO alteg_loyalty(id,created,visit_id,record_id,type_id,type_title,amount) VALUES(5,'2026-09-13T10:00:00',1,77,8,'Debit from gift card',1000)")
+    payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0, vacation=0, sick=0, maternity=0)], "file", "t.xlsx", "Бухгалтер")
+    iid = main.con.execute("SELECT id FROM pay_people WHERE name='Іванов Іван'").fetchone()["id"]
+    client.post("/payrun/adjust", data={"month": "2026-09", f"{iid}_deduct": "450", f"{iid}_deduct_note": "футболка"})
+    rid = payrun.create_run(main.con, "2026-09", "Бухгалтер")
+    by = {r["name"]: r for r in payrun.get_run(main.con, rid)["result"]["rows"]}
+    assert by["Іванов Іван"]["deduct"] == 450 and by["Іванов Іван"]["to_pay"] == by["Іванов Іван"]["gross"] - 450 and by["Іванов Іван"]["cost"] == by["Іванов Іван"]["gross"]
+    assert by["Косметолог Тест"]["cash"] == 2000 and by["Косметолог Тест"]["gross"] == 700            # 1000 + 1000 certificate, 35% of cosmetology
+    assert client.get(f"/payrun/{rid}").status_code == 200

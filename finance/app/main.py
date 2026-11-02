@@ -2006,7 +2006,7 @@ async def payrun_adjust(request: Request, u=Depends(pay_edit)):
     adj = {}
     for p in payrun.roster(c):
         d = {}
-        for fld in ("hours", "shifts", "retail", "fines", "extra", "cash_adj", "inj_cost", "adv_cash", "vacation", "sick"):
+        for fld in ("hours", "shifts", "retail", "fines", "deduct", "extra", "cash_adj", "inj_cost", "adv_cash", "vacation", "sick"):
             v = str(form.get(f"{p['id']}_{fld}", "")).strip()
             if v != "":
                 try:
@@ -2017,6 +2017,9 @@ async def payrun_adjust(request: Request, u=Depends(pay_edit)):
         note = str(form.get(f"{p['id']}_fines_note", "")).strip()
         if note:
             d["fines_note"] = note[:200]
+        dn = str(form.get(f"{p['id']}_deduct_note", "")).strip()
+        if dn:
+            d["deduct_note"] = dn[:200]
         cn = str(form.get(f"{p['id']}_cash_adj_note", "")).strip()
         if cn:
             d["cash_adj_note"] = cn[:200]

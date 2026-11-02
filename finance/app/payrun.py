@@ -371,7 +371,8 @@ def visit_effects(con, ym: str, people: list[dict]) -> dict:
             amt = round(sum(lo_.values()), 2)
             how = " і ".join(LOYALTY_PAID[k] for k in sorted(lo_, reverse=True))
             if hit[0]["kind"] == "cosm":
-                lines.append(dict(base, kind="loyalty", amount=amt, other="", effect=f"оплачено {how}: у косметолога не додано, правила в таблиці немає"))
+                per[who] = per.get(who, 0) + amt
+                lines.append(dict(base, kind="loyalty", amount=amt, other="", effect=f"оплачено {how}: +{amt:,.2f} до каси косметології {who}"))
             else:
                 per[who] = per.get(who, 0) + amt
                 lines.append(dict(base, kind="loyalty", amount=amt, other="", effect=f"оплачено {how}: +{amt:,.2f} до каси {who}"))
@@ -692,7 +693,7 @@ def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: 
         row = dict(person=p, section=p["section"], name=p["name"], kind=p["kind"], alteg=sd["alteg"], notes=[])
         mk = (marks or {}).get("per", {}).get(p["name"], 0.0)
         row["marks"] = mk
-        row["cash_note"] = ad.get("cash_adj_note", "") if ad.get("cash_adj") else ""
+        row["cash_note"] = ad.get("cash_adj_note", "") if (ad.get("cash_adj") or ad.get("inj_cost")) else ""
         retail = _num(ad["retail"]) if "retail" in ad else (sellers.get(p["name"], 0.0) if sellers is not None else sd["goods"] / 100)
         row["retail_base"] = retail
         row["retail"] = rnd(retail * RETAIL_PCT)
@@ -751,10 +752,12 @@ def compute(con, ym: str, people: list[dict], alteg: dict, f1: list[dict], adj: 
                 r[fld] = _num(ad[fld])
         r["fines"] = abs(_num(ad.get("fines", fb.get("fines", 0))))
         r["fines_note"] = ad.get("fines_note", "")
+        r["deduct"] = abs(_num(ad.get("deduct", 0)))                 # bought something from the salon (a T-shirt...): paid less in cash, the cost stays
+        r["deduct_note"] = ad.get("deduct_note", "")
         auto_adv = sum(v for n, v in advances["per"].items() if n == p["name"]) / 100 if p["section"] == _primary_section(people, p["name"]) else 0
         r["adv_cash_auto"] = auto_adv
         r["adv_cash"] = _num(ad["adv_cash"]) if "adv_cash" in ad else auto_adv
-        r["to_pay"] = rnd(r["gross"] - r["taxes"] - r["sal_card"] - r["adv_card"] - r["adv_cash"] - r["fines"])
+        r["to_pay"] = rnd(r["gross"] - r["taxes"] - r["sal_card"] - r["adv_card"] - r["adv_cash"] - r["fines"] - r["deduct"])
         r["cost"] = r["gross"] + r["vacation"] + r["sick"] + r["maternity"] - r["fines"]
     calc_unknown_sellers = (sellers or {}).get("__unknown__", {})
     return dict(rows=rows, unknown_sellers=calc_unknown_sellers, pool_base=pool_base, total_shifts=total_shifts, unmatched_staff=unmatched_staff, excluded=excluded,
@@ -824,7 +827,7 @@ def run_checks(con, ym: str, people: list[dict], inputs: dict, alteg: dict, calc
         if abs(alt - r["gross"]) > 0:
             mism.append(f"{r['name']}: {r['gross']} ≠ {alt}")
     out.append(_chk("C", "C1", "Нарахування перераховано другим способом, суми збігаються", "ok" if not mism else "error", "; ".join(mism) or f"Перевірено {len(rows)} рядків", mism))
-    bad_pay = [r["name"] for r in rows if abs(r["to_pay"] - rnd(r["gross"] - r["taxes"] - r["sal_card"] - r["adv_card"] - r["adv_cash"] - r["fines"])) > 0]
+    bad_pay = [r["name"] for r in rows if abs(r["to_pay"] - rnd(r["gross"] - r["taxes"] - r["sal_card"] - r["adv_card"] - r["adv_cash"] - r["fines"] - r.get("deduct", 0))) > 0]
     out.append(_chk("C", "C2", "До виплати = нараховано − податки − картка − аванси − штрафи", "ok" if not bad_pay else "error", ", ".join(bad_pay) or "Для кожного рядка збігається"))
     sec_tot = {}
     for r in rows:
@@ -950,7 +953,7 @@ def overall(checks: list[dict]) -> str:
 
 # ------------------------------------------------------------------ run + storage
 def totals(rows: list[dict]) -> dict:
-    keys = ("gross", "retail", "extra", "vacation", "sick", "maternity", "fines", "taxes", "adv_card", "sal_card", "adv_cash", "to_pay", "cost")
+    keys = ("gross", "retail", "extra", "vacation", "sick", "maternity", "fines", "deduct", "taxes", "adv_card", "sal_card", "adv_cash", "to_pay", "cost")
     t = {k: sum(r.get(k, 0) for r in rows) for k in keys}
     t["card"] = t["adv_card"] + t["sal_card"]
     t["cash"] = t["adv_cash"] + t["to_pay"]
@@ -1014,8 +1017,12 @@ def get_run(con, rid: int) -> dict | None:
     r = con.execute("SELECT * FROM pay_runs WHERE id=?", (rid,)).fetchone()
     if not r:
         return None
+    res = json.loads(r["result"])
+    for x in res.get("rows", []):                       # runs made before the «deduct» field existed
+        x.setdefault("deduct", 0.0)
+    res.get("totals", {}).setdefault("deduct", 0.0)
     return dict(id=r["id"], ym=r["ym"], version=r["version"], created_at=r["created_at"], created_by=r["created_by"], status=r["status"],
-                total_cost=r["total_cost"], result=json.loads(r["result"]), checks=json.loads(r["checks"]), inputs=json.loads(r["inputs"]),
+                total_cost=r["total_cost"], result=res, checks=json.loads(r["checks"]), inputs=json.loads(r["inputs"]),
                 approved_by=r["approved_by"], approved_at=r["approved_at"])
 
 
@@ -1037,7 +1044,7 @@ def export_xlsx(run: dict) -> bytes:
     ws.append([f"Версія {run['version']} · сформовано {run['created_at']} · {run['created_by']} · статус перевірок: {({'ok': 'усе гаразд', 'warn': 'є попередження', 'error': 'є помилки'})[run['status']]}"])
     ws.append([])
     cols = [("Співробітник", "name"), ("Каса за місяць", "cash"), ("Нарахування", "accrual"), ("Доплати", "extra"), ("Роздріб 10%", "retail"),
-            ("Нараховано (зарплата)", "gross"), ("Відпускні", "vacation"), ("Лікарняні", "sick"), ("Декретні", "maternity"), ("Штраф", "fines"),
+            ("Нараховано (зарплата)", "gross"), ("Відпускні", "vacation"), ("Лікарняні", "sick"), ("Декретні", "maternity"), ("Штраф", "fines"), ("Утримання (покупки)", "deduct"),
             ("ПДФО+ВЗ", "taxes"), ("Аванс Ф-1 (карта)", "adv_card"), ("ЗП Ф-1 (карта)", "sal_card"), ("Аванс готівкою", "adv_cash"), ("До виплати готівкою", "to_pay")]
     ws.append([c[0] for c in cols])
     hr = ws.max_row
@@ -1062,7 +1069,7 @@ def export_xlsx(run: dict) -> bytes:
     t = res["totals"]
     ws.append([])
     ws.append(["ВСЬОГО", sum(r.get("cash", 0) for r in res["rows"]), sum(r.get("accrual", 0) for r in res["rows"]), t["extra"], t["retail"], t["gross"], t["vacation"], t["sick"],
-               t["maternity"], t["fines"], t["taxes"], t["adv_card"], t["sal_card"], t["adv_cash"], t["to_pay"]])
+               t["maternity"], t["fines"], t.get("deduct", 0), t["taxes"], t["adv_card"], t["sal_card"], t["adv_cash"], t["to_pay"]])
     for i in range(1, len(cols) + 1):
         c = ws.cell(ws.max_row, i)
         c.font, c.fill = Font(bold=True, color="FFFFFF"), head_fill
@@ -1075,7 +1082,7 @@ def export_xlsx(run: dict) -> bytes:
     ws.freeze_panes = ws.cell(hr + 1, 2)
     s2 = wb.create_sheet("Зведення")
     s2.append(["Показник", "Сума, ₴"])
-    for lbl, v in (("Нараховано зарплати", t["gross"]), ("Відпускні", t["vacation"]), ("Лікарняні", t["sick"]), ("Декретні", t["maternity"]), ("Штрафи", -t["fines"]),
+    for lbl, v in (("Нараховано зарплати", t["gross"]), ("Відпускні", t["vacation"]), ("Лікарняні", t["sick"]), ("Декретні", t["maternity"]), ("Штрафи", -t["fines"]), ("Утримання за покупки (не зменшують витрату)", t.get("deduct", 0)),
                    ("Витрата компанії (без ЄСВ)", t["cost"]), ("ПДФО та військовий збір (утримано)", t["taxes"]), ("Виплата на карту (Ф-1)", t["card"]),
                    ("Готівкою: аванси", t["adv_cash"]), ("Готівкою: до виплати 7 числа", t["to_pay"]), ("Готівкою всього", t["cash"])):
         s2.append([lbl, v])
