@@ -322,8 +322,10 @@ def dashboard(request: Request, u=Depends(current_user)):
     takings = reports.daily_cash(c, today.isoformat(), today.isoformat())["days"][0]
     month = reports.build(c, today.replace(day=1).isoformat(), today.isoformat())
     recent = c.execute(
-        "SELECT t.*, a.name acc, a2.name acc2, c.name cat FROM transactions t JOIN accounts a ON a.id=t.account_id "
-        "LEFT JOIN accounts a2 ON a2.id=t.to_account_id LEFT JOIN categories c ON c.id=t.category_id "
+        "SELECT t.*, a.name acc, a2.name acc2, c.name cat, u.name author, "
+        "(SELECT u2.name FROM audit au JOIN users u2 ON u2.id=au.user_id WHERE au.tx_id=t.id AND au.action IN ('update','delete','restore') ORDER BY au.id DESC LIMIT 1) editor "
+        "FROM transactions t JOIN accounts a ON a.id=t.account_id "
+        "LEFT JOIN accounts a2 ON a2.id=t.to_account_id LEFT JOIN categories c ON c.id=t.category_id LEFT JOIN users u ON u.id=t.created_by "
         "WHERE t.deleted_at IS NULL AND t.occurred_at>=? AND t.occurred_at<? ORDER BY t.occurred_at DESC, t.id DESC LIMIT 300",
         (today.isoformat() + "T00:00:00", (today + timedelta(days=1)).isoformat() + "T00:00:00")).fetchall()
     uncategorised = c.execute(
@@ -642,7 +644,8 @@ def tx_edit_page(request: Request, tid: int, u=Depends(current_user)):
     hist = c.execute("SELECT a.*, u.name uname FROM audit a LEFT JOIN users u ON u.id=a.user_id "
                      "WHERE a.tx_id=? ORDER BY a.id DESC", (tid,)).fetchall()
     parts, parent = _split_info(c, t)
-    return render(request, "tx_form.html", u, t=t, kind=t["kind"], history=hist, parts=parts, parent=parent,
+    maker = c.execute("SELECT name, role, title, email, login FROM users WHERE id=?", (t["created_by"],)).fetchone() if t["created_by"] else None
+    return render(request, "tx_form.html", u, t=t, kind=t["kind"], history=hist, parts=parts, parent=parent, maker=maker,
                   default_dt=t["occurred_at"][:16], **lists(c))
 
 

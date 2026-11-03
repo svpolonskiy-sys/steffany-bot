@@ -1268,3 +1268,19 @@ def test_owner_can_delete_unapproved_payroll_runs(client):
     assert main.con.execute("SELECT approved_by FROM pay_runs WHERE id=?", (ids[3],)).fetchone()["approved_by"] == ""
     client.post(f"/payrun/{ids[3]}/delete")
     assert main.con.execute("SELECT COUNT(*) FROM pay_runs").fetchone()[0] == 0
+
+
+def test_transaction_shows_who_made_it(client):
+    c0 = main.con
+    till = accid("Каса салон")
+    client.post("/users", data={"name": "Адмін Олена", "email": "ol@x.ua", "role": "admin", "title": "Старший адміністратор", "password": "Admin1234x"})
+    c0.execute("UPDATE users SET must_change=0 WHERE email='ol@x.ua'"); c0.commit()
+    a = TestClient(main.app, base_url="http://testserver")
+    a.post("/login", data={"email": "ol@x.ua", "password": "Admin1234x"})
+    a.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "77", "occurred_at": "2026-11-03T10:00", "description": "Витрата для атрибуції"})
+    tid = c0.execute("SELECT id FROM transactions WHERE description='Витрата для атрибуції'").fetchone()["id"]
+    page = client.get(f"/transactions/{tid}").text
+    assert "Хто провів цю операцію" in page and "Адмін Олена" in page and "Старший адміністратор" in page and "Адміністратор" in page
+    assert "Адмін Олена" in client.get("/").text                                     # the author is visible on the dashboard row too
+    a.post(f"/transactions/{tid}", data={"kind": "expense", "account_id": till, "amount": "80", "occurred_at": "2026-11-03T10:00", "description": "Витрата для атрибуції", "reason": "поправила суму"})
+    assert "остання дія: змінено" in client.get(f"/transactions/{tid}").text
