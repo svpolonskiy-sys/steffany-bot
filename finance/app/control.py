@@ -16,7 +16,7 @@ log = logging.getLogger("control")
 
 SEV = {"high": "Високий", "mid": "Середній", "low": "Низький"}
 KINDS = {"pay": "Виплати ЗП", "dup": "Дублі платежів", "susp": "Підозрілі платежі", "bal": "Залишки й синхронізація",
-         "edit": "Зміни в обліку", "cat": "Категорії", "visit": "Коментарі до візитів", "reg": "Реєстрації", "dir": "Дії директора"}
+         "edit": "Зміни в обліку", "cat": "Категорії", "visit": "Коментарі до візитів", "reg": "Реєстрації", "dir": "Дії директора", "sys": "Стан системи"}
 SKIP_CATS = ("Зарплата", "Податки", "Кредит", "Комісія за обслуговування рахунку", "Виведення грошей з бізнесу")
 
 BIG_UNCATEGORISED = 500000      # kopecks
@@ -165,6 +165,14 @@ def check_director(con):
                  f"/payrun/{r['id']}", r["total_cost"])
 
 
+def check_system(con):
+    """Problems found by the daily self-check (they close by themselves when the next check is clean)."""
+    from . import monitor
+    m = monitor.last(con)
+    for p in (m or {}).get("problems", []):
+        yield _f(f"sys:{p['code']}", "sys", "high", p["title"], (p.get("detail") or "")[:300] + f" (перевірка {m['at'][:16].replace('T', ' ')})", "/control")
+
+
 def check_audit(con, today):
     since = (today - timedelta(days=30)).isoformat()
     for a in con.execute(
@@ -222,7 +230,7 @@ def detect(con, today=None):
     today = today or datetime.now(config.KYIV).date()
     out = []
     for fn in (lambda: check_payroll(con, today), lambda: check_duplicates(con), lambda: check_suspicious(con),
-               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today), lambda: check_registrations(con), lambda: check_admin_deletes(con), lambda: check_director(con)):
+               lambda: check_audit(con, today), lambda: check_accounts(con), lambda: check_visits(con, today), lambda: check_registrations(con), lambda: check_admin_deletes(con), lambda: check_director(con), lambda: check_system(con)):
         try:
             out += list(fn())
         except Exception:

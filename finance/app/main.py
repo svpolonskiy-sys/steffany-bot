@@ -12,12 +12,14 @@ from datetime import date, datetime, timedelta
 from urllib.parse import urlparse
 
 from fastapi import File, UploadFile, Depends, FastAPI, Form, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import categorize as cat, config, control, counterparties as cps, drill, payroll, payrun, pl, privat, reports, sync
+from . import categorize as cat, config, control, counterparties as cps, drill, monitor, payroll, payrun, pl, privat, reports, sync
 from .db import (account_balances, add_audit, connect, get_setting, insert_tx, lock, now_local, set_setting,
                  update_tx)
 from .security import encrypt, hash_password, verify_password
@@ -77,6 +79,11 @@ async def scheduler():
                                - datetime.fromisoformat(last)).total_seconds() >= config.SYNC_INTERVAL_SEC
             if due and sync.in_work_window():
                 await asyncio.to_thread(sync.sync_all, c)
+            now_k = datetime.now(config.KYIV)
+            if now_k.hour >= 9 and get_setting(c, "monitor_day") != now_k.date().isoformat():     # the daily self-check, 09:00 Kyiv
+                set_setting(c, "monitor_day", now_k.date().isoformat())
+                await asyncio.to_thread(monitor.run, c)
+                control.run(c)
         except Exception:
             log.exception("scheduler error")
 
@@ -114,6 +121,37 @@ tpl.env.globals.update(suggest_pattern=cat.suggest_pattern, pl_group_of=lambda c
 class Redirect(Exception):
     def __init__(self, url):
         self.url = url
+
+
+def _who(request: Request):
+    try:
+        uid = request.session.get("uid")
+        u = get_con().execute("SELECT name, role FROM users WHERE id=?", (uid,)).fetchone() if uid else None
+        return (u["name"], u["role"]) if u else ("", "")
+    except Exception:
+        return ("", "")
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _http_exc(request, exc):
+    if exc.status_code == 403:
+        try:
+            name, role = _who(request)
+            monitor.record(get_con(), 403, request.method, request.url.path, name, role)
+        except Exception:
+            log.exception("monitor record failed")
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(Exception)
+async def _unhandled(request, exc):
+    log.error("unhandled error on %s %s", request.method, request.url.path, exc_info=exc)
+    try:
+        name, role = _who(request)
+        monitor.record(get_con(), 500, request.method, request.url.path, name, role)
+    except Exception:
+        log.exception("monitor record failed")
+    return Response("Internal Server Error", status_code=500, media_type="text/plain")
 
 
 @app.exception_handler(Redirect)
@@ -306,6 +344,15 @@ def favicon():
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/status")
+def status():
+    """Result of the daily self-check without any details (for an external daily check)."""
+    m = monitor.last(get_con())
+    if not m:
+        return {"ok": True, "checked_at": None, "problems": []}
+    return {"ok": m["ok"], "checked_at": m["at"], "problems": [{"code": p["code"].split(":")[0], "title": p["title"]} for p in m["problems"]]}
 
 
 # ---------- dashboard ----------
@@ -1803,7 +1850,7 @@ def control_page(request: Request, u=Depends(need_analytics)):
                      (st, kind) if kind in control.KINDS else (st,)).fetchall()
     counts = {r["status"]: r["n"] for r in c.execute("SELECT status, COUNT(*) n FROM findings GROUP BY status")}
     kinds = {r["kind"]: r["n"] for r in c.execute("SELECT kind, COUNT(*) n FROM findings WHERE status='open' GROUP BY kind")}
-    return render(request, "control.html", u, rows=rows, st=st, kind=kind, counts=counts, kinds=kinds,
+    return render(request, "control.html", u, rows=rows, st=st, kind=kind, counts=counts, kinds=kinds, mon=monitor.last(c),
                   KINDS_C=control.KINDS, SEV=control.SEV)
 
 

@@ -1306,3 +1306,25 @@ def test_director_changes_category_of_any_operation_inline(client):
     assert r.status_code == 200 and c0.execute("SELECT category_id FROM transactions WHERE id=?", (tid,)).fetchone()["category_id"] == k["id"]
     who = c0.execute("SELECT u.name FROM audit a JOIN users u ON u.id=a.user_id WHERE a.tx_id=? AND a.action='update'", (tid,)).fetchone()
     assert who["name"] == "Директор Кат"                                                               # logged with her name
+
+
+def test_daily_monitor_records_errors_and_reports_status(client):
+    from app import monitor, control
+    c0 = main.con
+    assert monitor.run(c0)["ok"] is True
+    anon = TestClient(main.app, base_url="http://testserver")
+    assert anon.get("/status").json() == {"ok": True, "checked_at": monitor.last(c0)["at"], "problems": []}
+    client.post("/users", data={"name": "Директор М", "email": "dm@x.ua", "role": "director", "password": "Direct1234x"})
+    c0.execute("UPDATE users SET must_change=0 WHERE email='dm@x.ua'"); c0.commit()
+    d = TestClient(main.app, base_url="http://testserver")
+    d.post("/login", data={"email": "dm@x.ua", "password": "Direct1234x"})
+    assert d.get("/users").status_code == 403                                   # a refusal for a director is recorded...
+    c0.execute("INSERT INTO app_errors(at,status,method,path,user_name,role) VALUES(?,?,?,?,?,?)", (main.now_local(), 500, "GET", "/reports", "", ""))
+    c0.commit()
+    res = monitor.run(c0)
+    codes = {p["code"] for p in res["problems"]}
+    assert res["ok"] is False and {"denied", "err5xx"} <= codes                 # ...and flagged, with the server error too
+    assert anon.get("/status").json()["ok"] is False
+    assert any(f["key"].startswith("sys:") for f in control.check_system(c0))
+    c0.execute("DELETE FROM app_errors"); c0.commit()
+    assert monitor.run(c0)["ok"] is True
