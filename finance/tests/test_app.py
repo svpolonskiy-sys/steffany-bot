@@ -1211,7 +1211,13 @@ def test_director_role_works_but_cannot_manage(client):
     mine = c0.execute("SELECT id FROM transactions WHERE description='Директорська витрата'").fetchone()["id"]
     client.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "20", "occurred_at": "2026-11-01T11:00", "description": "Чужа"})
     other = c0.execute("SELECT id FROM transactions WHERE description='Чужа'").fetchone()["id"]
-    assert d.post(f"/transactions/{other}/delete", data={"reason": "не моя операція"}).status_code == 403
+    assert d.get(f"/transactions/{other}").status_code == 200                                        # the director edits any operation
+    d.post(f"/transactions/{other}", data={"kind": "expense", "account_id": till, "amount": "25", "occurred_at": "2026-11-01T11:00", "description": "Чужа", "reason": "уточнила суму"})
+    assert c0.execute("SELECT amount FROM transactions WHERE id=?", (other,)).fetchone()["amount"] == 2500
+    assert "Директор Тест" in client.get(f"/transactions/{other}").text                              # and the change is attributed to her
+    d.post(f"/transactions/{other}/delete", data={"reason": "не моя операція"})                        # deleting is still only a request to the owner
+    assert c0.execute("SELECT deleted_at FROM transactions WHERE id=?", (other,)).fetchone()["deleted_at"] is None
+    c0.execute("UPDATE del_requests SET status='done' WHERE tx_id=?", (other,)); c0.commit()
     d.post(f"/transactions/{mine}/delete", data={"reason": "внесла помилково"})
     assert c0.execute("SELECT deleted_at FROM transactions WHERE id=?", (mine,)).fetchone()["deleted_at"] is None          # not deleted: only a request
     assert c0.execute("SELECT COUNT(*) FROM del_requests WHERE tx_id=? AND status='pending'", (mine,)).fetchone()[0] == 1
@@ -1277,10 +1283,26 @@ def test_transaction_shows_who_made_it(client):
     c0.execute("UPDATE users SET must_change=0 WHERE email='ol@x.ua'"); c0.commit()
     a = TestClient(main.app, base_url="http://testserver")
     a.post("/login", data={"email": "ol@x.ua", "password": "Admin1234x"})
-    a.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "77", "occurred_at": "2026-11-03T10:00", "description": "Витрата для атрибуції"})
+    a.post("/transactions/new", data={"kind": "expense", "account_id": till, "amount": "77", "occurred_at": datetime.now(config.KYIV).strftime("%Y-%m-%dT10:00"), "description": "Витрата для атрибуції"})
     tid = c0.execute("SELECT id FROM transactions WHERE description='Витрата для атрибуції'").fetchone()["id"]
     page = client.get(f"/transactions/{tid}").text
     assert "Хто провів цю операцію" in page and "Адмін Олена" in page and "Старший адміністратор" in page and "Адміністратор" in page
     assert "Адмін Олена" in client.get("/").text                                     # the author is visible on the dashboard row too
-    a.post(f"/transactions/{tid}", data={"kind": "expense", "account_id": till, "amount": "80", "occurred_at": "2026-11-03T10:00", "description": "Витрата для атрибуції", "reason": "поправила суму"})
+    a.post(f"/transactions/{tid}", data={"kind": "expense", "account_id": till, "amount": "80", "occurred_at": datetime.now(config.KYIV).strftime("%Y-%m-%dT10:00"), "description": "Витрата для атрибуції", "reason": "поправила суму"})
     assert "остання дія: змінено" in client.get(f"/transactions/{tid}").text
+
+
+def test_director_changes_category_of_any_operation_inline(client):
+    c0 = main.con
+    till = accid("Каса салон")
+    client.post("/users", data={"name": "Директор Кат", "email": "dk@x.ua", "role": "director", "password": "Direct1234x"})
+    c0.execute("UPDATE users SET must_change=0 WHERE email='dk@x.ua'"); c0.commit()
+    d = TestClient(main.app, base_url="http://testserver")
+    d.post("/login", data={"email": "dk@x.ua", "password": "Direct1234x"})
+    tid = main.insert_tx(c0, account_id=till, kind="expense", amount=153600, occurred_at="2026-11-05T17:17:00", description="товар в роботу", source="alteg", external_id="alteg:1")
+    c0.commit()                                                                                       # arrives from Alteg: nobody "owns" it
+    k = c0.execute("SELECT id FROM categories WHERE kind='expense' AND name='Матеріал в роботу'").fetchone() or c0.execute("SELECT id FROM categories WHERE kind='expense' LIMIT 1").fetchone()
+    r = d.post(f"/transactions/{tid}/category", data={"category_id": k["id"]})
+    assert r.status_code == 200 and c0.execute("SELECT category_id FROM transactions WHERE id=?", (tid,)).fetchone()["category_id"] == k["id"]
+    who = c0.execute("SELECT u.name FROM audit a JOIN users u ON u.id=a.user_id WHERE a.tx_id=? AND a.action='update'", (tid,)).fetchone()
+    assert who["name"] == "Директор Кат"                                                               # logged with her name

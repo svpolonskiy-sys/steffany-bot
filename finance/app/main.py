@@ -183,6 +183,13 @@ def staff_only(u=Depends(current_user)):
     return u
 
 
+def can_edit_tx(u=Depends(current_user)):
+    """Owner, accountant and director edit (and split) any operation; administrators are limited elsewhere."""
+    if u["role"] not in ("owner", "accountant", "director"):
+        raise HTTPException(403, "Ця дія доступна лише власнику, бухгалтеру та директору")
+    return u
+
+
 def _till_id(c):
     r = c.execute("SELECT id FROM accounts WHERE active=1 AND lower(name) LIKE '%каса салон%' ORDER BY id").fetchone()
     return r["id"] if r else None
@@ -190,7 +197,7 @@ def _till_id(c):
 
 def _own_recent(c, u, t) -> bool:
     """An administrator may touch only his own operation made during the last 24 hours."""
-    if not (is_limited(u) or u["role"] == "director"):
+    if not is_limited(u):                        # owner, accountant, director and managers edit any operation; every change is logged with the name
         return True
     return bool(t) and t["created_by"] == u["id"] and t["created_at"] >= (datetime.now(config.KYIV) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -757,7 +764,7 @@ def _split_info(c, t):
 
 
 @app.get("/transactions/{tid}/split", response_class=HTMLResponse)
-def tx_split_page(request: Request, tid: int, u=Depends(staff_only)):
+def tx_split_page(request: Request, tid: int, u=Depends(can_edit_tx)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     if not t or t["deleted_at"] or t["kind"] == "transfer":
@@ -766,7 +773,7 @@ def tx_split_page(request: Request, tid: int, u=Depends(staff_only)):
 
 
 @app.post("/transactions/{tid}/split")
-async def tx_split(request: Request, tid: int, u=Depends(staff_only)):
+async def tx_split(request: Request, tid: int, u=Depends(can_edit_tx)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     if not t or t["deleted_at"] or t["kind"] == "transfer":
@@ -809,7 +816,7 @@ async def tx_split(request: Request, tid: int, u=Depends(staff_only)):
 
 
 @app.post("/transactions/{tid}/unsplit")
-def tx_unsplit(request: Request, tid: int, reason: str = Form(""), u=Depends(staff_only)):
+def tx_unsplit(request: Request, tid: int, reason: str = Form(""), u=Depends(can_edit_tx)):
     c = get_con()
     t = c.execute("SELECT * FROM transactions WHERE id=?", (tid,)).fetchone()
     reason = _reason(reason)
