@@ -1328,3 +1328,26 @@ def test_daily_monitor_records_errors_and_reports_status(client):
     assert any(f["key"].startswith("sys:") for f in control.check_system(c0))
     c0.execute("DELETE FROM app_errors"); c0.commit()
     assert monitor.run(c0)["ok"] is True
+
+
+def test_cash_advances_window_ends_on_the_6th_and_counts_early_salary(client):
+    from app import payrun
+    _payrun_setup()
+    main.con.execute("INSERT INTO pay_people(name,section,kind,fixed) VALUES('Фіксов Федір','Інші працівники','fixed',800000)")
+    till = accid("Каса салон")
+    cat_id = main.con.execute("SELECT id FROM categories WHERE name='Зарплата'").fetchone()["id"]
+    for day, amt, txt in (("2026-09-05", 100, "аванс Іванов"),                       # before the 8th: belongs to August
+                          ("2026-09-20", 1000, "аванс Іванов"),                      # counted
+                          ("2026-10-05", 5000, "зарплата за вересень Іванов"),       # paid before the 7th: an advance
+                          ("2026-09-10", 700, "зарплата за серпень Іванов"),         # another month
+                          ("2026-10-06", 2000, "Нонік Анна"),                        # last day of the window, no word «аванс»
+                          ("2026-10-07", 9000, "Іванов"),                            # the payout day itself
+                          ("2026-09-15", 3360, "зп прибиральниці"),                  # no person
+                          ("2026-09-16", 8000, "Фіксов Федір"),                      # fixed staff
+                          ("2026-09-18", 400, "Петрова Ольга аванс")):               # administrator
+        main.con.execute("INSERT INTO transactions(account_id,kind,amount,occurred_at,description,category_id,source,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)",
+                         (till, "expense", amt * 100, day + "T12:00:00", txt, cat_id, "alteg", "2026-11-01T00:00:00", "2026-11-01T00:00:00"))
+    main.con.commit()
+    people = payrun.roster(main.con)
+    adv = payrun.cash_advances(main.con, "2026-09", people)
+    assert adv["per"] == {"Іванов Іван": 600000, "Нонік Анна": 200000, "Петрова Ольга": 40000} and adv["total"] == 840000 and adv["unmatched"] == []

@@ -159,23 +159,43 @@ def alteg_month(con, ym: str) -> dict:
     return dict(staff=staff, total_svc=total_svc, total_goods=total_goods, cert=cert, days=sorted(days))
 
 
-def cash_advances(con, ym: str, people: list[dict]) -> dict:
-    """Cash advances paid out of the till / safe in the month, matched to people by surname."""
+MONTH_STEMS = ("січ", "лют", "берез", "квіт", "трав", "черв", "лип", "серп", "верес", "жовт", "листоп", "груд")
+PAYOUT_DAY = 7           # the final part of the salary is paid in cash on the 7th of the next month
+
+
+def cash_advance_window(ym: str):
+    """Everything paid from the 8th of the month up to the end of the 6th of the next month is an advance of this month's salary."""
     lo, hi = month_bounds(ym)
+    return (lo.replace(day=PAYOUT_DAY + 1).isoformat() + "T00:00:00", (hi + timedelta(days=PAYOUT_DAY - 1)).isoformat() + "T23:59:59")
+
+
+def cash_advances(con, ym: str, people: list[dict]) -> dict:
+    """Cash paid out of the till before the payout day counts as an advance (a salary paid earlier than the 7th is an advance too,
+    so on the 7th the rest may be zero). Taken: cash «Зарплата» payments of the window that name a person paid by the percentage
+    (master, cosmetologist, administrator, manager), or any payment with the word «аванс». Not taken: other months' salary,
+    fixed staff (they have their own fixed pay), payments without a person and without «аванс»."""
+    start, end = cash_advance_window(ym)
+    stem = MONTH_STEMS[int(ym[5:7]) - 1]
     per: dict[str, int] = {}
     unmatched = []
     total = 0
     q = ("SELECT t.id, t.amount, t.occurred_at, t.description FROM transactions t JOIN accounts a ON a.id=t.account_id "
          "JOIN categories c ON c.id=t.category_id WHERE t.deleted_at IS NULL AND t.kind='expense' AND a.kind='cash' "
-         "AND c.name='Зарплата' AND t.occurred_at BETWEEN ? AND ?")
-    for t in con.execute(q, (lo.isoformat() + "T00:00:00", hi.isoformat() + "T23:59:59")):
-        if "аванс" not in norm(t["description"]):
-            continue
+         "AND c.name='Зарплата' AND t.occurred_at BETWEEN ? AND ? ORDER BY t.occurred_at")
+    for t in con.execute(q, (start, end)):
+        text = norm(t["description"])
+        other_month = any(st in text for st in MONTH_STEMS if st != stem) and stem not in text
+        if other_month:
+            continue                                            # salary of another month
         hit = match_name(t["description"], people)
-        total += t["amount"]
-        if len(hit) >= 1 and len({p["name"] for p in hit}) == 1:
+        names = {p["name"] for p in hit}
+        if len(names) == 1:
+            if not any(p["kind"] in ("master", "cosm", "admin", "manager") for p in hit):
+                continue                                        # fixed staff
             per[hit[0]["name"]] = per.get(hit[0]["name"], 0) + t["amount"]
-        else:
+            total += t["amount"]
+        elif "аванс" in text:
+            total += t["amount"]
             unmatched.append(dict(id=t["id"], date=t["occurred_at"][:10], amount=t["amount"], text=t["description"][:80]))
     return dict(per=per, total=total, unmatched=unmatched)
 
