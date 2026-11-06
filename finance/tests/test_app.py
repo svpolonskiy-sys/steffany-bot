@@ -1351,3 +1351,15 @@ def test_cash_advances_window_ends_on_the_6th_and_counts_early_salary(client):
     people = payrun.roster(main.con)
     adv = payrun.cash_advances(main.con, "2026-09", people)
     assert adv["per"] == {"Іванов Іван": 600000, "Нонік Анна": 200000, "Петрова Ольга": 40000} and adv["total"] == 840000 and adv["unmatched"] == []
+
+
+def test_runs_list_shows_approve_button_to_owner_for_latest_version(client):
+    from app import payrun
+    _payrun_setup()
+    payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0, vacation=0, sick=0, maternity=0)], "file", "t.xlsx", "Бухгалтер")
+    r1 = payrun.create_run(main.con, "2026-09", "Бухгалтер")
+    r2 = payrun.create_run(main.con, "2026-09", "Бухгалтер")
+    page = client.get("/payrun?month=2026-09").text
+    assert f'/payrun/{r2}/approve' in page and f'/payrun/{r1}/approve' not in page          # only the newest version can be approved
+    client.post(f"/payrun/{r2}/approve")
+    assert f'/payrun/{r2}/approve' not in client.get("/payrun?month=2026-09").text
