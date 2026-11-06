@@ -1363,3 +1363,20 @@ def test_runs_list_shows_approve_button_to_owner_for_latest_version(client):
     assert f'/payrun/{r2}/approve' in page and f'/payrun/{r1}/approve' not in page          # only the newest version can be approved
     client.post(f"/payrun/{r2}/approve")
     assert f'/payrun/{r2}/approve' not in client.get("/payrun?month=2026-09").text
+
+
+def test_old_approved_versions_can_be_deleted_latest_approved_stays(client):
+    from app import payrun
+    _payrun_setup()
+    payrun.save_f1(main.con, "2026-09", [dict(name="Іванов Іван", adv_card=0, sal_card=0, taxes=0, vacation=0, sick=0, maternity=0)], "file", "t.xlsx", "Бухгалтер")
+    old, new = payrun.create_run(main.con, "2026-09", "Б"), payrun.create_run(main.con, "2026-09", "Б")
+    client.post(f"/payrun/{old}/approve")                                                         # approved version v1 (will be refused: it is not the latest)
+    main.con.execute("UPDATE pay_runs SET approved_by='Власник' WHERE id=?", (old,)); main.con.commit()
+    page = client.get("/payrun?month=2026-09").text
+    assert f"/payrun/{old}/delete" in page and f"/payrun/{new}/delete" in page                  # the old approved one can be deleted
+    client.post(f"/payrun/{new}/approve")
+    assert f"/payrun/{new}/delete" not in client.get("/payrun?month=2026-09").text               # the newest approved one is protected
+    client.post(f"/payrun/{old}/delete")
+    assert main.con.execute("SELECT COUNT(*) FROM pay_runs WHERE id=?", (old,)).fetchone()[0] == 0
+    client.post(f"/payrun/{new}/delete")
+    assert main.con.execute("SELECT COUNT(*) FROM pay_runs WHERE id=?", (new,)).fetchone()[0] == 1

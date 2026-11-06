@@ -2152,35 +2152,37 @@ def payrun_view(request: Request, rid: int, u=Depends(need_analytics)):
 
 @app.post("/payrun/{rid}/delete")
 def payrun_delete(request: Request, rid: int, u=Depends(owner_only)):
-    """Owner only; an approved version cannot be deleted (the payment basis stays). Every deletion is logged."""
+    """Owner only. An old (not the newest) version can always be deleted, even approved; the newest approved version stays
+    (it is the payment basis; withdraw the approval first). Every deletion is logged."""
     c = get_con()
     run = payrun.get_run(c, rid)
     if not run:
         raise HTTPException(404)
-    if run["approved_by"]:
-        flash(request, "Затверджене нарахування видалити не можна.")
+    latest = c.execute("SELECT MAX(version) FROM pay_runs WHERE ym=?", (run["ym"],)).fetchone()[0]
+    if run["approved_by"] and run["version"] == latest:
+        flash(request, "Це остання затверджена версія: спершу зніміть затвердження (у самому звіті), потім видаляйте.")
         return RedirectResponse(f"/payrun?month={run['ym']}", status_code=303)
     with lock():
         c.execute("DELETE FROM pay_runs WHERE id=?", (rid,))
         c.commit()
-    log_act(request, u, "нарахування ЗП: видалено звіт", f"{run['ym']}, версія {run['version']}, витрата {run['total_cost'] / 100:,.2f} ₴, сформував {run['created_by']}")
+    log_act(request, u, "нарахування ЗП: видалено звіт", f"{run['ym']}, версія {run['version']}, витрата {run['total_cost'] / 100:,.2f} ₴, сформував {run['created_by']}" + (f", було затверджено: {run['approved_by']}" if run["approved_by"] else ""))
     flash(request, f"Видалено: {payrun.month_label(run['ym'])}, версія {run['version']}")
     return RedirectResponse(f"/payrun?month={run['ym']}", status_code=303)
 
 
 @app.post("/payrun/cleanup")
 def payrun_cleanup(request: Request, month: str = Form(...), u=Depends(owner_only)):
-    """Deletes every old, not approved version of the month; the latest one and any approved one stay."""
+    """Deletes every old version of the month (approved or not); only the newest one stays."""
     c = get_con()
     latest = c.execute("SELECT MAX(version) FROM pay_runs WHERE ym=?", (month,)).fetchone()[0]
-    rows = c.execute("SELECT id, version FROM pay_runs WHERE ym=? AND version<? AND approved_by=''", (month, latest or 0)).fetchall()
+    rows = c.execute("SELECT id, version FROM pay_runs WHERE ym=? AND version<?", (month, latest or 0)).fetchall()
     with lock():
         for r in rows:
             c.execute("DELETE FROM pay_runs WHERE id=?", (r["id"],))
         c.commit()
     if rows:
         log_act(request, u, "нарахування ЗП: очищено старі звіти", f"{month}: видалено версій {len(rows)} ({', '.join('v' + str(r['version']) for r in rows)})")
-    flash(request, f"Видалено старих версій: {len(rows)}. Остання та затверджені залишились." if rows else "Старих незатверджених версій немає.")
+    flash(request, f"Видалено старих версій: {len(rows)}. Лишилась остання версія." if rows else "Старих версій немає.")
     return RedirectResponse(f"/payrun?month={month}", status_code=303)
 
 
