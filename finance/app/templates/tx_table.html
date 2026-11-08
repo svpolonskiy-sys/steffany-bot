@@ -7,9 +7,29 @@
 <td class="r num s {{ 'in' if t.kind=='income' else 'out' if t.kind=='expense' else 'mut' }}">{{ '+' if t.kind=='income' else '−' if t.kind=='expense' else '⇄' }} {{ t.amount|money }}</td><td class="ac"><a class="ico" href="/transactions/{{ t.id }}" title="Редагувати або розділити платіж" aria-label="Редагувати або розділити платіж"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a></td></tr>
 {% else %}<tr><td colspan="6" class="mut">Немає операцій</td></tr>{% endfor %}</table>
 
-<script>document.querySelectorAll('.catsel').forEach(function(sel){sel.addEventListener('change',function(){
- var pat=prompt('Категорію змінено.\n\nЗастосувати до всіх схожих операцій (теперішніх і майбутніх)?\nКлюч пошуку в описі або контрагенті (очистіть і натисніть OK, щоб змінити лише цю операцію):',sel.dataset.pat);
- if(pat===null){sel.value=sel.dataset.cur;return}
- var f=new FormData();f.append('category_id',sel.value);f.append('rule_text',pat);
- fetch('/transactions/'+sel.dataset.id+'/category',{method:'POST',body:f}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(d){
-  if(d.similar){alert('Готово. Також змінено схожих операцій: '+d.similar)}location.reload()}).catch(function(){alert('Не вдалось зберегти');sel.value=sel.dataset.cur})})});</script>
+<script>(function(){
+function ask(sel,done){
+ var o=document.createElement('div');o.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(20,10,30,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+ o.innerHTML='<div role="dialog" aria-modal="true" style="background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.4);max-width:460px;width:100%;padding:20px">'+
+ '<div style="font-size:18px;font-weight:700;margin-bottom:6px">Змінити категорію</div>'+
+ '<div class="mut" style="font-size:14px;margin-bottom:12px">Нова категорія: <b style="color:var(--ink)"></b></div>'+
+ '<label style="font-size:13px">Ключ пошуку в описі чи контрагенті (для кнопки «Застосувати до всіх схожих»)</label>'+
+ '<input type="text" style="margin:4px 0 14px">'+
+ '<div style="display:grid;gap:8px">'+
+ '<button type="button" data-a="all">Застосувати до всіх схожих (теперішніх і майбутніх)</button>'+
+ '<button type="button" class="sec" data-a="one">Змінити лише цю операцію</button>'+
+ '<button type="button" class="sec" data-a="no">Скасувати (нічого не змінювати)</button></div></div>';
+ o.querySelector('b').textContent=sel.options[sel.selectedIndex].text;
+ var inp=o.querySelector('input');inp.value=sel.dataset.pat||'';
+ function close(a){document.removeEventListener('keydown',key);o.remove();done(a,inp.value.trim())}
+ function key(e){if(e.key==='Escape')close('no')}
+ document.addEventListener('keydown',key);
+ o.addEventListener('click',function(e){if(e.target===o)close('no');var b=e.target.closest('button[data-a]');if(b){if(b.dataset.a==='all'&&!inp.value.trim()){inp.focus();inp.style.borderColor='var(--out)';return}close(b.dataset.a)}});
+ document.body.appendChild(o);inp.focus();inp.select()}
+document.querySelectorAll('.catsel').forEach(function(sel){sel.addEventListener('change',function(){
+ ask(sel,function(a,pat){
+  if(a==='no'){sel.value=sel.dataset.cur;return}
+  var f=new FormData();f.append('category_id',sel.value);f.append('rule_text',a==='all'?pat:'');
+  fetch('/transactions/'+sel.dataset.id+'/category',{method:'POST',body:f}).then(function(r){return r.ok?r.json():Promise.reject()}).then(function(d){
+   if(d.similar){alert('Готово. Також змінено схожих операцій: '+d.similar)}location.reload()}).catch(function(){alert('Не вдалось зберегти');sel.value=sel.dataset.cur})})})});
+})();</script>
