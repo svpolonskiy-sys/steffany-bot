@@ -1380,3 +1380,8 @@ def test_old_approved_versions_can_be_deleted_latest_approved_stays(client):
     assert main.con.execute("SELECT COUNT(*) FROM pay_runs WHERE id=?", (old,)).fetchone()[0] == 0
     client.post(f"/payrun/{new}/delete")
     assert main.con.execute("SELECT COUNT(*) FROM pay_runs WHERE id=?", (new,)).fetchone()[0] == 1
+
+
+def test_filter_panels_are_not_hidden_by_the_navigation_dropdown_style():
+    css = open(f"{main.BASE_DIR}/static/style.css").read()
+    assert "details.dd[open]>.ddp{opacity:1;visibility:visible" in css       # the nav's .ddp{opacity:0;visibility:hidden} once hid the filters
