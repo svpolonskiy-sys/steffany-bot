@@ -1,0 +1,723 @@
+<title>Sinaptic: віддача СЕС</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: технічний звіт інженера-енергетика. Ліва колонка з параметрами станції, праворуч результати; текстові розділи шириною ~70 знаків. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#e9edf1; --line:#d3dae1;
+  --fg:#16212b; --muted:#56636f;
+  --sun:#c98a06; --sun-soft:#f6e3b4;
+  --ai:#0f7c74; --ai-soft:#cfe9e5;
+  --base:#7a8794; --base-soft:#dfe4e9;
+  --bad:#b5432f; --good:#2c7a3f;
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --surface:#16202a; --surface-2:#1d2935; --line:#2b3a48;
+  --fg:#e6edf3; --muted:#9aa9b6;
+  --sun:#f0b43a; --sun-soft:#3d3115;
+  --ai:#3cc3b5; --ai-soft:#123b38;
+  --base:#8d9aa7; --base-soft:#27333f;
+  --bad:#e57a63; --good:#62c27b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#16202a; --surface-2:#1d2935; --line:#2b3a48;
+  --fg:#e6edf3; --muted:#9aa9b6;
+  --sun:#f0b43a; --sun-soft:#3d3115;
+  --ai:#3cc3b5; --ai-soft:#123b38;
+  --base:#8d9aa7; --base-soft:#27333f;
+  --bad:#e57a63; --good:#62c27b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+a{color:var(--ai)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:clamp(26px,4.2vw,44px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(20px,2.6vw,28px);font-weight:700}
+h3{font-size:16px;font-weight:500}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.prose{max-width:70ch;display:grid;gap:12px}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--f-mono)}
+
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+nav.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;gap:6px 18px;align-items:center;flex-wrap:wrap;padding-block:10px}
+nav.top b{font-family:var(--f-display);font-size:14px;margin-right:8px}
+nav.top a{color:var(--muted);text-decoration:none;font-size:14px}
+nav.top a:hover,nav.top a:focus-visible{color:var(--fg)}
+
+header.hero{padding-block:44px 28px}
+header.hero .wrap{display:grid;gap:18px}
+.lede{font-size:18px;max-width:62ch;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:8px}
+.fact{background:var(--surface);padding:14px 16px;display:grid;gap:4px;align-content:start}
+.fact .v{font-family:var(--f-display);font-size:22px;font-weight:500}
+.fact .k{font-size:13px;color:var(--muted)}
+.fact .s{font-size:11px;color:var(--muted);font-family:var(--f-mono)}
+
+section{padding-block:40px;border-top:1px solid var(--line)}
+section > .wrap{display:grid;gap:22px}
+
+/* monitoring stack */
+.stack{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.stack{grid-template-columns:1fr}}
+.layer{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:8px;align-content:start;position:relative;min-width:0}
+.layer .lv{font-family:var(--f-mono);font-size:11px;color:var(--sun);letter-spacing:.06em}
+.layer ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--muted);display:grid;gap:3px}
+
+.weak{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.wk{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:6px;padding:14px 16px;display:grid;gap:6px;min-width:0}
+.wk .tag{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.wk p{font-size:14px}
+.wk .fix{color:var(--ai);font-size:13.5px}
+
+/* business model */
+.bm{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:8px;align-content:start;min-width:0}
+.card ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+.tiers{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+.tiers th,.tiers td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tiers th{font-family:var(--f-mono);font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;counter-reset:s}
+.step{background:var(--surface-2);border-radius:var(--r);padding:14px;display:grid;gap:6px;min-width:0}
+.step .n{font-family:var(--f-mono);font-size:12px;color:var(--ai)}
+
+/* simulator */
+.sim{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:980px){.sim{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:16px}
+@media (min-width:981px){.panel{position:sticky;top:calc(env(safe-area-inset-top,0px) + 60px);max-height:calc(100vh - 80px);overflow:auto}}
+.grp{display:grid;gap:10px}
+.grp > .eyebrow{border-bottom:1px solid var(--line);padding-bottom:6px}
+.fld{display:grid;gap:4px}
+.fld label{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}
+.fld label output{font-family:var(--f-mono);font-size:12.5px;color:var(--fg);white-space:nowrap}
+.fld small{color:var(--muted);font-size:12px}
+input[type=range]{width:100%;accent-color:var(--ai)}
+input[type=number]{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit;font-family:var(--f-mono);font-size:13px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button,.btn{font:inherit;font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ai);border-color:var(--ai);color:var(--surface)}
+.seg button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13.5px}
+.chk input{margin-top:3px;accent-color:var(--ai)}
+select{font:inherit;font-size:13px;padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+
+.results{display:grid;gap:16px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:4px;align-content:start}
+.kpi .v{font-family:var(--f-display);font-size:21px;font-weight:500}
+.kpi .k{font-size:13px;color:var(--muted)}
+.kpi .s{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.kpi.main{background:var(--ai);border-color:var(--ai);color:var(--surface)}
+.kpi.main .k,.kpi.main .s{color:var(--surface);opacity:.85}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
+.box-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+svg text{font-family:var(--f-mono);font-size:11px;fill:var(--muted)}
+.wf{display:grid;gap:8px}
+.wf-row{display:grid;grid-template-columns:minmax(120px,210px) minmax(0,1fr) 120px;gap:10px;align-items:center;font-size:13.5px}
+@media (max-width:560px){.wf-row{grid-template-columns:1fr 100px}.wf-row .bar{grid-column:1 / -1;order:3}}
+.wf-row .bar{height:18px;background:var(--surface-2);border-radius:4px;position:relative;overflow:hidden}
+.wf-row .bar span{position:absolute;top:0;bottom:0;background:var(--ai);border-radius:4px}
+.wf-row .bar span.neg{background:var(--bad)}
+.wf-row .val{font-family:var(--f-mono);font-size:13px;text-align:right}
+.wf-row.total{border-top:1px solid var(--line);padding-top:8px;font-weight:600}
+.cmp{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+.cmp th,.cmp td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right}
+.cmp th:first-child,.cmp td:first-child{text-align:left}
+.cmp th{font-family:var(--f-mono);font-size:11.5px;font-weight:500;color:var(--muted);text-transform:uppercase}
+.cmp td.up{color:var(--good)}
+.split{display:flex;height:26px;border-radius:6px;overflow:hidden;font-family:var(--f-mono);font-size:12px}
+.split div{display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;color:var(--surface)}
+.note{font-size:12.5px;color:var(--muted)}
+.src{display:grid;gap:6px;font-size:13.5px;padding-left:20px;margin:0}
+.src li{padding-left:2px}
+footer{padding-block:30px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:no-preference){.wf-row .bar span{transition:width .25s ease,left .25s ease}}
+</style>
+
+<nav class="top"><div class="wrap">
+  <b>Sinaptic · Енергія</b>
+  <a href="#market">Ринок</a><a href="#monitoring">Моніторинг</a><a href="#weak">Слабкі місця</a><a href="#model">Бізнес-модель</a><a href="#sim">Симулятор</a><a href="#sources">Джерела</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">Дослідження ринку · Україна · листопад 2026 · станції від 100 кВт</span>
+  <h1>ШІ-оператор для сонячних станцій і накопичувачів: оплата з виміряного приросту</h1>
+  <p class="lede">Станції в Україні будують швидше, ніж вчаться ними керувати. Моніторинг показує аварії, але не рахує, скільки гривень станція втратила сьогодні і чому. Sinaptic.ai закриває цей розрив: агенти ШІ знаходять втрати, керують накопичувачем за ціною ринку і беруть плату лише з доведеного результату.</p>
+  <div class="facts" id="market">
+    <div class="fact"><span class="v num">9,4–9,7 ГВт</span><span class="k">сонячної генерації в Україні на середину 2026</span><span class="s">АСЕУ / pv magazine</span></div>
+    <div class="fact"><span class="v num">1,5 ГВт</span><span class="k">нових СЕС за 2025 рік (0,8 ГВт у 2024), ~2 ГВт прогноз на 2026</span><span class="s">АСЕУ</span></div>
+    <div class="fact"><span class="v num">2,9 ГВт·год</span><span class="k">накопичувачів встановлено у 2025, 4-те місце в Європі; ~3,2 ГВт·год прогноз 2026</span><span class="s">SolarPower Europe / АСЕУ</span></div>
+    <div class="fact"><span class="v num">~80%</span><span class="k">нових установок 2026 року до 1 МВт, переважно для власного споживання бізнесу</span><span class="s">АСЕУ</span></div>
+    <div class="fact"><span class="v num">15 000 ₴</span><span class="k">прайс-кеп за МВт·год у вечірній пік 17:00–23:00; вдень ціна падає до 2–3 тис. ₴</span><span class="s">НКРЕКП №796, ОРЕЕ</span></div>
+    <div class="fact"><span class="v num">5,77%</span><span class="k">середні втрати потужності СЕС через обладнання; у 2020 було 1,84%</span><span class="s">Raptor Maps 2025</span></div>
+  </div>
+</div></header>
+
+<section><div class="wrap">
+  <span class="eyebrow">Ринок</span>
+  <h2>Що відбувається на ринку</h2>
+  <div class="bm">
+    <div class="card"><h3>Два сегменти від 100 кВт</h3><ul>
+      <li><b>Власне споживання (C&amp;I).</b> Заводи, агрохолдинги, мережі, логістика. СЕС 0,1–5 МВт на даху чи поруч, дедалі частіше з УЗЕ. Мета: дешевший кВт·год і робота під час відключень.</li>
+      <li><b>Продаж на ринок.</b> Станції 1–100 МВт: старі на «зеленому» тарифі в балансуючій групі Гарантованого покупця і нові, що продають на РДН/ВДР через трейдера чи агрегатора.</li></ul></div>
+    <div class="card"><h3>Ціна стала погодинною</h3><ul>
+      <li>Сонце обвалює денну ціну РДН навесні й улітку, вечірній пік упирається в кеп 15 000 ₴/МВт·год.</li>
+      <li>Спред «день–вечір» у кілька разів робить УЗЕ окремим бізнесом. Оператор ринку оцінює окупність 1 МВт / 3 МВт·год на арбітражі в 3,7–3,8 року.</li>
+      <li>Укренерго оцінює компенсації за небаланси через надлишок денної генерації СЕС у 2025 році в понад 1 млрд ₴.</li></ul></div>
+    <div class="card"><h3>Ринок гнучкості відкривається</h3><ul>
+      <li>DTEK та Fluence запустили 200 МВт / 400 МВт·год УЗЕ і виграли аукціони FCR та aFRR.</li>
+      <li>Ліцензія агрегатора (НКРЕКП №1909) та нові правила для одиниць агрегації (№660, травень 2026). YASNO отримала статус агрегатора.</li>
+      <li>Із 2024 року УЗЕ не потребують дозволу на будівництво. Імпорт накопичувачів за 9 місяців 2025 становив 957 МВт·год.</li></ul></div>
+    <div class="card"><h3>Обмеження</h3><ul>
+      <li>Головне гальмо для бізнесу — фінансування. Банкам потрібні прозорі дані про роботу станцій.</li>
+      <li>Регуляторика змінюється кілька разів на рік: кепи, тарифи на передачу, правила балансуючих груп (№882, червень 2026).</li>
+      <li>Атаки на енергосистему, відключення, просадки й стрибки напруги в мережі.</li></ul></div>
+  </div>
+</div></section>
+
+<section id="monitoring"><div class="wrap">
+  <span class="eyebrow">Як влаштовано</span>
+  <h2>Системи контролю та моніторингу сьогодні</h2>
+  <p class="prose" style="color:var(--muted)">Типова станція 100 кВт – 20 МВт в Україні складається з п'яти рівнів. Дані проходять знизу вгору, а рішення приймає людина на четвертому рівні, найчастіше вручну і з запізненням.</p>
+  <div class="stack">
+    <div class="layer"><span class="lv">РІВЕНЬ 1 · ПОЛЕ</span><h3>Обладнання</h3><ul><li>Модулі, стрінги, DC-кабелі</li><li>Інвертори Huawei, Sungrow, SolarEdge, Deye, SMA</li><li>УЗЕ: BMS, PCS, HVAC</li><li>Лічильник АСКОЕ, рідко піранометр</li><li>Дизель-генератор на випадок відключень</li></ul></div>
+    <div class="layer"><span class="lv">РІВЕНЬ 2 · ЗБІР</span><h3>Логери і протоколи</h3><ul><li>SmartLogger, WiFi/4G-донгли</li><li>Modbus RTU/TCP, RS-485</li><li>IEC 60870-5-104 для ОСР/ОСП на великих станціях</li><li>Дискретність 5–15 хв, розриви зв'язку</li></ul></div>
+    <div class="layer"><span class="lv">РІВЕНЬ 3 · ПЛАТФОРМИ</span><h3>Портали виробників</h3><ul><li>FusionSolar, iSolarCloud, SolarEdge, Solarman</li><li>SCADA на станціях від кількох МВт</li><li>Окремий портал на кожен бренд, своя хмара</li><li>Аварії за кодами помилок, без грошової оцінки</li></ul></div>
+    <div class="layer"><span class="lv">РІВЕНЬ 4 · ЛЮДИ</span><h3>Експлуатація</h3><ul><li>Енергетик підприємства, часто на пів ставки</li><li>Сервіс EPC-підрядника за викликом</li><li>Диспетчер балансуючої групи, трейдер</li><li>Звіти в Excel раз на місяць</li></ul></div>
+    <div class="layer"><span class="lv">РІВЕНЬ 5 · РИНОК</span><h3>Гроші</h3><ul><li>РДН і ВДР (Оператор ринку)</li><li>Балансуючий ринок і допоміжні послуги (Укренерго)</li><li>Постачальник, договір зі споживачем</li><li>ОСР: ліміти експорту, графіки відключень</li></ul></div>
+  </div>
+</div></section>
+
+<section id="weak"><div class="wrap">
+  <span class="eyebrow">Діагностика</span>
+  <h2>Слабкі місця, які закриває автоматизація ШІ</h2>
+  <div class="weak">
+    <div class="wk"><span class="tag">ВТРАТИ ГЕНЕРАЦІЇ · 2–6% енергії</span><h3>Немає моделі очікуваної генерації</h3><p>Портал показує, скільки станція виробила, але не скільки мала виробити за цієї погоди. Деградація стрінга, PID, гаряча точка чи збитий трекінг MPPT роками непомітні, бо аварійного коду немає.</p><p class="fix">ШІ: цифровий двійник за супутниковою інсоляцією і температурою, порівняння кожного стрінга з сусідами, втрата в кВт·год і гривнях з причиною.</p></div>
+    <div class="wk"><span class="tag">ЗАБРУДНЕННЯ · 2–6% енергії</span><h3>Миття за календарем</h3><p>Пил з полів, пилок навесні, сажа біля підприємства. Станції миють раз-два на рік за графіком, а не тоді, коли втрата перевищує вартість миття.</p><p class="fix">ШІ: оцінка індексу забруднення з даних генерації, планування миття за прогнозом погоди і ціною енергії.</p></div>
+    <div class="wk"><span class="tag">ПРОСТОЇ · 1–3% часу</span><h3>Довга реакція на аварії</h3><p>Інвертор вимкнувся в п'ятницю, енергетик побачив у понеділок, запчастину везуть тиждень. На портфелях подорожі технічних фахівців дорогі й часто зайві.</p><p class="fix">ШІ: виявлення аномалій за хвилини, діагноз і наряд у Telegram з переліком запчастин, передбачення відмов вентиляторів і IGBT за трендами температури.</p></div>
+    <div class="wk"><span class="tag">МЕРЕЖА · до 1–2% енергії</span><h3>Відключення інверторів через напругу</h3><p>Коли в локальній мережі багато СЕС, у сонячні години напруга зростає і інвертори вимикаються захистом. Ніхто не рахує ці хвилини.</p><p class="fix">ШІ: виявлення шаблону відключень, рекомендація налаштувань Q(U) і cos φ, пакет даних для ОСР.</p></div>
+    <div class="wk"><span class="tag">УЗЕ · найбільший резерв</span><h3>Накопичувач у статичному режимі</h3><p>Більшість C&amp;I УЗЕ працюють у режимі «самоспоживання» чи за таймером з 30–50% резерву. Вони не знають ціни завтрашнього дня і пропускають денний провал та вечірній пік.</p><p class="fix">ШІ: прогноз цін РДН, навантаження і генерації, оптимізація 1–2 циклів на добу з урахуванням деградації і графіків відключень.</p></div>
+    <div class="wk"><span class="tag">НЕБАЛАНСИ · 15–30% похибки</span><h3>Прогноз «як учора»</h3><p>Станції на ринку подають графік за спрощеним прогнозом. Кожен МВт·год відхилення купується чи продається за ціною балансуючого ринку.</p><p class="fix">ШІ: ансамбль метеомоделей і нейромережевий прогноз на добу наперед і внутрішньодобово, автоматичне коригування на ВДР.</p></div>
+    <div class="wk"><span class="tag">ДАНІ · ризик</span><h3>Розпорошені портали і китайські хмари</h3><p>Різні бренди мають різні портали і формати. Логери постійно підключені до хмар виробника. Інцидент Deye у 2024 році і вразливості Solarman показали, що станцію можна вимкнути ззовні.</p><p class="fix">ШІ: єдиний edge-шлюз, локальне збирання даних, контроль команд, журнал аудиту.</p></div>
+    <div class="wk"><span class="tag">ПЕРСОНАЛ · години щомісяця</span><h3>Ручна звітність і рішення</h3><p>Звіти для власника, банку і постачальника, звірка лічильників, заявки на РДН і диспетчерські листи — від десятків годин на місяць на станцію.</p><p class="fix">ШІ: агент звітності і заявок, людина лише погоджує винятки.</p></div>
+  </div>
+</div></section>
+
+<section id="model"><div class="wrap">
+  <span class="eyebrow">Бізнес-модель</span>
+  <h2>Sinaptic.ai Energy: ШІ-оператор поверх наявного обладнання</h2>
+  <div class="prose">
+    <p><b>Пропозиція клієнту:</b> «Ми підключаємось до вашої станції без заміни обладнання, показуємо, скільки гривень ви втрачаєте, і забираємо ці втрати. Ви платите невелику фіксовану суму і частку від приросту, який вимірює незалежна методика. Немає приросту — немає змінної оплати».</p>
+  </div>
+  <div class="bm">
+    <div class="card"><span class="eyebrow">Продукт</span><h3>Чотири шари</h3><ul>
+      <li><b>Data Hub.</b> Edge-шлюз і конектори до FusionSolar, iSolarCloud, SolarEdge, Solarman, Modbus, IEC-104, АСКОЕ, супутникової погоди і цін ОРЕЕ.</li>
+      <li><b>Цифровий двійник.</b> Очікувана генерація для кожного стрінга, інвертора, години.</li>
+      <li><b>Агенти ШІ.</b> Діагностика, миття, прогноз і заявки, керування УЗЕ, наряди, звітність.</li>
+      <li><b>Рівні автономії.</b> L1 рекомендації → L2 погодження в один клік → L3 автономне керування УЗЕ в погоджених межах.</li></ul></div>
+    <div class="card"><span class="eyebrow">Клієнти</span><h3>Кому продаємо</h3><ul>
+      <li>Підприємства з СЕС 0,1–5 МВт і УЗЕ: завод, агро, ритейл, холодильні склади.</li>
+      <li>Власники станцій 1–50 МВт, що продають енергію на ринку.</li>
+      <li>Інвестори з портфелями УЗЕ під арбітраж і допоміжні послуги.</li>
+      <li><b>Канали:</b> EPC-інтегратори (виручка за O&amp;M), банки і лізинг (моніторинг кредитованих станцій), трейдери й агрегатори (white-label прогнози і керування).</li></ul></div>
+    <div class="card"><span class="eyebrow">Цінність</span><h3>Що отримує клієнт</h3><ul>
+      <li>+3–8% енергії зі станції без нового обладнання.</li>
+      <li>Дохід УЗЕ в 1,5–3 рази більший, ніж у статичному режимі.</li>
+      <li>Небаланси менші на 50–60%.</li>
+      <li>−15–25% витрат на O&amp;M, −70% ручної роботи з моніторингу.</li>
+      <li>Банкабельні дані: щомісячний звіт PR і втрат для кредитора.</li></ul></div>
+  </div>
+
+  <h3>Тарифи</h3>
+  <div class="scroll"><table class="tiers">
+    <thead><tr><th>Пакет</th><th>Що входить</th><th>Ціна</th><th>Для кого</th></tr></thead>
+    <tbody>
+      <tr><td><b>Аудит втрат</b><br><span class="note">30 днів</span></td><td>Підключення, цифровий двійник, звіт: скільки гривень і де втрачено, план дій</td><td class="mono">25–60 тис. ₴ разово, зараховується в оплату при підписанні договору</td><td>Вхід для всіх; інструмент продажу</td></tr>
+      <tr><td><b>Monitor</b></td><td>Єдиний портал, аномалії, наряди, звіти. Рівень L1</td><td class="mono">30–60 ₴ / кВт·рік</td><td>СЕС без УЗЕ, бюджетні клієнти</td></tr>
+      <tr><td><b>Performance</b><br><span class="note">основний</span></td><td>Monitor + миття, прогноз, небаланси, оптимізація O&amp;M. L2</td><td class="mono">45 ₴ / кВт·рік + 25% виміряного приросту</td><td>C&amp;I і станції на ринку</td></tr>
+      <tr><td><b>Autopilot УЗЕ</b></td><td>Автономне керування накопичувачем за прогнозом цін, у майбутньому FCR/aFRR через агрегатора. L3</td><td class="mono">20–30% додаткового доходу понад базову стратегію</td><td>Власники УЗЕ від 200 кВт·год</td></tr>
+      <tr><td><b>Партнерський</b></td><td>White-label для EPC, агрегаторів і банків</td><td class="mono">Частка виручки 10–15% партнеру або ліцензія за МВт</td><td>Масштабування через канали</td></tr>
+    </tbody></table></div>
+
+  <h3>Як вимірюємо результат</h3>
+  <div class="steps">
+    <div class="step"><span class="n">Крок 1</span><b>Базова лінія</b><p class="note">3–6 місяців історії, супутникова інсоляція і температура. Модель очікуваної генерації та імітація попередньої стратегії УЗЕ на фактичних цінах. Підхід за протоколом IPMVP, варіант B.</p></div>
+    <div class="step"><span class="n">Крок 2</span><b>Контрольна група</b><p class="note">На портфелях частина інверторів чи станцій залишається на старому режимі. Для УЗЕ — чергування стратегій тиждень через тиждень на старті.</p></div>
+    <div class="step"><span class="n">Крок 3</span><b>Щомісячна звірка</b><p class="note">Приріст = факт мінус базова лінія, перераховано за фактичною погодою і цінами. Джерело істини — комерційний лічильник АСКОЕ і дані ОРЕЕ.</p></div>
+    <div class="step"><span class="n">Крок 4</span><b>Розрахунок</b><p class="note">Success fee нараховується лише на додатний приріст. Спірні місяці розглядає незалежний аудитор, кошти утримуються на ескроу до рішення.</p></div>
+  </div>
+
+  <div class="bm">
+    <div class="card"><span class="eyebrow">Економіка Sinaptic</span><h3>Юніт на 1 МВт C&amp;I з УЗЕ</h3><ul>
+      <li>Виручка: див. симулятор нижче, зазвичай 0,4–1,0 млн ₴/рік.</li>
+      <li>Собівартість обслуговування: хмара, зв'язок, підтримка — ~40–70 тис. ₴/рік.</li>
+      <li>Онбординг: edge-шлюз + інтеграція ~50–80 тис. ₴, оплачує клієнт.</li>
+      <li>Валова маржа понад 80%; окупність CAC менше 6 місяців.</li></ul></div>
+    <div class="card"><span class="eyebrow">Обсяг ринку (оцінка)</span><h3>Адресний сегмент</h3><ul>
+      <li>Із 9,5 ГВт сонячної генерації до 3 ГВт можуть бути станціями від 100 кВт з доступом до даних.</li>
+      <li>Середня виручка 200–400 ₴/кВт·рік → 0,6–1,2 млрд ₴/рік.</li>
+      <li>Плюс 3 ГВт·год нових УЗЕ щороку — найвища маржа.</li>
+      <li>Ціль на 3 роки: 300 МВт під керуванням.</li></ul></div>
+    <div class="card"><span class="eyebrow">Ризики</span><h3>І як їх знижуємо</h3><ul>
+      <li>Зміна кепів і тарифів: модель перераховує базову лінію автоматично.</li>
+      <li>Доступ до даних закритих хмар: власний edge-шлюз на Modbus.</li>
+      <li>Кібербезпека: локальне керування, підписані команди, журнал.</li>
+      <li>Відповідальність за помилку керування: межі SOC і потужності в договорі, резерв під відключення.</li></ul></div>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <span class="eyebrow">Симулятор · одна станція · типова доба кожного місяця</span>
+  <h2>Скільки дає оптимізація на конкретній станції</h2>
+  <p class="prose note">Розрахунок іде погодинно для 12 типових діб. Базовий режим — як станцію експлуатують зараз. Режим ШІ — ті самі обладнання і ціни, але з усуненням частини втрат і оптимальним керуванням УЗЕ (динамічне програмування з урахуванням ККД і деградації). Виграш накопичувача зменшено на 15%, бо реальний прогноз цін неідеальний. Усі параметри можна змінити.</p>
+
+  <div class="sim">
+    <form class="panel" id="ctl" autocomplete="off">
+      <div class="grp">
+        <span class="eyebrow">Приклад станції</span>
+        <div class="seg" id="presets">
+          <button type="button" data-p="ci" aria-pressed="true">Завод 1 МВт + УЗЕ</button>
+          <button type="button" data-p="merchant" aria-pressed="false">СЕС 5 МВт на РДН</button>
+          <button type="button" data-p="small" aria-pressed="false">Склад 150 кВт</button>
+        </div>
+      </div>
+
+      <div class="grp">
+        <span class="eyebrow">Станція</span>
+        <div class="fld"><label>Режим роботи</label>
+          <div class="seg" id="modeSeg"><button type="button" data-m="self" aria-pressed="true">Власне споживання</button><button type="button" data-m="merchant" aria-pressed="false">Продаж на ринку</button></div></div>
+        <div class="fld"><label for="pv">Потужність СЕС <output id="pv_o"></output></label><input type="range" id="pv" min="100" max="20000" step="50"></div>
+        <div class="fld"><label for="bp">Потужність УЗЕ <output id="bp_o"></output></label><input type="range" id="bp" min="0" max="10000" step="50"></div>
+        <div class="fld"><label for="be">Ємність УЗЕ <output id="be_o"></output></label><input type="range" id="be" min="0" max="20000" step="50"></div>
+        <div class="fld"><label for="lim">Ліміт видачі в мережу <output id="lim_o"></output></label><input type="range" id="lim" min="0" max="20000" step="50"><small>Для підприємства — дозволений експорт надлишку, для станції на ринку — потужність приєднання.</small></div>
+        <div class="fld selfonly"><label for="ld">Споживання вдень, 7:00–22:00 <output id="ld_o"></output></label><input type="range" id="ld" min="20" max="10000" step="10"></div>
+        <div class="fld selfonly"><label for="ln">Споживання вночі <output id="ln_o"></output></label><input type="range" id="ln" min="10" max="10000" step="10"></div>
+        <label class="chk selfonly"><input type="checkbox" id="hourly"> <span>Договір з постачальником за погодинною ціною РДН. Без нього накопичувач не заробляє на різниці цін.</span></label>
+      </div>
+
+      <div class="grp">
+        <span class="eyebrow">Ринок</span>
+        <div class="fld"><label for="lvl">Рівень цін РДН <output id="lvl_o"></output></label><input type="range" id="lvl" min="0.6" max="1.5" step="0.05"><small>1,0 ≈ фактичні середньомісячні ціни 2025–2026.</small></div>
+        <div class="fld"><label for="spr">Різниця цін день/вечір <output id="spr_o"></output></label><input type="range" id="spr" min="0.4" max="1.6" step="0.05"></div>
+        <div class="fld"><label for="tar">Передача, розподіл і маржа постачальника <output id="tar_o"></output></label><input type="range" id="tar" min="0" max="4000" step="50"><small>Додається до ціни РДН при купівлі з мережі.</small></div>
+        <div class="fld"><label for="fx">Курс, ₴ за € <output id="fx_o"></output></label><input type="range" id="fx" min="40" max="60" step="0.5"></div>
+      </div>
+
+      <div class="grp">
+        <span class="eyebrow">Поточний стан станції (база)</span>
+        <div class="fld"><label for="soil">Втрати від забруднення <output id="soil_o"></output></label><input type="range" id="soil" min="0" max="10" step="0.5"></div>
+        <div class="fld"><label for="eq">Невиявлені дефекти обладнання <output id="eq_o"></output></label><input type="range" id="eq" min="0" max="10" step="0.5"><small>Raptor Maps: у середньому 5,77% у 2024 році.</small></div>
+        <div class="fld"><label for="dt">Простої інверторів <output id="dt_o"></output></label><input type="range" id="dt" min="0" max="6" step="0.25"></div>
+        <div class="fld"><label for="trip">Відключення через напругу мережі <output id="trip_o"></output></label><input type="range" id="trip" min="0" max="5" step="0.25"></div>
+        <div class="fld"><label for="err">Похибка прогнозу генерації <output id="err_o"></output></label><input type="range" id="err" min="5" max="40" step="1"></div>
+        <div class="fld"><label for="om">O&amp;M, ₴ за кВт на рік <output id="om_o"></output></label><input type="range" id="om" min="50" max="600" step="10"></div>
+        <div class="fld"><label for="hrs">Ручна робота з моніторингу і звітності <output id="hrs_o"></output></label><input type="range" id="hrs" min="0" max="200" step="5"></div>
+      </div>
+
+      <div class="grp">
+        <span class="eyebrow">Що автоматизує ШІ</span>
+        <label class="chk"><input type="checkbox" id="L_soil" checked> <span>Миття за індексом забруднення</span></label>
+        <label class="chk"><input type="checkbox" id="L_eq" checked> <span>Діагностика дефектів стрінгів та інверторів</span></label>
+        <label class="chk"><input type="checkbox" id="L_dt" checked> <span>Предиктивне ТО і швидка реакція</span></label>
+        <label class="chk"><input type="checkbox" id="L_trip" checked> <span>Налаштування під напругу мережі</span></label>
+        <label class="chk"><input type="checkbox" id="L_bess" checked> <span>Оптимальне керування УЗЕ за ціною</span></label>
+        <label class="chk"><input type="checkbox" id="L_fc" checked> <span>Прогноз генерації і небаланси</span></label>
+        <label class="chk"><input type="checkbox" id="L_om" checked> <span>Автоматизація O&amp;M і звітності</span></label>
+        <div class="fld"><label for="k">Сценарій ефективності ШІ <output id="k_o"></output></label><input type="range" id="k" min="0.5" max="1.3" step="0.05"><small>0,5 — песимістичний, 1,0 — базовий за кейсами, 1,3 — оптимістичний.</small></div>
+      </div>
+
+      <div class="grp">
+        <span class="eyebrow">Тариф Sinaptic</span>
+        <div class="fld"><label for="ff">Фіксована плата <output id="ff_o"></output></label><input type="range" id="ff" min="0" max="150" step="5"></div>
+        <div class="fld"><label for="sf">Частка від приросту <output id="sf_o"></output></label><input type="range" id="sf" min="0" max="50" step="1"></div>
+        <div class="fld"><label for="ob">Онбординг, разово <output id="ob_o"></output></label><input type="range" id="ob" min="0" max="300000" step="5000"></div>
+      </div>
+    </form>
+
+    <div class="results" aria-live="polite">
+      <div class="kpis">
+        <div class="kpi main"><span class="k">Приріст результату станції за рік</span><span class="v num" id="kUp">—</span><span class="s" id="kUpE"></span></div>
+        <div class="kpi"><span class="k">Клієнту залишається після оплати Sinaptic</span><span class="v num" id="kNet">—</span><span class="s" id="kNetS"></span></div>
+        <div class="kpi"><span class="k">Виручка Sinaptic</span><span class="v num" id="kFee">—</span><span class="s" id="kFeeS"></span></div>
+        <div class="kpi"><span class="k">Додаткова енергія</span><span class="v num" id="kEn">—</span><span class="s" id="kEnS"></span></div>
+        <div class="kpi"><span class="k">Звільнено часу персоналу</span><span class="v num" id="kHr">—</span><span class="s" id="kHrS"></span></div>
+      </div>
+
+      <div class="box">
+        <div class="box-h"><h3>Звідки береться приріст</h3><span class="note">₴ на рік</span></div>
+        <div class="wf" id="wf"></div>
+      </div>
+
+      <div class="box">
+        <div class="box-h"><h3>Типова доба: як працює накопичувач</h3>
+          <div class="seg"><select id="mon" aria-label="Місяць"></select>
+          <span class="seg" id="daySeg"><button type="button" data-d="base" aria-pressed="false">База</button><button type="button" data-d="ai" aria-pressed="true">ШІ</button></span></div></div>
+        <div class="legend"><span><i style="background:var(--sun-soft);border:1px solid var(--sun)"></i>Генерація СЕС</span><span><i style="background:var(--ai)"></i>Розряд УЗЕ</span><span><i style="background:var(--base)"></i>Заряд УЗЕ</span><span><i style="background:var(--sun);height:3px"></i>Ціна РДН, ₴/МВт·год</span><span class="selfonly"><i style="background:var(--fg);height:2px"></i>Споживання</span></div>
+        <div id="dayChart"></div>
+        <p class="note" id="dayNote"></p>
+      </div>
+
+      <div class="box">
+        <div class="box-h"><h3>Результат за місяцями</h3><div class="legend"><span><i style="background:var(--base)"></i>База</span><span><i style="background:var(--ai)"></i>З Sinaptic</span></div></div>
+        <div id="monChart"></div>
+      </div>
+
+      <div class="box">
+        <div class="box-h"><h3>Показники до і після</h3></div>
+        <div class="scroll" style="border:0"><table class="cmp" id="cmp"></table></div>
+      </div>
+
+      <div class="box">
+        <div class="box-h"><h3>Розподіл приросту</h3><span class="note" id="splitNote"></span></div>
+        <div class="split" id="split"></div>
+        <p class="note">Перший рік включає онбординг. Далі клієнт платить лише фіксовану частину і частку від приросту.</p>
+      </div>
+
+      <div class="box">
+        <h3>Ключові припущення</h3>
+        <ul class="note" style="margin:0;padding-left:18px;display:grid;gap:4px">
+          <li>Генерація: Київська область, ~1 125 кВт·год/кВт на рік до втрат, розподіл по місяцях і годинах за тривалістю дня.</li>
+          <li>Ціни РДН: середньомісячні 2025–2026 (січень 8 250 ₴, травень 4 600 ₴, серпень 5 800 ₴/МВт·год) з денним провалом від сонця і вечірнім піком, обмеження 15 000 ₴.</li>
+          <li>УЗЕ: ККД циклу 88%, деградація 1 200 ₴ на МВт·год розряду. База для підприємства — режим самоспоживання з резервом 30%, для станції на ринку — таймер (заряд 10–15, розряд 18–22). ШІ тримає резерв 20% під графіки відключень.</li>
+          <li>Ефект ШІ (сценарій 1,0): забруднення −55%, дефекти −60%, простої −60%, відключення через напругу −50%, похибка прогнозу −60%, O&amp;M −20%, ручна робота −70%, 85% від ідеальної оптимізації УЗЕ. Миття: 2 рази на рік у базі, 3 з ШІ, 18 тис. ₴ за МВт.</li>
+          <li>Небаланси: вартість відхилення 30% ціни РДН на кожен МВт·год похибки, лише для енергії, відданої в мережу.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="sources"><div class="wrap">
+  <span class="eyebrow">Джерела і кейси</span>
+  <h2>На чому базуються цифри</h2>
+  <ol class="src">
+    <li><a href="https://www.ess-news.com/2026/09/28/ukraine-adds-between-1-6-1-9-gwh-of-energy-storage-in-h1-2026/" target="_blank" rel="noopener">ESS News / АСЕУ: Україна додала 1,6–1,9 ГВт·год УЗЕ за I півріччя 2026, 9,4–9,7 ГВт СЕС</a></li>
+    <li><a href="https://solarquarter.com/2026/08/27/ukraine-becomes-europes-fourth-largest-battery-storage-market-with-3-gwh-installed-in-2025/amp/" target="_blank" rel="noopener">SolarPower Europe: Україна — 4-й ринок накопичувачів у Європі, 2,9 ГВт·год у 2025</a></li>
+    <li><a href="https://borgexpert.com/news/u-2025-rotsi-v-ukraini-vstanovyly-vdvichi-bilshe-soniachnykh-elektrostantsij-nizh-rokom-ranishe" target="_blank" rel="noopener">АСЕУ: 1,5 ГВт нових СЕС у 2025 проти 0,8 ГВт у 2024</a></li>
+    <li><a href="https://ukragroconsult.com/news/ukrayina-suttyevo-narostyla-import-sonyachnyh-panelej/" target="_blank" rel="noopener">Імпорт: 957 МВт·год накопичувачів за 9 місяців 2025</a></li>
+    <li><a href="https://forbes.ua/news/okupnist-do-4-rokiv-operator-rinku-viznachiv-nayefektivnishu-model-ustanovki-zberigannya-energii-21042026-38146" target="_blank" rel="noopener">Forbes / Оператор ринку: УЗЕ 1 МВт / 3 МВт·год на арбітражі РДН окупається за 3,7–3,8 року</a></li>
+    <li><a href="https://interfax.com.ua/news/economic/1057916.html" target="_blank" rel="noopener">Інтерфакс: прайс-кепи НКРЕКП, 15 000 ₴/МВт·год з 17:00 до 23:00</a>; <a href="https://gmk.center/ua/news/regulyator-pidvishhiv-prajs-kepi-na-rinku-e-e-u-vechirni-pikovi-godini-v-1-6-raza/" target="_blank" rel="noopener">GMK Center</a></li>
+    <li><a href="https://gmk.center/?p=131211" target="_blank" rel="noopener">GMK Center: ціни РДН 2026 за місяцями</a></li>
+    <li><a href="https://raptormaps.com/resources/2025-global-solar-report" target="_blank" rel="noopener">Raptor Maps Global Solar Report 2025: 5,77% втрат потужності, $5 720 на МВт на рік, інвертори — 39% втрат</a></li>
+    <li><a href="https://www.casestudies.com/company/sparkcognition/case-study/increasing-solar-energy-production-with-an-ai-approach-to-soiling-detection" target="_blank" rel="noopener">SparkCognition: кейс виявлення забруднення ШІ замість станцій вимірювання</a> (матеріал вендора)</li>
+    <li><a href="https://www.omdena.com/blog/ai-solar-performance-monitoring" target="_blank" rel="noopener">Omdena з посиланням на Wood Mackenzie: ШІ-обслуговування знижує витрати на O&amp;M на 15–25%</a> (матеріал вендора)</li>
+    <li><a href="https://renewables.dtek.com/en/media-center/press/dtek-and-fluence-energise-the-largest-battery-storage-facility-in-ukraine-with-a-total-capacity-of-200-mw-1/" target="_blank" rel="noopener">DTEK і Fluence: 200 МВт / 400 МВт·год УЗЕ</a>; <a href="https://www.energy-storage.news/ukraines-dtek-on-ancillary-service-wins-afrr-is-the-future" target="_blank" rel="noopener">DTEK про перемоги в аукціонах FCR і aFRR</a></li>
+    <li><a href="https://biz.ligazakon.net/news/243956_nkrekp-vprovadzhu-nov-pravila-dlya-agregatorv-na-rinku-elektroenerg" target="_blank" rel="noopener">НКРЕКП: нові правила для агрегаторів</a>; <a href="https://forbes.ua/ru/news/yasno-akhmetova-stala-agregatorom-elektroenergii-shcho-tse-mozhe-dati-biznesu-07052026-38644" target="_blank" rel="noopener">YASNO стала агрегатором</a></li>
+    <li><a href="https://mezha.ua/articles/kitayska-hmara-nad-sonyachnim-invertorom-313517/" target="_blank" rel="noopener">Межа: ризики хмар виробників інверторів, інцидент Deye</a></li>
+    <li><a href="https://forbes.ua/news/rinok-sonyachnikh-sistem-v-ukraini-za-tri-misyatsi-zris-na-15-yaki-golovni-stimuli-ta-obmezhennya-dlya-biznesu-u-vstanovlenni-ses-11112025-34015" target="_blank" rel="noopener">Forbes: фінансування — головне обмеження для бізнесу</a></li>
+    <li><a href="https://mev.gov.ua/sites/default/files/2025-08/bess-report-ukraine-v3-18.08.2025_1.pdf" target="_blank" rel="noopener">Міненерго: звіт про УЗЕ в Україні, серпень 2025</a></li>
+  </ol>
+  <p class="note prose">Кейси з відсотками ефекту ШІ (Omdena, SparkCognition) — матеріали постачальників, а не незалежні аудити. Тому симулятор має повзунок песимістичного сценарію, а бізнес-модель передбачає оплату тільки з виміряного результату.</p>
+</div></section>
+
+<footer><div class="wrap">Модель для демонстрації та оцінки. Для договору базова лінія будується на даних конкретної станції.</div></footer>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const DAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+const MN=["Січень","Лютий","Березень","Квітень","Травень","Червень","Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"];
+const MS=["Січ","Лют","Бер","Кві","Тра","Чер","Лип","Сер","Вер","Жов","Лис","Гру"];
+const YIELD=[28,48,92,125,152,155,160,145,105,64,30,21];        // кВт·год/кВт за місяць
+const HALF=[4.0,5.0,5.9,6.8,7.6,8.0,7.8,7.1,6.2,5.2,4.2,3.8];   // половина світлового дня, год
+const LEVEL=[8250,9000,7000,5200,4600,4900,5250,5800,4800,4700,6200,7500]; // ₴/МВт·год
+const DIP=[0.9,0.85,0.7,0.5,0.4,0.42,0.45,0.5,0.6,0.75,0.88,0.92];
+const BASEH=[0.78,0.75,0.74,0.74,0.76,0.82,0.95,1.1,1.15,1.1,1,1,1,1,1,1.05,1.2,1.55,1.85,1.95,1.85,1.6,1.25,0.95];
+const EFF=0.88, DEG=1200, CAP=15000;
+const REC={soil:.55,eq:.6,dt:.6,trip:.5,err:.6,om:.2,hrs:.7,bess:.85};
+const HOUR_RATE=450, CLEAN_COST=18000, CLEAN_B=2, CLEAN_A=3, PEN=0.30, SELL_DISC=0.10, MER_FEE=0.03, MER_IMPORT=700;
+
+const PRESETS={
+  ci:{mode:"self",pv:1000,bp:1000,be:2000,lim:300,ld:600,ln:200,hourly:true,lvl:1,spr:1,tar:2400,fx:49,soil:4,eq:4.5,dt:2,trip:1.25,err:25,om:180,hrs:60,k:1,ff:45,sf:25,ob:80000},
+  merchant:{mode:"merchant",pv:5000,bp:2500,be:5000,lim:4000,ld:600,ln:200,hourly:true,lvl:1,spr:1,tar:2400,fx:49,soil:3.5,eq:4.5,dt:1.5,trip:1,err:22,om:220,hrs:90,k:1,ff:45,sf:25,ob:150000},
+  small:{mode:"self",pv:150,bp:0,be:0,lim:0,ld:120,ln:40,hourly:false,lvl:1,spr:1,tar:2400,fx:49,soil:4,eq:5,dt:2.5,trip:1.5,err:25,om:200,hrs:20,k:1,ff:45,sf:25,ob:25000}
+};
+const S={mode:"self",preset:"ci",day:"ai",month:5};
+
+function pvShape(m){
+  const noon=(m>=3&&m<=9)?13:12, a=[]; let s=0;
+  for(let h=0;h<24;h++){const x=(h+0.5-noon)/HALF[m]; const v=Math.abs(x)<1?Math.pow(Math.cos(x*Math.PI/2),1.5):0; a.push(v); s+=v;}
+  return a.map(v=>v/s);
+}
+const SHAPES=[...Array(12)].map((_,m)=>pvShape(m));
+function prices(m,lvl,spr){
+  const sh=SHAPES[m], mx=Math.max(...sh);
+  let raw=BASEH.map((b,h)=>b*(1-(1-DIP[m])*sh[h]/mx));
+  const mean=raw.reduce((a,b)=>a+b,0)/24; raw=raw.map(r=>r/mean);
+  return raw.map(r=>Math.min(CAP,Math.max(10,LEVEL[m]*lvl*(1+spr*(r-1)))));
+}
+
+/* одна година: ac>0 заряд з боку змінного струму, ac<0 розряд */
+function hourCash(P,mode,pv,load,ac,buy,sell,lim){
+  if(mode==="self"){
+    const net=load-pv+ac;
+    if(net>=0) return {cash:-net*buy/1000,exp:0,imp:net,curt:0};
+    const ex=Math.min(-net,lim); return {cash:ex*sell/1000,exp:ex,imp:0,curt:-net-ex};
+  }
+  const net=pv-ac;
+  if(net>=0){const ex=Math.min(net,lim); return {cash:ex*sell/1000,exp:ex,imp:0,curt:net-ex};}
+  return {cash:net*buy/1000,exp:0,imp:-net,curt:0};
+}
+
+function dispatchDP(pv,load,buy,sell,p){
+  const N=40,E=p.be,Pw=p.bp; if(E<=0||Pw<=0) return null;
+  const dE=E/N, ec=Math.sqrt(EFF), iMin=Math.round(N*p.socMin);
+  const NEG=-1e18; let V=new Array(N+1).fill(0); const pol=[];
+  for(let h=23;h>=0;h--){
+    const nV=new Array(N+1).fill(NEG), ch=new Array(N+1).fill(0);
+    for(let i=iMin;i<=N;i++){
+      let best=NEG,bj=i;
+      for(let j=iMin;j<=N;j++){
+        const d=(j-i)*dE; let ac,deg=0;
+        if(d>0){ac=d/ec; if(ac>Pw+1e-9) continue; if(!p.gridCharge){const sur=p.mode==="self"?Math.max(0,pv[h]-load[h]):pv[h]; if(ac>sur+1e-9) continue;}}
+        else {ac=d*ec; if(-ac>Pw+1e-9) continue; deg=-d*DEG/1000;}
+        const v=hourCash(0,p.mode,pv[h],load[h],ac,buy[h],sell[h],p.lim).cash-deg+V[j];
+        if(v>best){best=v;bj=j;}
+      }
+      nV[i]=best; ch[i]=bj;
+    }
+    V=nV; pol[h]=ch;
+  }
+  let i=iMin; const out=[];
+  for(let h=0;h<24;h++){const j=pol[h][i]; const d=(j-i)*dE; const ac=d>0?d/ec:d*ec; out.push({ac,soc:j*dE,dis:d<0?-d:0}); i=j;}
+  return out;
+}
+
+function dispatchBase(pv,load,p){
+  const out=[]; if(p.be<=0||p.bp<=0){for(let h=0;h<24;h++) out.push({ac:0,soc:0,dis:0}); return out;}
+  const ec=Math.sqrt(EFF);
+  if(p.mode==="self"){
+    const res=0.3*p.be; let soc=res;
+    for(let h=0;h<24;h++){
+      let ac=0,dis=0; const sur=pv[h]-load[h];
+      if(sur>0){ac=Math.min(sur,p.bp,(p.be-soc)/ec); soc+=ac*ec;}
+      else {const o=Math.min(-sur,p.bp,(soc-res)*ec); if(o>0){ac=-o; dis=o/ec; soc-=dis;}}
+      out.push({ac,soc,dis});
+    }
+  } else {
+    const res=0.1*p.be; let soc=res;
+    for(let h=0;h<24;h++){
+      let ac=0,dis=0;
+      if(h>=10&&h<15){ac=Math.min(pv[h],p.bp,(p.be-soc)/ec); soc+=ac*ec;}
+      else if(h>=18&&h<22){const o=Math.min(p.bp,(soc-res)*ec, (p.be-res)*ec/4+1e-9); if(o>0){ac=-o;dis=o/ec;soc-=dis;}}
+      out.push({ac,soc,dis});
+    }
+  }
+  return out;
+}
+
+function evalDay(m,p,genF,battery,ai){
+  const pr=prices(m,p.lvl,p.spr), sh=SHAPES[m], dk=YIELD[m]/DAYS[m];
+  const pv=sh.map(s=>s*dk*p.pv*genF);
+  const load=[...Array(24)].map((_,h)=>p.mode==="self"?((h>=7&&h<22)?p.ld:p.ln):0);
+  const avgP=pr.reduce((a,b)=>a+b,0)/24;
+  const buyP=p.mode==="self"?(p.hourly?pr:pr.map(()=>avgP)).map(x=>x+p.tar):pr.map(x=>x+MER_IMPORT);
+  const sellP=p.mode==="self"?pr.map(x=>x*(1-SELL_DISC)):pr.map(x=>x*(1-MER_FEE));
+  const bp={...p,socMin:0.2,gridCharge:p.mode==="merchant"||p.hourly};
+  const run=disp=>{let cash=0,exp=0,expV=0,imp=0,curt=0,dis=0,deg=0;
+    for(let h=0;h<24;h++){const r=hourCash(0,p.mode,pv[h],load[h],disp[h].ac,buyP[h],sellP[h],p.lim); cash+=r.cash; exp+=r.exp; expV+=r.exp*pr[h]/1000; imp+=r.imp; curt+=r.curt; dis+=disp[h].dis; deg+=disp[h].dis*DEG/1000;}
+    return {cash:cash-deg,exp,expV,imp,curt,dis};};
+  const b=dispatchBase(pv,load,p); const rb=run(b);
+  let disp=b, r=rb, cash=rb.cash;
+  if(battery==="ai"){
+    const d=dispatchDP(pv,load,buyP,sellP,bp);
+    if(d){const rd=run(d); if(rd.cash>rb.cash){disp=d; r=rd; cash=rb.cash+ai.cap*(rd.cash-rb.cash);}}
+  }
+  const noPV=p.mode==="self"?load.reduce((a,l,h)=>a+l*buyP[h]/1000,0):0;
+  return {cash,value:cash+noPV,pv,load,pr,disp,exp:r.exp,expV:r.expV,curt:r.curt,dis:r.dis,gen:pv.reduce((a,b)=>a+b,0)};
+}
+
+function factors(p,ai,on){
+  const f=(base,key)=>{const b=base/100; return on&&on[key]?b*(1-Math.min(0.95,REC[key]*ai.k)):b;};
+  const s=f(p.soil,"soil"),e=f(p.eq,"eq"),d=f(p.dt,"dt"),t=f(p.trip,"trip");
+  return {s,e,d,t,F:(1-s)*(1-e)*(1-d)*(1-t)};
+}
+
+function year(p,genF,battery,errRate,cleanN,omMul,hrsMul,ai){
+  let value=0,gen=0,exp=0,expV=0,dis=0,curt=0; const mon=[],days=[];
+  for(let m=0;m<12;m++){
+    const r=evalDay(m,p,genF,battery,ai), n=DAYS[m];
+    const imb=r.expV*errRate*PEN;
+    const mv=(r.value-imb)*n;
+    value+=mv; gen+=r.gen*n; exp+=r.exp*n; expV+=r.expV*n; dis+=r.dis*n; curt+=r.curt*n;
+    mon.push(mv); days.push(r);
+  }
+  const imbal=expV*errRate*PEN;
+  const clean=cleanN*CLEAN_COST*p.pv/1000;
+  const om=p.pv*p.om*omMul, hrs=p.hrs*12*hrsMul, labor=hrs*HOUR_RATE;
+  const fixed=clean+om+labor;
+  const monNet=mon.map(v=>v-fixed/12);
+  return {total:value-fixed,value,gen,exp,dis,curt,imbal,clean,om,hrs,labor,mon:monNet,days};
+}
+
+function read(){
+  const g=id=>parseFloat($(id).value);
+  return {mode:S.mode,pv:g("pv"),bp:g("bp"),be:g("be"),lim:g("lim"),ld:g("ld"),ln:g("ln"),hourly:$("hourly").checked,
+    lvl:g("lvl"),spr:g("spr"),tar:g("tar"),fx:g("fx"),soil:g("soil"),eq:g("eq"),dt:g("dt"),trip:g("trip"),err:g("err"),om:g("om"),hrs:g("hrs"),k:g("k"),ff:g("ff"),sf:g("sf"),ob:g("ob")};
+}
+const on=()=>({soil:$("L_soil").checked,eq:$("L_eq").checked,dt:$("L_dt").checked,trip:$("L_trip").checked,bess:$("L_bess").checked,fc:$("L_fc").checked,om:$("L_om").checked});
+
+const fmtU=v=>{const a=Math.abs(v); const s=v<0?"−":""; if(a>=1e6) return s+(a/1e6).toLocaleString("uk-UA",{maximumFractionDigits:2,minimumFractionDigits:2})+" млн ₴"; if(a>=1e3) return s+Math.round(a/1e3).toLocaleString("uk-UA")+" тис. ₴"; return s+Math.round(a)+" ₴";};
+const fmtE=(v,fx)=>"≈ "+(v<0?"−":"")+"€"+Math.round(Math.abs(v)/fx).toLocaleString("uk-UA");
+const fkW=v=>v>=1000?(v/1000).toLocaleString("uk-UA",{maximumFractionDigits:2})+" МВт":v+" кВт";
+const fkWh=v=>v>=1000?(v/1000).toLocaleString("uk-UA",{maximumFractionDigits:2})+" МВт·год":v+" кВт·год";
+const fMWh=v=>(v/1000).toLocaleString("uk-UA",{maximumFractionDigits:0})+" МВт·год";
+
+function labels(p){
+  const set=(id,t)=>$(id+"_o").textContent=t;
+  set("pv",fkW(p.pv)); set("bp",p.bp?fkW(p.bp):"немає"); set("be",p.be?fkWh(p.be):"немає"); set("lim",p.lim?fkW(p.lim):"експорт заборонено");
+  set("ld",fkW(p.ld)); set("ln",fkW(p.ln)); set("lvl","×"+p.lvl.toFixed(2)); set("spr","×"+p.spr.toFixed(2)); set("tar",p.tar.toLocaleString("uk-UA")+" ₴/МВт·год");
+  set("fx",p.fx.toFixed(1)); set("soil",p.soil+"%"); set("eq",p.eq+"%"); set("dt",p.dt+"%"); set("trip",p.trip+"%"); set("err",p.err+"%");
+  set("om",p.om+" ₴"); set("hrs",p.hrs+" год/міс"); set("k",p.k.toFixed(2)); set("ff",p.ff+" ₴/кВт·рік"); set("sf",p.sf+"%"); set("ob",Math.round(p.ob/1000)+" тис. ₴");
+  document.querySelectorAll(".selfonly").forEach(el=>el.hidden=p.mode!=="self");
+}
+
+let LAST=null;
+function compute(){
+  const p=read(); labels(p);
+  const L=on(), ai={k:p.k,cap:Math.min(0.97,REC.bess*Math.min(1.15,p.k))};
+  const errB=p.err/100, errA=L.fc?errB*(1-Math.min(0.9,REC.err*p.k)):errB;
+  const fB=factors(p,ai,null), fA=factors(p,ai,L);
+  const anyLoss=L.soil||L.eq||L.dt||L.trip;
+  const clA=L.soil?CLEAN_A:CLEAN_B;
+  const omA=L.om?1-REC.om*p.k:1, hrA=L.om?1-Math.min(0.95,REC.hrs*p.k):1;
+  const hasB=p.be>0&&p.bp>0;
+  const Y0=year(p,fB.F,"base",errB,CLEAN_B,1,1,ai);
+  const Y1=year(p,fA.F,"base",errB,clA,1,1,ai);
+  const Y2=year(p,fA.F,(L.bess&&hasB)?"ai":"base",errB,clA,1,1,ai);
+  const Y3=year(p,fA.F,(L.bess&&hasB)?"ai":"base",errA,clA,1,1,ai);
+  const Y4=year(p,fA.F,(L.bess&&hasB)?"ai":"base",errA,clA,omA,hrA,ai);
+  // розклад приросту від втрат генерації пропорційно логарифмам факторів
+  const d1=Y1.total-Y0.total, lnT=Math.log(fA.F/fB.F)||1;
+  const part=k=>Math.log((1-fA[k])/(1-fB[k]))/lnT;
+  const cleanDelta=-(Y1.clean-Y0.clean);
+  const lossPart=d1-cleanDelta;
+  const rows=[
+    {n:"Миття за індексом забруднення",v:anyLoss?lossPart*part("s")+cleanDelta:0,on:L.soil},
+    {n:"Діагностика дефектів",v:anyLoss?lossPart*part("e"):0,on:L.eq},
+    {n:"Предиктивне ТО, менше простоїв",v:anyLoss?lossPart*part("d"):0,on:L.dt},
+    {n:"Налаштування під напругу мережі",v:anyLoss?lossPart*part("t"):0,on:L.trip},
+    {n:"Керування УЗЕ за ціною",v:Y2.total-Y1.total,on:L.bess&&hasB},
+    {n:"Прогноз і небаланси",v:Y3.total-Y2.total,on:L.fc},
+    {n:"O&M і звітність",v:Y4.total-Y3.total,on:L.om}
+  ];
+  const up=Y4.total-Y0.total;
+  const fee=p.ff*p.pv+Math.max(0,up)*p.sf/100;
+  LAST={p,Y0,Y4,rows,up,fee,fB,fA,errA,errB,hasB};
+  render();
+}
+
+function render(){
+  const {p,Y0,Y4,rows,up,fee,fB,fA,errA,errB,hasB}=LAST;
+  const fee1=fee+p.ob, net=up-fee, net1=up-fee1;
+  $("kUp").textContent=(up>=0?"+":"")+fmtU(up); $("kUpE").textContent=fmtE(up,p.fx)+" · "+(Y0.total!==0?((up/Math.abs(Y0.total))*100).toFixed(1):"0")+"% до бази";
+  $("kNet").textContent=fmtU(net); $("kNetS").textContent="1-й рік з онбордингом: "+fmtU(net1);
+  $("kFee").textContent=fmtU(fee); $("kFeeS").textContent=(p.pv?Math.round(fee/p.pv):0)+" ₴/кВт·рік · ROI клієнта ×"+(fee>0?(up/fee).toFixed(1):"—");
+  const dE=Y4.gen-Y0.gen; $("kEn").textContent="+"+fMWh(dE); $("kEnS").textContent="+"+(Y0.gen?(dE/Y0.gen*100).toFixed(1):0)+"% виробітку · без втрат "+(fB.F*100).toFixed(1)+"→"+(fA.F*100).toFixed(1)+"%";
+  const dh=Y0.hrs-Y4.hrs; $("kHr").textContent=Math.round(dh)+" год/рік"; $("kHrS").textContent="≈ "+(dh/1980).toFixed(2)+" ставки · виїздів менше";
+
+  // waterfall
+  const mx=Math.max(1,...rows.map(r=>Math.abs(r.v)),Math.abs(up));
+  const wf=$("wf"); wf.innerHTML="";
+  const addRow=(n,v,cls,dim)=>{const d=document.createElement("div"); d.className="wf-row"+(cls?" "+cls:"");
+    const w=Math.abs(v)/mx*100; d.innerHTML='<span style="'+(dim?"color:var(--muted)":"")+'">'+n+'</span><div class="bar"><span class="'+(v<0?"neg":"")+'" style="left:0;width:'+w.toFixed(1)+'%"></span></div><span class="val num">'+(dim?"вимкнено":(v>=0?"+":"")+fmtU(v))+'</span>'; wf.appendChild(d);};
+  rows.forEach(r=>addRow(r.n,r.v,"",!r.on||(r.n.startsWith("Керування")&&!hasB)));
+  addRow("Разом за рік",up,"total",false);
+
+  // comparison table
+  const t=[
+    ["Фінансовий результат станції, ₴/рік",fmtU(Y0.total),fmtU(Y4.total),up],
+    ["Виробіток СЕС",fMWh(Y0.gen),fMWh(Y4.gen),Y4.gen-Y0.gen],
+    ["Енергія, збережена від керованих втрат",(fB.F*100).toFixed(1)+"%",(fA.F*100).toFixed(1)+"%",1],
+    ["Цикли УЗЕ на рік",hasB?Math.round(Y0.dis/p.be):"—",hasB?Math.round(Y4.dis/p.be):"—",0],
+    ["Обмежена (втрачена) генерація",fMWh(Y0.curt),fMWh(Y4.curt),Y0.curt-Y4.curt],
+    ["Похибка прогнозу",(errB*100).toFixed(0)+"%",(errA*100).toFixed(0)+"%",1],
+    ["Вартість небалансів, ₴/рік",fmtU(Y0.imbal),fmtU(Y4.imbal),Y0.imbal-Y4.imbal],
+    ["O&M + миття + ручна праця, ₴/рік",fmtU(Y0.om+Y0.clean+Y0.labor),fmtU(Y4.om+Y4.clean+Y4.labor),(Y0.om+Y0.clean+Y0.labor)-(Y4.om+Y4.clean+Y4.labor)],
+    ["Ручна робота, год/рік",Math.round(Y0.hrs),Math.round(Y4.hrs),1]
+  ];
+  $("cmp").innerHTML="<thead><tr><th>Показник</th><th>База</th><th>З Sinaptic</th></tr></thead><tbody>"+t.map(r=>"<tr><td>"+r[0]+"</td><td class='num'>"+r[1]+"</td><td class='num"+(r[3]>0?" up":"")+"'>"+r[2]+"</td></tr>").join("")+"</tbody>";
+
+  // split
+  const sp=$("split"); const tot=Math.max(1,up); const c1=Math.max(0,net1), s1=fee1;
+  const sum=Math.max(1,c1+s1);
+  sp.innerHTML='<div style="background:var(--ai);width:'+(c1/sum*100).toFixed(1)+'%">Клієнт '+fmtU(c1)+'</div><div style="background:var(--sun);width:'+(s1/sum*100).toFixed(1)+'%">Sinaptic '+fmtU(s1)+'</div>';
+  $("splitNote").textContent="1-й рік · частка клієнта "+(up>0?Math.round(Math.max(0,net1)/up*100):0)+"%";
+
+  drawMonths(Y0.mon,Y4.mon); drawDay();
+}
+
+/* ---------- charts ---------- */
+function niceMax(v){if(v<=0) return 1; const e=Math.pow(10,Math.floor(Math.log10(v))); const f=v/e; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;}
+function drawMonths(a,b){
+  const W=760,H=240,L=56,R=10,T=12,B=26; const mx=niceMax(Math.max(...a,...b,1)); const mn=Math.min(0,...a,...b);
+  const lo=mn<0?-niceMax(-mn):0; const y=v=>T+(H-T-B)*(1-(v-lo)/(mx-lo));
+  const bw=(W-L-R)/12; let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Результат за місяцями">';
+  for(let i=0;i<=4;i++){const v=lo+(mx-lo)*i/4, yy=y(v); s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end">'+(Math.abs(v)>=1e6?(v/1e6).toFixed(1)+"м":Math.round(v/1e3)+"т")+'</text>';}
+  for(let m=0;m<12;m++){const x=L+m*bw, w=bw*0.36;
+    const r=(v,xx,c)=>{const y0=y(0),y1=y(v); s+='<rect x="'+xx.toFixed(1)+'" y="'+Math.min(y0,y1).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.max(0.5,Math.abs(y1-y0)).toFixed(1)+'" fill="'+c+'" rx="2"><title>'+MN[m]+': '+fmtU(v)+'</title></rect>';};
+    r(a[m],x+bw*0.12,"var(--base)"); r(b[m],x+bw*0.5,"var(--ai)");
+    s+='<text x="'+(x+bw/2)+'" y="'+(H-8)+'" text-anchor="middle">'+MS[m]+'</text>';}
+  s+='</svg>'; $("monChart").innerHTML=s;
+}
+function drawDay(){
+  if(!LAST) return; const m=S.month; const Y=S.day==="ai"?LAST.Y4:LAST.Y0; const d=Y.days[m]; const p=LAST.p;
+  const W=760,H=280,L=50,R=56,T=14,B=26; const pw=(W-L-R)/24;
+  const powMax=niceMax(Math.max(1,...d.pv,...d.load,...d.disp.map(x=>Math.abs(x.ac))));
+  const yP=v=>T+(H-T-B)/2*(1-v/powMax);           // симетрично: заряд вниз
+  const prMax=niceMax(Math.max(...d.pr)); const yR=v=>T+(H-T-B)*(1-v/prMax);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Типова доба">';
+  [-1,-0.5,0,0.5,1].forEach(f=>{const yy=yP(f*powMax); s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--line)" stroke-width="'+(f===0?1.5:1)+'"/><text x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end">'+(Math.abs(f*powMax)>=1000?(f*powMax/1000).toFixed(1)+"М":Math.round(f*powMax))+'</text>';});
+  [0,0.5,1].forEach(f=>{s+='<text x="'+(W-R+6)+'" y="'+(yR(f*prMax)+4)+'">'+Math.round(f*prMax/1000)+'т ₴</text>';});
+  // PV area
+  let a="M"+L+","+yP(0); d.pv.forEach((v,h)=>{a+=" L"+(L+h*pw+pw/2).toFixed(1)+","+yP(v).toFixed(1);}); a+=" L"+(W-R)+","+yP(0)+" Z";
+  s+='<path d="'+a+'" fill="var(--sun-soft)" stroke="var(--sun)" stroke-width="1"/>';
+  // battery bars
+  d.disp.forEach((x,h)=>{ if(Math.abs(x.ac)<1e-6) return; const v=-x.ac; const y0=yP(0),y1=yP(v);
+    s+='<rect x="'+(L+h*pw+pw*0.18).toFixed(1)+'" y="'+Math.min(y0,y1).toFixed(1)+'" width="'+(pw*0.64).toFixed(1)+'" height="'+Math.abs(y1-y0).toFixed(1)+'" fill="'+(v>0?"var(--ai)":"var(--base)")+'" rx="2"><title>'+h+':00 '+(v>0?"розряд ":"заряд ")+Math.round(Math.abs(v))+' кВт</title></rect>';});
+  // load
+  if(p.mode==="self"){let l=""; d.load.forEach((v,h)=>{const x0=L+h*pw,x1=x0+pw; l+=(h?" L":"M")+x0.toFixed(1)+","+yP(v).toFixed(1)+" L"+x1.toFixed(1)+","+yP(v).toFixed(1);}); s+='<path d="'+l+'" fill="none" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/>';}
+  // price
+  let pl=""; d.pr.forEach((v,h)=>{pl+=(h?" L":"M")+(L+h*pw+pw/2).toFixed(1)+","+yR(v).toFixed(1);}); s+='<path d="'+pl+'" fill="none" stroke="var(--sun)" stroke-width="2.5"/>';
+  const pk=d.pr.indexOf(Math.max(...d.pr)); s+='<circle cx="'+(L+pk*pw+pw/2)+'" cy="'+yR(d.pr[pk])+'" r="3.5" fill="var(--sun)"/>';
+  for(let h=0;h<24;h+=3) s+='<text x="'+(L+h*pw+pw/2)+'" y="'+(H-8)+'" text-anchor="middle">'+String(h).padStart(2,"0")+':00</text>';
+  s+='<text x="'+L+'" y="'+(T-2)+'">кВт</text></svg>';
+  $("dayChart").innerHTML=s;
+  const cyc=p.be>0?(d.dis/p.be):0;
+  const mn=Math.min(...d.pr), mx=Math.max(...d.pr);
+  $("dayNote").textContent=MN[m]+": ціна від "+Math.round(mn).toLocaleString("uk-UA")+" до "+Math.round(mx).toLocaleString("uk-UA")+" ₴/МВт·год. "+(LAST.hasB?("Накопичувач робить "+cyc.toFixed(2)+" цикла за добу в режимі «"+(S.day==="ai"?"ШІ":"база")+"». "):"УЗЕ немає. ")+"Результат доби: "+fmtU(d.value-d.expV*(S.day==="ai"?LAST.errA:LAST.errB)*PEN)+".";
+}
+
+/* ---------- wiring ---------- */
+function applyPreset(k){
+  const P=PRESETS[k]; S.preset=k; S.mode=P.mode;
+  ["pv","bp","be","lim","ld","ln","lvl","spr","tar","fx","soil","eq","dt","trip","err","om","hrs","k","ff","sf","ob"].forEach(id=>$(id).value=P[id]);
+  $("hourly").checked=P.hourly;
+  document.querySelectorAll("#presets button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.p===k));
+  syncMode();
+}
+function syncMode(){document.querySelectorAll("#modeSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===S.mode));}
+let tm=null; const sched=()=>{clearTimeout(tm); tm=setTimeout(compute,60);};
+$("presets").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; applyPreset(b.dataset.p); compute();});
+$("modeSeg").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; S.mode=b.dataset.m; syncMode(); document.querySelectorAll("#presets button").forEach(x=>x.setAttribute("aria-pressed","false")); compute();});
+$("ctl").addEventListener("input",()=>{document.querySelectorAll("#presets button").forEach(x=>x.setAttribute("aria-pressed","false")); sched();});
+$("ctl").addEventListener("submit",e=>e.preventDefault());
+const mon=$("mon"); MN.forEach((n,i)=>{const o=document.createElement("option"); o.value=i; o.textContent=n; mon.appendChild(o);}); mon.value=S.month;
+mon.addEventListener("change",()=>{S.month=+mon.value; drawDay();});
+$("daySeg").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; S.day=b.dataset.d; document.querySelectorAll("#daySeg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.d===S.day)); drawDay();});
+applyPreset("ci"); compute();
+window.__sim=()=>LAST;
+})();
+</script>
