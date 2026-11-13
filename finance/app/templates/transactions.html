@@ -8,7 +8,11 @@
 <a class="{{ 'on' if cur=='transfer' }}" href="{{ fu(items, set={'kind':'transfer'}) }}">Перекази <span>{{ kind_counts.get('transfer',0) }}</span></a></div>
 <div class="pills" style="margin-top:10px">
 {% for key,label,a,b in presets %}<a class="{{ 'on' if f.date_from==a.isoformat() and f.date_to==b.isoformat() }}" href="{{ fu(items, set={'date_from':a.isoformat(),'date_to':b.isoformat()}) }}">{{ label }}</a>{% endfor %}
-<a class="{{ 'on' if not f.date_from and not f.date_to }}" href="{{ fu(items, drop=[('date_from',None),('date_to',None)]) }}">Весь час</a></div>
+<a class="{{ 'on' if not f.date_from and not f.date_to }}" href="{{ fu(items, drop=[('date_from',None),('date_to',None)]) }}">Весь час</a>
+{% set ns=namespace(m=false) %}{% for key,label,pa,pb in presets %}{% if f.date_from==pa.isoformat() and f.date_to==pb.isoformat() %}{% set ns.m=true %}{% endif %}{% endfor %}{% set custom=(f.date_from or f.date_to) and not ns.m %}
+<a href="#" id="cr_btn" class="{{ 'on' if custom }}">📅 Свій період{% if custom %}: {{ (f.date_from[8:10] ~ '.' ~ f.date_from[5:7] ~ '.' ~ f.date_from[2:4]) if f.date_from else '…' }} – {{ (f.date_to[8:10] ~ '.' ~ f.date_to[5:7] ~ '.' ~ f.date_to[2:4]) if f.date_to else '…' }}{% endif %}</a></div>
+<div id="cr" class="card" style="display:none;margin:0 0 12px;padding:12px 14px"><div class="row" style="align-items:flex-end;gap:10px"><div><label>З дати</label><input type="date" id="cr_from" value="{{ f.date_from }}"></div><div><label>По дату (включно)</label><input type="date" id="cr_to" value="{{ f.date_to }}"></div>
+<div style="flex:0 0 auto;display:flex;gap:8px"><button type="button" id="cr_go">Показати за цей період</button><button type="button" class="sec" id="cr_x">Закрити</button></div></div><div class="mut" style="font-size:12.5px;margin-top:6px">Усі суми, підсумки та вигрузки CSV/Excel на сторінці рахуються за вибраний період. Можна вказати лише одну з дат.</div></div>
 
 <form method="get" id="ff" class="card fbar">
 {% for k in f.kinds %}<input type="hidden" name="kind" value="{{ k }}">{% endfor %}
@@ -51,4 +55,11 @@ f.querySelectorAll('input[name=q],input[name=amount_from],input[name=amount_to]'
 f.querySelectorAll('.ddsearch').forEach(function(s){s.addEventListener('input',function(){var v=s.value.toLowerCase();s.parentNode.querySelectorAll('label[data-n]').forEach(function(l){l.style.display=l.dataset.n.indexOf(v)>-1?'':'none'})})});
 document.addEventListener('click',function(e){document.querySelectorAll('details.dd[open]').forEach(function(d){if(!d.contains(e.target))d.removeAttribute('open')})});
 var q=f.querySelector('input[name=q]');if(q&&q.value){var l=q.value.length;q.focus();q.setSelectionRange(l,l)}})();</script>
+<script>(function(){var b=document.getElementById('cr_btn'),box=document.getElementById('cr');if(!b||!box)return;
+function go(){var f=document.getElementById('cr_from').value,t=document.getElementById('cr_to').value;if(!f&&!t){alert('Вкажіть хоча б одну дату');return}if(f&&t&&f>t){alert('Дата «З» не може бути пізніше за дату «По»');return}
+var q=new URLSearchParams(location.search);q.delete('page');f?q.set('date_from',f):q.delete('date_from');t?q.set('date_to',t):q.delete('date_to');location.search=q.toString()}
+b.addEventListener('click',function(e){e.preventDefault();box.style.display=box.style.display==='none'?'block':'none';if(box.style.display==='block')document.getElementById('cr_from').focus()});
+document.getElementById('cr_go').addEventListener('click',go);document.getElementById('cr_x').addEventListener('click',function(){box.style.display='none'});
+box.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();go()}});
+if(b.classList.contains('on'))box.style.display='none'})();</script>
 {% endblock %}

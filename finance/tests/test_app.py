@@ -1385,3 +1385,10 @@ def test_old_approved_versions_can_be_deleted_latest_approved_stays(client):
 def test_filter_panels_are_not_hidden_by_the_navigation_dropdown_style():
     css = open(f"{main.BASE_DIR}/static/style.css").read()
     assert "details.dd[open]>.ddp{opacity:1;visibility:visible" in css       # the nav's .ddp{opacity:0;visibility:hidden} once hid the filters
+
+
+def test_transactions_page_has_custom_period_button(client):
+    page = client.get("/transactions").text
+    assert 'id="cr_btn"' in page and "Свій період" in page and 'id="cr_from"' in page
+    custom = client.get("/transactions?date_from=2026-10-12&date_to=2026-11-05").text
+    assert 'class="on"' in custom and "12.10.26 – 05.11.26" in custom                      # a range that is not a preset is shown on the button
