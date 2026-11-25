@@ -191,6 +191,34 @@
   ul.clean li { display: flex; gap: 12px; font-size: 19px; line-height: 1.45; margin-bottom: 14px; }
   ul.clean li .emoji { flex-shrink: 0; }
 </style>
+<style>
+  .who { display:flex; gap:40px; align-items:center; justify-content:center; margin-top:40px; }
+  .person { width:300px; text-align:center; }
+  .person .face { width:120px; height:120px; border-radius:50%; margin:0 auto 18px; display:flex; align-items:center; justify-content:center; font-size:64px; }
+  .person h3 { font-size:26px; }
+  .person p { font-size:17px; color:var(--muted); line-height:1.45; margin-top:8px; }
+  .bot-center { width:200px; height:200px; border-radius:40px; background:var(--navy); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 20px 50px rgba(20,33,61,.25); }
+  .arrow-both { font-size:40px; color:var(--orange); font-weight:800; }
+
+  .house { display:flex; flex-direction:column; width:560px; flex-shrink:0; }
+  .roof { width:0; height:0; border-left:280px solid transparent; border-right:280px solid transparent; border-bottom:70px solid #cfd5e0; }
+  .floor { border:2px dashed #b9c1d0; border-top:none; background:#eef1f6; padding:11px 18px; display:flex; gap:12px; align-items:center; font-size:15.5px; color:#4b556a; }
+  .floor:first-of-type { border-top:2px dashed #b9c1d0; }
+  .floor .emoji { font-size:20px; }
+  .foundation { background:var(--orange); color:#fff; padding:18px 22px; border-radius:0 0 14px 14px; }
+  .foundation h3 { font-size:21px; }
+  .foundation ul { list-style:none; margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; font-size:15px; }
+  .ground { height:12px; background:repeating-linear-gradient(45deg,#8a6a4a 0 6px,#a5835f 6px 12px); border-radius:0 0 6px 6px; }
+
+  .metric { display:flex; gap:20px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:18px; padding:20px 24px; }
+  .metric .icon-badge { margin:0; flex-shrink:0; }
+  .metric h3 { font-size:20px; }
+  .metric p { font-size:16px; color:var(--muted); margin-top:4px; line-height:1.4; }
+
+  .stage-tbl { margin-top:4px; font-size:12px; }
+  .stage-tbl .r { display:grid; grid-template-columns:1.4fr 1fr 1fr; padding:4px 0; border-bottom:1px solid #eee; }
+  .stage-tbl .r:last-child { border-bottom:none; }
+</style>
 </head>
 <body>
 
@@ -198,9 +226,9 @@
 <section class="slide dark" style="padding:0;">
   <div style="position:absolute; right:-120px; top:-120px; width:620px; height:620px; border-radius:50%; background:radial-gradient(circle, rgba(242,140,40,.35), rgba(242,140,40,0) 70%);"></div>
   <div style="position:absolute; left:80px; top:80px; right:560px;">
-    <div class="kicker">Презентація для забудовника</div>
+    <div class="kicker">Пілот на одному ЖК</div>
     <h1>Особистий помічник,<br>який нічого<br>не&nbsp;забуває</h1>
-    <p class="lead" style="margin-top:28px; font-size:24px;">Ви говорите в Telegram. Помічник сам записує витрати, задачі, ідеї та зустрічі, нагадує про них і показує звіти.</p>
+    <p class="lead" style="margin-top:28px; font-size:24px;">Ви говорите в Telegram. Помічник записує гроші, задачі й зустрічі, нагадує про них і стежить, де ваші гроші.</p>
     <div style="margin-top:40px; display:flex; gap:14px; font-size:17px; color:#c7cfe0;">
       <span><span class="emoji">🎙</span> голосом</span><span>·</span>
       <span><span class="emoji">⌨️</span> текстом</span><span>·</span>
@@ -212,74 +240,100 @@
       <div class="screen">
         <div class="tg-head"><div class="tg-ava"><span class="emoji">👷</span></div><div><div class="tg-name">Ваш помічник</div><div class="tg-status">онлайн</div></div></div>
         <div class="tg-body">
-          <div class="msg out"><div class="voice"><div class="play">▶</div><div class="wave"><i style="height:8px"></i><i style="height:16px"></i><i style="height:11px"></i><i style="height:20px"></i><i style="height:9px"></i><i style="height:15px"></i><i style="height:21px"></i><i style="height:12px"></i><i style="height:7px"></i><i style="height:17px"></i><i style="height:10px"></i><i style="height:14px"></i><i style="height:6px"></i></div><span style="font-size:11px;color:#6b7684">0:07</span></div><span class="t">09:14</span></div>
-          <div class="msg in"><div class="card-title"><span class="emoji">✅</span> Записав</div>Бетон М300 — 18 м³<br><b>62 400 ₴</b> · Секція 2<span class="t">09:14</span></div>
-          <div class="msg out">Нагадай у п'ятницю погодити покрівлю з Олегом<span class="t">09:20</span></div>
-          <div class="msg in"><span class="emoji">📌</span> Задачу створено. Нагадаю в <b>четвер о 18:00</b>, щоб ви встигли до п'ятниці.<span class="t">09:20</span></div>
+          <div class="msg out"><div class="voice"><div class="play">▶</div><div class="wave"><i style="height:8px"></i><i style="height:16px"></i><i style="height:11px"></i><i style="height:20px"></i><i style="height:9px"></i><i style="height:15px"></i><i style="height:21px"></i><i style="height:12px"></i><i style="height:7px"></i><i style="height:17px"></i><i style="height:10px"></i><i style="height:14px"></i></div><span style="font-size:11px;color:#6b7684">0:07</span></div><span class="t">09:14</span></div>
+          <div class="msg in"><div class="card-title"><span class="emoji">✅</span> Записав</div>Бетон М300 — 18 м³<br><b>62 400 ₴</b> · Каркас<span class="t">09:14</span></div>
+          <div class="msg in" style="background:#fff8ef;"><span class="emoji">🧾</span> Петро просить оплатити рахунок <b>48 000 ₴</b> за арматуру<span class="t">09:30</span></div>
+          <div class="btns" style="grid-template-columns:1fr 1fr;"><div><span class="emoji">✅</span> Погодити</div><div><span class="emoji">❌</span> Відхилити</div></div>
         </div>
       </div>
     </div>
   </div>
-  <div class="footer" style="left:80px; right:80px;"><span>Особистий помічник забудовника</span><span>2026</span></div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>2026</span></div>
 </section>
 
 <!-- 2. ПРОБЛЕМА -->
 <section class="slide">
   <div class="kicker">Знайома ситуація?</div>
-  <h2>За день ви робите сотню дрібних справ.<br>Половина з них ніде не записана.</h2>
+  <h2>На будівництві щодня сотня дрібних справ.<br>Половина з них ніде не записана.</h2>
   <div class="grid" style="grid-template-columns:repeat(4,1fr); margin-top:44px;">
-    <div class="card"><div class="icon-badge" style="background:var(--orange-soft)"><span class="emoji">💸</span></div><h3>Гроші «розпливаються»</h3><p>Віддали прорабу готівку на закупку. Через тиждень ніхто не пам'ятає, скільки і на що.</p></div>
-    <div class="card"><div class="icon-badge" style="background:var(--violet-soft)"><span class="emoji">💡</span></div><h3>Ідеї зникають</h3><p>Під час об'їзду майданчика з'явилася гарна думка. До вечора вона забулася.</p></div>
-    <div class="card"><div class="icon-badge" style="background:var(--blue-soft)"><span class="emoji">🤝</span></div><h3>Домовленості губляться</h3><p>На зустрічі про все домовились, але ніхто не записав, хто що мав зробити.</p></div>
-    <div class="card"><div class="icon-badge" style="background:var(--red-soft)"><span class="emoji">⏰</span></div><h3>Терміни вилітають</h3><p>«Треба передзвонити до п'ятниці». Згадали в понеділок.</p></div>
+    <div class="card"><div class="icon-badge" style="background:var(--orange-soft)"><span class="emoji">💸</span></div><h3>Гроші на руках</h3><p>Віддали прорабу готівку. Через тиждень ніхто не пам'ятає, скільки і на що.</p></div>
+    <div class="card"><div class="icon-badge" style="background:var(--red-soft)"><span class="emoji">🏗</span></div><h3>Аванси підрядникам</h3><p>Аванс заплатили, а скільки з нього вже відпрацьовано, ніхто точно не скаже.</p></div>
+    <div class="card"><div class="icon-badge" style="background:var(--blue-soft)"><span class="emoji">🤝</span></div><h3>Домовленості</h3><p>На зустрічі домовились, але ніхто не записав, хто що мав зробити.</p></div>
+    <div class="card"><div class="icon-badge" style="background:var(--violet-soft)"><span class="emoji">⏰</span></div><h3>Терміни й ідеї</h3><p>«Треба до п'ятниці» згадали в понеділок. Гарна ідея забулась до вечора.</p></div>
   </div>
   <p class="lead" style="margin-top:40px;">Звичайний помічник поруч міг би все це фіксувати. Але він не може бути з вами 24/7, втомлюється й теж забуває.</p>
   <div class="footer"><span>Особистий помічник забудовника</span><span>2</span></div>
 </section>
 
-<!-- 3. РІШЕННЯ -->
+<!-- 3. ЯК ЦЕ ПРАЦЮЄ -->
 <section class="slide">
-  <div class="kicker">Рішення</div>
+  <div class="kicker">Як це працює</div>
   <h2>Просто скажіть це в Telegram.<br>Решту зробить помічник.</h2>
   <div style="display:flex; align-items:stretch; gap:18px; margin-top:54px;">
-    <div class="card" style="flex:1; text-align:center;"><div class="icon-badge" style="background:var(--orange-soft); margin:0 auto 16px;"><span class="emoji">🎙</span></div><h3>1. Ви кажете</h3><p>Голосом, текстом або фото. Як зручно, без жодних форм і кнопок.</p></div>
+    <div class="card" style="flex:1; text-align:center;"><div class="icon-badge" style="background:var(--orange-soft); margin:0 auto 16px;"><span class="emoji">🎙</span></div><h3>1. Ви кажете</h3><p>Голосом, текстом або фото. Як живій людині, без форм і таблиць.</p></div>
     <div style="display:flex; align-items:center; font-size:34px; color:var(--orange); font-weight:800;">→</div>
-    <div class="card" style="flex:1; text-align:center;"><div class="icon-badge" style="background:var(--violet-soft); margin:0 auto 16px;"><span class="emoji">🧠</span></div><h3>2. Помічник розуміє</h3><p>Що це: витрата, задача, ідея чи зустріч. Скільки, на що, для якого об'єкта.</p></div>
+    <div class="card" style="flex:1; text-align:center;"><div class="icon-badge" style="background:var(--violet-soft); margin:0 auto 16px;"><span class="emoji">🧠</span></div><h3>2. Помічник розуміє</h3><p>Що це: гроші, задача чи зустріч. Скільки, кому, на який етап будівництва.</p></div>
     <div style="display:flex; align-items:center; font-size:34px; color:var(--orange); font-weight:800;">→</div>
-    <div class="card" style="flex:1; text-align:center;"><div class="icon-badge" style="background:var(--green-soft); margin:0 auto 16px;"><span class="emoji">🗂</span></div><h3>3. Записує на місце</h3><p>У потрібну «папку» і коротко показує вам, що саме записав.</p></div>
+    <div class="card" style="flex:1; text-align:center;"><div class="icon-badge" style="background:var(--green-soft); margin:0 auto 16px;"><span class="emoji">🗂</span></div><h3>3. Записує на місце</h3><p>У потрібну «папку» і одразу коротко показує вам, що записав.</p></div>
     <div style="display:flex; align-items:center; font-size:34px; color:var(--orange); font-weight:800;">→</div>
-    <div class="card" style="flex:1; text-align:center;"><div class="icon-badge" style="background:var(--blue-soft); margin:0 auto 16px;"><span class="emoji">🔔</span></div><h3>4. Нагадує і звітує</h3><p>Сам приходить зранку з планом на день, а ввечері з підсумком.</p></div>
+    <div class="card" style="flex:1; text-align:center;"><div class="icon-badge" style="background:var(--blue-soft); margin:0 auto 16px;"><span class="emoji">🔔</span></div><h3>4. Нагадує і звітує</h3><p>Сам приходить зранку з планом, а ввечері з підсумком дня.</p></div>
   </div>
-  <p class="lead" style="margin-top:42px;">Нічого встановлювати й вивчати не треба. Ви просто пишете в Telegram, як писали б живій людині.</p>
+  <p class="lead" style="margin-top:42px;">Нічого встановлювати й вивчати не треба. Тільки Telegram, який у вас уже є.</p>
   <div class="footer"><span>Особистий помічник забудовника</span><span>3</span></div>
 </section>
 
-<!-- 4. КОМАНДА -->
+<!-- 4. ХТО В БОТІ -->
+<section class="slide">
+  <div class="kicker">Хто користується</div>
+  <h2>На старті тільки двоє: ви і прораб</h2>
+  <div class="who">
+    <div class="person">
+      <div class="face" style="background:var(--orange-soft)"><span class="emoji">👨‍💼</span></div>
+      <h3>Ви</h3>
+      <p>Надиктовуєте все, що робите. Погоджуєте оплати однією кнопкою. Бачите всю картину.</p>
+    </div>
+    <div class="arrow-both">⇄</div>
+    <div class="bot-center">
+      <span class="emoji" style="font-size:64px">🤖</span>
+      <div style="font-weight:800; font-size:20px; margin-top:10px;">Помічник</div>
+      <div style="font-size:14px; color:#c7cfe0; margin-top:4px;">в Telegram</div>
+    </div>
+    <div class="arrow-both">⇄</div>
+    <div class="person">
+      <div class="face" style="background:var(--blue-soft)"><span class="emoji">👷</span></div>
+      <h3>Прораб</h3>
+      <p>Скидає фото чеків і накладних, просить гроші через бот. Бачить тільки свої гроші.</p>
+    </div>
+  </div>
+  <p class="lead" style="margin:44px auto 0; text-align:center;">Факти приносить той, хто їх створює. Вам не треба все надиктовувати самому.</p>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>4</span></div>
+</section>
+
+<!-- 5. КОМАНДА -->
 <section class="slide dark">
   <div class="kicker">Ваша команда</div>
   <h2>Ніби поруч з вами завжди працюють<br>п'ятеро помічників</h2>
   <div class="grid" style="grid-template-columns:repeat(5,1fr); gap:16px; margin-top:34px;">
-    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(242,140,40,.18)"><span class="emoji">💰</span></div><h3 style="color:#fff">Фінансист</h3><p style="color:#b6bfd3">Записує кожну гривню: що, скільки, кому, для якого об'єкта. Стежить, хто ще не відзвітував за видані гроші.</p></div>
-    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(47,111,219,.22)"><span class="emoji">📅</span></div><h3 style="color:#fff">Секретар</h3><p style="color:#b6bfd3">Призначає зустрічі в календарі, нагадує про них, а після зустрічі питає, про що домовились.</p></div>
-    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(46,158,106,.22)"><span class="emoji">✅</span></div><h3 style="color:#fff">Менеджер задач</h3><p style="color:#b6bfd3">Кожне «треба зробити» перетворює на задачу з терміном і стежить, щоб нічого не прострочилось.</p></div>
-    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(122,79,214,.25)"><span class="emoji">📝</span></div><h3 style="color:#fff">Записник</h3><p style="color:#b6bfd3">Зберігає ідеї й нотатки. Через місяць знайде: «що я казав про паркінг?»</p></div>
-    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(217,83,79,.22)"><span class="emoji">📊</span></div><h3 style="color:#fff">Аналітик</h3><p style="color:#b6bfd3">Відповідає на питання про гроші, показує звіти й попереджає, коли щось іде не за планом.</p></div>
+    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(242,140,40,.18)"><span class="emoji">💵</span></div><h3 style="color:#fff">Касир</h3><p style="color:#b6bfd3">Знає, скільки ваших грошей зараз на руках у прораба, і збирає з нього чеки.</p></div>
+    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(217,83,79,.22)"><span class="emoji">🏗</span></div><h3 style="color:#fff">Контролер підрядників</h3><p style="color:#b6bfd3">Рахує аванси й акти. Завжди скаже, хто кому скільки винен.</p></div>
+    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(46,158,106,.22)"><span class="emoji">✅</span></div><h3 style="color:#fff">Контролер оплат</h3><p style="color:#b6bfd3">Приносить рахунки на погодження. Без вашого «так» ніщо не оплачується.</p></div>
+    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(47,111,219,.22)"><span class="emoji">📅</span></div><h3 style="color:#fff">Секретар</h3><p style="color:#b6bfd3">Записує задачі, зустрічі й ідеї. Нагадує вчасно.</p></div>
+    <div class="card" style="background:var(--navy-2); border-color:#2c3d66;"><div class="icon-badge" style="background:rgba(122,79,214,.25)"><span class="emoji">📊</span></div><h3 style="color:#fff">Звітувальник</h3><p style="color:#b6bfd3">Зранку план, увечері підсумок, у п'ятницю звіт за тиждень.</p></div>
   </div>
   <p class="lead" style="margin-top:24px; font-size:19px; max-width:1100px;">Насправді це одна програма зі штучним інтелектом. Але працює вона саме так: не спить, не забуває й не йде у відпустку.</p>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>4</span></div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>5</span></div>
 </section>
 
-<!-- 5. ПРИКЛАД: ПІДЗВІТ -->
+<!-- 6. ПРИКЛАД 1: ВИДАВ ПРОРАБУ -->
 <section class="slide">
   <div class="example">
     <div class="text">
-      <div class="kicker">Приклад 1 · Фінансист</div>
-      <h2>«Віддав Петровичу<br>10 тисяч на автомати»</h2>
+      <div class="kicker">Приклад 1 · Касир</div>
+      <h2>«Дав Петру<br>20 тисяч на арматуру»</h2>
       <div class="steps">
         <div class="step"><div class="n">1</div><div>Ви надиктовуєте голосове <b>прямо з майданчика</b>, 5 секунд.</div></div>
-        <div class="step"><div class="n">2</div><div>Помічник знає, що <b>Петрович — це Іван Петренко</b>, прораб другої секції.</div></div>
-        <div class="step"><div class="n">3</div><div>Записує це не як витрату, а як <b>гроші під звіт</b>: Петрович має принести чеки або повернути залишок.</div></div>
-        <div class="step"><div class="n">4</div><div>Якщо за 3 дні звіту немає, <b>помічник сам нагадає</b>.</div></div>
+        <div class="step"><div class="n">2</div><div>Петро в себе в Telegram тисне <b>«Отримав»</b>. Ніяких суперечок «я давав 20, а не 15».</div></div>
+        <div class="step"><div class="n">3</div><div>Помічник рахує, <b>скільки ваших грошей зараз у Петра</b>.</div></div>
       </div>
       <span class="pill" style="background:var(--orange-soft); color:#a75a10;">Жодна гривня не зникне без сліду</span>
     </div>
@@ -288,71 +342,132 @@
         <div class="tg-head"><div class="tg-ava"><span class="emoji">👷</span></div><div><div class="tg-name">Ваш помічник</div><div class="tg-status">онлайн</div></div></div>
         <div class="tg-body">
           <div class="msg out" style="max-width:92%">
-            <div class="voice"><div class="play">▶</div><div class="wave"><i style="height:8px"></i><i style="height:16px"></i><i style="height:11px"></i><i style="height:20px"></i><i style="height:9px"></i><i style="height:15px"></i><i style="height:21px"></i><i style="height:12px"></i><i style="height:7px"></i><i style="height:17px"></i><i style="height:10px"></i><i style="height:14px"></i></div><span style="font-size:11px;color:#6b7684">0:05</span></div>
-            <div class="voice-text">«Віддав Петровичу десять тисяч на розетки й автомати для другої секції»</div>
-            <span class="t">11:42</span>
+            <div class="voice"><div class="play">▶</div><div class="wave"><i style="height:8px"></i><i style="height:16px"></i><i style="height:11px"></i><i style="height:20px"></i><i style="height:9px"></i><i style="height:15px"></i><i style="height:21px"></i><i style="height:12px"></i><i style="height:7px"></i><i style="height:17px"></i></div><span style="font-size:11px;color:#6b7684">0:04</span></div>
+            <div class="voice-text">«Дав Петру двадцять тисяч на арматуру»</div>
+            <span class="t">08:40</span>
           </div>
           <div class="msg in" style="max-width:92%">
-            <div class="card-title"><span class="emoji">💸</span> Видано під звіт</div>
-            <div class="row"><span>Сума</span><b>10 000 ₴ готівкою</b></div>
-            <div class="row"><span>Кому</span><b>Іван Петренко</b></div>
-            <div class="row"><span>Об'єкт</span><b>Секція 2</b></div>
-            <div class="row"><span>На що</span><b>Електрика</b></div>
-            <div style="margin-top:6px; color:#a75a10; font-weight:600;"><span class="emoji">⏳</span> Чекаю на чеки</div>
-            <span class="t">11:42</span>
+            <div class="card-title"><span class="emoji">💵</span> Видано під звіт</div>
+            <div class="row"><span>Кому</span><b>Петро (прораб)</b></div>
+            <div class="row"><span>Сума</span><b>20 000 ₴</b></div>
+            <div class="row"><span>На що</span><b>Арматура</b></div>
+            <span class="t">08:40</span>
           </div>
-          <div class="btns"><div><span class="emoji">✅</span> Вірно</div><div><span class="emoji">✏️</span> Змінити</div><div><span class="emoji">↩️</span> Скасувати</div></div>
+          <div class="msg in" style="max-width:92%; background:#effaf3;"><span class="emoji">🤝</span> Петро підтвердив: <b>отримав 20 000 ₴</b><span class="t">08:42</span></div>
+          <div class="msg in" style="max-width:92%"><span class="emoji">💼</span> Зараз у Петра на руках: <b>24 200 ₴</b><span class="t">08:42</span></div>
         </div>
       </div>
     </div>
   </div>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>5</span></div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>6</span></div>
 </section>
 
-<!-- 6. ПРИКЛАД: ЧЕК -->
+<!-- 7. ПРИКЛАД 2: ПРОРАБ ЗВІТУЄ -->
+<section class="slide">
+  <div class="example">
+    <div class="phone">
+      <div class="screen">
+        <div class="tg-head"><div class="tg-ava" style="background:var(--blue)"><span class="emoji">👷</span></div><div><div class="tg-name">Помічник · екран Петра</div><div class="tg-status">онлайн</div></div></div>
+        <div class="tg-body">
+          <div class="msg out" style="padding:5px;"><div class="photo"></div><span class="t" style="padding-right:6px">15:08</span></div>
+          <div class="msg in" style="max-width:92%"><span class="emoji">🧾</span> Чек Епіцентр: <b>7 860 ₴</b>, зараховано.<span class="t">15:08</span></div>
+          <div class="msg out" style="max-width:92%">Без чека: 1 500 бригаді на обід і 600 на доставку<span class="t">17:15</span></div>
+          <div class="msg in" style="max-width:92%"><span class="emoji">📝</span> Записав <b>без чека: 2 100 ₴</b><span class="t">17:15</span></div>
+          <div class="msg in" style="max-width:92%; background:#fff8ef;"><span class="emoji">🔔</span> На руках <b>14 240 ₴</b>. Скинь чеки на решту або поверни залишок.<span class="t">19:00</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="text">
+      <div class="kicker">Приклад 2 · Касир</div>
+      <h2>Прораб сам звітує.<br>Ви тільки бачите результат.</h2>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div>Петро фотографує чек, і <b>помічник сам рахує</b> суму та що купили.</div></div>
+        <div class="step"><div class="n">2</div><div>Якщо чека немає, Петро <b>просто каже голосом</b>, кому і за що. У вас це видно окремим рядком.</div></div>
+        <div class="step"><div class="n">3</div><div>Нагадує про чеки <b>помічник, а не ви</b>. Неприємних розмов «де чек?» більше немає.</div></div>
+      </div>
+      <span class="pill" style="background:var(--green-soft); color:#1f7a50;">Ніяких чеків у бардачку</span>
+    </div>
+  </div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>7</span></div>
+</section>
+
+<!-- 8. ПРИКЛАД 3: ПОГОДЖЕННЯ ОПЛАТ -->
+<section class="slide">
+  <div class="example">
+    <div class="text">
+      <div class="kicker">Приклад 3 · Контролер оплат</div>
+      <h2>Рахунок на оплату?<br>Одна кнопка.</h2>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div>Петро скидає в бот рахунок від постачальника або просить гроші.</div></div>
+        <div class="step"><div class="n">2</div><div>Вам приходить картка: <b>хто, скільки, за що</b> і скільки вже заплачено цьому постачальнику.</div></div>
+        <div class="step"><div class="n">3</div><div>Ви тиснете <b>«Погодити»</b> або «Відхилити». Петро одразу бачить відповідь.</div></div>
+      </div>
+      <span class="pill" style="background:var(--blue-soft); color:#1f4fa8;">Без вашого «так» нічого не оплачується</span>
+    </div>
+    <div class="phone">
+      <div class="screen">
+        <div class="tg-head"><div class="tg-ava"><span class="emoji">👷</span></div><div><div class="tg-name">Ваш помічник</div><div class="tg-status">онлайн</div></div></div>
+        <div class="tg-body">
+          <div class="msg in" style="max-width:92%">
+            <div class="card-title"><span class="emoji">🧾</span> Петро просить оплатити</div>
+            <div class="row"><span>Кому</span><b>ТОВ «Метал-Буд»</b></div>
+            <div class="row"><span>Сума</span><b>48 000 ₴</b></div>
+            <div class="row"><span>За що</span><b>Арматура А500, 2 т</b></div>
+            <div class="row"><span>Етап</span><b>Каркас</b></div>
+            <div style="margin-top:7px; padding-top:7px; border-top:1px solid #eee; color:#55606c;">Цьому постачальнику вже оплачено цього місяця: <b>96 000 ₴</b></div>
+            <span class="t">10:05</span>
+          </div>
+          <div class="btns"><div><span class="emoji">✅</span> Погодити</div><div><span class="emoji">❌</span> Відхилити</div><div><span class="emoji">💬</span> Питання</div></div>
+          <div class="msg in" style="max-width:92%; background:#effaf3;"><span class="emoji">✅</span> Погоджено. Петро отримав повідомлення.<span class="t">10:07</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>8</span></div>
+</section>
+
+<!-- 9. ПРИКЛАД 4: ПІДРЯДНИКИ -->
 <section class="slide">
   <div class="example">
     <div class="phone">
       <div class="screen">
         <div class="tg-head"><div class="tg-ava"><span class="emoji">👷</span></div><div><div class="tg-name">Ваш помічник</div><div class="tg-status">онлайн</div></div></div>
         <div class="tg-body">
-          <div class="msg out" style="padding:5px;"><div class="photo"></div><div style="padding:4px 6px 0; font-size:13px">Петрович скинув чек</div><span class="t" style="padding-right:6px">15:08</span></div>
+          <div class="msg out" style="max-width:92%">Підписали акт з покрівельниками на 350 тисяч<span class="t">16:20</span></div>
+          <div class="msg in" style="max-width:92%"><span class="emoji">✅</span> Акт записав: Покрівля Олега, <b>350 000 ₴</b><span class="t">16:20</span></div>
           <div class="msg in" style="max-width:92%">
-            <div class="card-title"><span class="emoji">🧾</span> Чек прочитано</div>
-            <div class="row"><span>Магазин</span><b>Епіцентр К</b></div>
-            <div class="row"><span>Сума</span><b>7 860 ₴</b></div>
-            <div class="row"><span>Позицій</span><b>14 (автомати, розетки, кабель)</b></div>
-            <div style="margin-top:8px; padding-top:7px; border-top:1px solid #eee;">Зарахував у звіт <b>Петренка</b>.<br>Залишок у нього: <b style="color:#a75a10">2 140 ₴</b></div>
-            <span class="t">15:08</span>
+            <div class="card-title"><span class="emoji">🏗</span> П'ятниця: підрядники</div>
+            <div style="margin-bottom:6px;"><b>Покрівля (Олег)</b><br>аванс 600 000 · актами 350 000<br><span style="color:#a33a36">не відпрацьовано: <b>250 000 ₴</b></span></div>
+            <div><b>Фасад (Сервіс-Буд)</b><br>аванс 200 000 · актами 260 000<br><span style="color:#1f7a50">ми винні: <b>60 000 ₴</b></span></div>
+            <span class="t">18:00</span>
           </div>
-          <div class="btns"><div><span class="emoji">✅</span> Вірно</div><div><span class="emoji">✏️</span> Змінити</div><div><span class="emoji">💵</span> Повернув</div></div>
         </div>
       </div>
     </div>
     <div class="text">
-      <div class="kicker">Приклад 2 · Фінансист</div>
-      <h2>Сфотографували чек,<br>і все пораховано</h2>
+      <div class="kicker">Приклад 4 · Контролер підрядників</div>
+      <h2>Аванси під контролем:<br>хто кому скільки винен</h2>
       <div class="steps">
-        <div class="step"><div class="n">1</div><div>Фото чека, накладної чи рахунку. Можна навіть <b>пом'ятого або рукописного</b>.</div></div>
-        <div class="step"><div class="n">2</div><div>Помічник сам читає магазин, суму, дату й товари.</div></div>
-        <div class="step"><div class="n">3</div><div>Зараховує чек у звіт потрібної людини й рахує, <b>скільки грошей ще в неї на руках</b>.</div></div>
+        <div class="step"><div class="n">1</div><div>Один раз кажете: <b>«Договір з Олегом на покрівлю, 1,2 мільйона»</b>.</div></div>
+        <div class="step"><div class="n">2</div><div>Далі голосом: «дали аванс», «підписали акт». Помічник <b>сам рахує різницю</b>.</div></div>
+        <div class="step"><div class="n">3</div><div>Щоп'ятниці коротко: хто <b>ще не відпрацював аванс</b>, а кому винні ми.</div></div>
       </div>
-      <span class="pill" style="background:var(--green-soft); color:#1f7a50;">Ніяких паперових коробок із чеками</span>
+      <span class="pill" style="background:var(--red-soft); color:#a33a36;">Найбільші гроші під найсуворішим контролем</span>
     </div>
   </div>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>6</span></div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>9</span></div>
 </section>
 
-<!-- 7. ПРИКЛАД: ЗАДАЧА + ІДЕЯ -->
+<!-- 10. ПРИКЛАД 5: КІЛЬКА СПРАВ -->
 <section class="slide">
   <div class="example">
     <div class="text">
-      <div class="kicker">Приклад 3 · Менеджер задач і Записник</div>
+      <div class="kicker">Приклад 5 · Секретар</div>
       <h2>Кілька справ<br>в одному повідомленні</h2>
       <div class="steps">
-        <div class="step"><div class="n">1</div><div>Говорите як є, все підряд, <b>без жодної структури</b>.</div></div>
-        <div class="step"><div class="n">2</div><div>Помічник сам розкладає це на окремі записи: <b>витрату, задачу, ідею</b>.</div></div>
-        <div class="step"><div class="n">3</div><div>У задачі одразу є термін і нагадування, а ідея лягає в папку проєкту.</div></div>
+        <div class="step"><div class="n">1</div><div>Говорите як є, все підряд, <b>без жодного порядку</b>.</div></div>
+        <div class="step"><div class="n">2</div><div>Помічник сам розкладає: <b>витрата, задача, ідея</b>.</div></div>
+        <div class="step"><div class="n">3</div><div>Для задачі одразу ставить термін і нагадування.</div></div>
       </div>
       <span class="pill" style="background:var(--violet-soft); color:#5a35a8;">Говорите як живій людині</span>
     </div>
@@ -360,12 +475,12 @@
       <div class="screen">
         <div class="tg-head"><div class="tg-ava"><span class="emoji">👷</span></div><div><div class="tg-name">Ваш помічник</div><div class="tg-status">онлайн</div></div></div>
         <div class="tg-body">
-          <div class="msg out" style="max-width:92%">Заплатив 5 тисяч за вивіз сміття. До п'ятниці треба погодити кошторис покрівлі з Олегом. І ідея: на першому поверсі зробити комерцію замість квартир<span class="t">17:30</span></div>
+          <div class="msg out" style="max-width:92%">Заплатив 5 тисяч за вивіз сміття. До п'ятниці погодити кошторис фасаду. І ідея: на першому поверсі зробити комерцію<span class="t">17:30</span></div>
           <div class="msg in" style="max-width:92%">
             <div class="card-title">Записав 3 речі:</div>
             <div style="margin-bottom:6px"><span class="emoji">💸</span> <b>Витрата</b>: вивіз сміття, 5 000 ₴</div>
-            <div style="margin-bottom:6px"><span class="emoji">📌</span> <b>Задача</b>: погодити кошторис покрівлі з Олегом, до пт. Нагадаю в чт о 18:00</div>
-            <div><span class="emoji">💡</span> <b>Ідея</b>: комерція на 1-му поверсі (у папці «Планування»)</div>
+            <div style="margin-bottom:6px"><span class="emoji">📌</span> <b>Задача</b>: кошторис фасаду, до пт. Нагадаю в чт</div>
+            <div><span class="emoji">💡</span> <b>Ідея</b>: комерція на 1-му поверсі</div>
             <span class="t">17:30</span>
           </div>
           <div class="btns"><div><span class="emoji">✅</span> Все ок</div><div><span class="emoji">✏️</span> Змінити</div><div><span class="emoji">↩️</span> Скасувати</div></div>
@@ -373,10 +488,10 @@
       </div>
     </div>
   </div>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>7</span></div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>10</span></div>
 </section>
 
-<!-- 8. ПРИКЛАД: ЗУСТРІЧІ -->
+<!-- 11. ПРИКЛАД 6: ЗУСТРІЧІ -->
 <section class="slide">
   <div class="example">
     <div class="phone">
@@ -384,65 +499,29 @@
         <div class="tg-head"><div class="tg-ava"><span class="emoji">👷</span></div><div><div class="tg-name">Ваш помічник</div><div class="tg-status">онлайн</div></div></div>
         <div class="tg-body">
           <div class="msg out">Завтра о 10 зустріч з архітектором у мерії<span class="t">19:02</span></div>
-          <div class="msg in"><span class="emoji">📅</span> У календарі: <b>завтра, 10:00</b>, мерія. Нагадаю о 9:00.<span class="t">19:02</span></div>
-          <div class="msg in" style="background:#fff8ef;"><span class="emoji">🔔</span> За годину зустріч з архітектором. Минулого разу говорили про <b>висоту паркінгу</b>.<span class="t">09:00</span></div>
+          <div class="msg in"><span class="emoji">📅</span> У календарі: <b>завтра, 10:00</b>. Нагадаю о 9:00.<span class="t">19:02</span></div>
+          <div class="msg in" style="background:#fff8ef;"><span class="emoji">🔔</span> За годину зустріч з архітектором.<span class="t">09:00</span></div>
           <div class="msg in"><span class="emoji">🤝</span> Як пройшла зустріч? Про що домовились?<span class="t">11:15</span></div>
-          <div class="msg out">Паркінг погодили, ТУ до 15-го, з мене лист у водоканал<span class="t">11:20</span></div>
-          <div class="msg in"><span class="emoji">✅</span> Записав підсумки і 2 задачі.<span class="t">11:20</span></div>
+          <div class="msg out">Паркінг погодили, з мене лист у водоканал до 15-го<span class="t">11:20</span></div>
+          <div class="msg in"><span class="emoji">✅</span> Записав підсумок і задачу.<span class="t">11:20</span></div>
         </div>
       </div>
     </div>
     <div class="text">
-      <div class="kicker">Приклад 4 · Секретар</div>
-      <h2>Зустрічі під контролем:<br>до, під час і після</h2>
+      <div class="kicker">Приклад 6 · Секретар</div>
+      <h2>Зустрічі: до, під час<br>і після</h2>
       <div class="steps">
-        <div class="step"><div class="n">1</div><div>Одна фраза, і <b>зустріч уже у вашому календарі</b> на телефоні.</div></div>
-        <div class="step"><div class="n">2</div><div>Перед зустріччю нагадування й <b>коротка довідка</b>: про що домовлялись минулого разу.</div></div>
+        <div class="step"><div class="n">1</div><div>Одна фраза, і <b>зустріч уже у вашому календарі</b>.</div></div>
+        <div class="step"><div class="n">2</div><div>Вчасне <b>нагадування</b> перед зустріччю.</div></div>
         <div class="step"><div class="n">3</div><div>Після зустрічі помічник <b>сам питає про підсумки</b> і робить із них задачі.</div></div>
       </div>
       <span class="pill" style="background:var(--blue-soft); color:#1f4fa8;">Жодна домовленість не загубиться</span>
     </div>
   </div>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>8</span></div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>11</span></div>
 </section>
 
-<!-- 9. ПРИКЛАД: ПИТАННЯ -->
-<section class="slide">
-  <div class="example">
-    <div class="text">
-      <div class="kicker">Приклад 5 · Аналітик</div>
-      <h2>Питаєте як у бухгалтера.<br>Відповідь за секунди.</h2>
-      <ul class="clean" style="margin-top:30px;">
-        <li><span class="emoji">❓</span><span>«Скільки ми витратили на бетон у жовтні?»</span></li>
-        <li><span class="emoji">❓</span><span>«Хто мені ще не відзвітував за гроші?»</span></li>
-        <li><span class="emoji">❓</span><span>«Скільки пішло на другу секцію з початку року?»</span></li>
-        <li><span class="emoji">❓</span><span>«Що я казав про планування першого поверху?»</span></li>
-        <li><span class="emoji">❓</span><span>«Які в мене задачі на цей тиждень?»</span></li>
-      </ul>
-      <span class="pill" style="background:var(--red-soft); color:#a33a36;">Не треба шукати по папках і таблицях</span>
-    </div>
-    <div class="phone">
-      <div class="screen">
-        <div class="tg-head"><div class="tg-ava"><span class="emoji">👷</span></div><div><div class="tg-name">Ваш помічник</div><div class="tg-status">онлайн</div></div></div>
-        <div class="tg-body">
-          <div class="msg out">Хто мені ще не відзвітував за гроші?<span class="t">20:10</span></div>
-          <div class="msg in" style="max-width:92%">
-            <div class="card-title"><span class="emoji">📋</span> Відкриті підзвіти: 3</div>
-            <div class="row"><span>Петренко І.</span><b>2 140 ₴ · 2 дні</b></div>
-            <div class="row"><span>Коваль С.</span><b>15 000 ₴ · 6 днів</b></div>
-            <div class="row"><span>Мельник А.</span><b>4 500 ₴ · 1 день</b></div>
-            <div style="margin-top:7px; padding-top:7px; border-top:1px solid #eee;">Разом на руках: <b>21 640 ₴</b><br><span style="color:#a33a36"><span class="emoji">⚠️</span> Коваль затримує звіт</span></div>
-            <span class="t">20:10</span>
-          </div>
-          <div class="btns" style="grid-template-columns:1fr 1fr;"><div><span class="emoji">🔔</span> Нагадати Ковалю</div><div><span class="emoji">📊</span> Відкрити звіт</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>9</span></div>
-</section>
-
-<!-- 10. ДЕНЬ З ПОМІЧНИКОМ -->
+<!-- 12. ПОМІЧНИК ПРИХОДИТЬ САМ -->
 <section class="slide">
   <div class="kicker">Помічник приходить сам</div>
   <h2>Вам не треба його питати:<br>він сам тримає вас у курсі</h2>
@@ -452,7 +531,7 @@
       <div class="time">08:00 <span class="emoji" style="font-size:28px">☀️</span></div>
       <div class="bubble">
         <b>План на сьогодні:</b>
-        <ul><li>2 зустрічі (10:00 мерія, 15:00 постачальник)</li><li>3 задачі на сьогодні, 1 прострочена</li><li>Коваль 6 днів не звітує за 15 000 ₴</li></ul>
+        <ul><li>Зустріч о 10:00, мерія</li><li>2 рахунки чекають вашого «так»</li><li>Задача на сьогодні: лист у водоканал</li></ul>
       </div>
     </div>
     <div class="card">
@@ -460,151 +539,162 @@
       <div class="time">20:00 <span class="emoji" style="font-size:28px">🌙</span></div>
       <div class="bubble">
         <b>Підсумок дня:</b>
-        <ul><li>Витрачено: 84 260 ₴ (7 записів)</li><li>Нових задач: 4, ідей: 1</li><li>2 записи без об'єкта: уточніть, будь ласка</li></ul>
+        <ul><li>Витрачено: 84 260 ₴</li><li>У прораба на руках: 14 240 ₴</li><li>Сьогодні платили? Скажіть одним реченням</li></ul>
       </div>
     </div>
     <div class="card">
-      <div class="when">Щопонеділка</div>
-      <div class="time">09:00 <span class="emoji" style="font-size:28px">📈</span></div>
+      <div class="when">Щоп'ятниці</div>
+      <div class="time">18:00 <span class="emoji" style="font-size:28px">📈</span></div>
       <div class="bubble">
         <b>Тиждень:</b>
-        <ul><li>Витрати по статтях і об'єктах</li><li>План / факт кошторису</li><li><span class="emoji">⚠️</span> Арматура: +12% до плану</li></ul>
+        <ul><li>Витрати по етапах будівництва</li><li>Аванси підрядникам: хто не відпрацював</li><li>Які задачі не виконані</li></ul>
       </div>
     </div>
   </div>
-  <p class="lead" style="margin-top:28px; font-size:19px;">Помічник також попереджає одразу, коли щось не так: подвійна оплата, ціна вища за звичну, перевищення бюджету. Час і частоту повідомлень ви налаштовуєте самі, без спаму.</p>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>10</span></div>
+  <p class="lead" style="margin-top:28px; font-size:19px;">Коротко, по 3–5 рядків. Без спаму: час повідомлень ви обираєте самі.</p>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>12</span></div>
 </section>
 
-<!-- 11. КАБІНЕТ -->
+<!-- 13. КАБІНЕТ -->
 <section class="slide">
   <div class="kicker">Ваш кабінет</div>
-  <h2>Уся картина на одному екрані:<br>на комп'ютері й на телефоні</h2>
+  <h2>Уся картина по ЖК на одному екрані</h2>
   <div style="display:flex; gap:36px; margin-top:30px; align-items:flex-start;">
     <div class="dash" style="flex:1;">
-      <div class="dash-top"><span class="logo" style="color:#fff">ЖК «Ваш об'єкт»</span><span class="act">Сьогодні</span><span>Фінанси</span><span>Підзвіти</span><span>Задачі</span><span>Ідеї</span><span>Календар</span></div>
+      <div class="dash-top"><span class="logo" style="color:#fff">ЖК «Ваш об'єкт»</span><span class="act">Огляд</span><span>Гроші</span><span>Підрядники</span><span>Задачі</span><span style="margin-left:auto; background:var(--green); color:#fff; padding:4px 10px; border-radius:8px;">⬇ Excel для бухгалтера</span></div>
       <div class="dash-body">
-        <div class="kpi"><div class="l">Витрачено за місяць</div><div class="v">3,48 млн ₴</div><div class="d" style="color:var(--muted)">з 4,1 млн за планом</div></div>
-        <div class="kpi"><div class="l">Сьогодні</div><div class="v">84 260 ₴</div><div class="d" style="color:var(--muted)">7 записів</div></div>
-        <div class="kpi"><div class="l">Гроші під звітом</div><div class="v" style="color:#c26a12">21 640 ₴</div><div class="d" style="color:#a33a36">1 людина затримує</div></div>
-        <div class="kpi"><div class="l">Задачі</div><div class="v">12</div><div class="d" style="color:#a33a36">1 прострочена</div></div>
-        <div class="chart">
-          <div class="l">Витрати по тижнях, тис. ₴</div>
-          <div class="bars" style="margin-bottom:18px;">
-            <div style="height:55%"><span>1 тиж</span></div><div style="height:80%"><span>2 тиж</span></div><div style="height:62%"><span>3 тиж</span></div><div style="height:95%; background:var(--orange)"><span>4 тиж</span></div>
+        <div class="kpi"><div class="l">Витрачено за місяць</div><div class="v">3,48 млн ₴</div></div>
+        <div class="kpi"><div class="l">У прораба на руках</div><div class="v" style="color:#c26a12">14 240 ₴</div></div>
+        <div class="kpi"><div class="l">Аванси не відпрацьовані</div><div class="v" style="color:#a33a36">250 000 ₴</div></div>
+        <div class="kpi"><div class="l">Рахунки чекають «так»</div><div class="v">2</div></div>
+        <div class="chart" style="grid-column:span 4;">
+          <div class="l">Куди пішли гроші: по етапах будівництва</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 30px;">
+            <div class="hbar"><div class="h"><span>Нульовий цикл</span><b>0,62 млн</b></div><div class="track"><div class="fill" style="width:38%; background:var(--navy)"></div></div></div>
+            <div class="hbar"><div class="h"><span>Покрівля</span><b>0,35 млн</b></div><div class="track"><div class="fill" style="width:22%; background:var(--violet)"></div></div></div>
+            <div class="hbar"><div class="h"><span>Каркас</span><b>1,48 млн</b></div><div class="track"><div class="fill" style="width:90%; background:var(--blue)"></div></div></div>
+            <div class="hbar"><div class="h"><span>Інженерні мережі</span><b>0,21 млн</b></div><div class="track"><div class="fill" style="width:13%; background:var(--green)"></div></div></div>
+            <div class="hbar"><div class="h"><span>Стіни</span><b>0,64 млн</b></div><div class="track"><div class="fill" style="width:40%; background:var(--orange)"></div></div></div>
+            <div class="hbar"><div class="h"><span>Інше</span><b>0,18 млн</b></div><div class="track"><div class="fill" style="width:11%; background:#9aa1b0"></div></div></div>
           </div>
-        </div>
-        <div class="chart">
-          <div class="l">Куди йдуть гроші</div>
-          <div class="hbar"><div class="h"><span>Матеріали</span><b>1,62 млн</b></div><div class="track"><div class="fill" style="width:78%; background:var(--blue)"></div></div></div>
-          <div class="hbar"><div class="h"><span>Роботи підрядників</span><b>1,10 млн</b></div><div class="track"><div class="fill" style="width:55%; background:var(--green)"></div></div></div>
-          <div class="hbar"><div class="h"><span>Техніка і доставка</span><b>0,41 млн</b></div><div class="track"><div class="fill" style="width:22%; background:var(--orange)"></div></div></div>
-          <div class="hbar" style="margin-bottom:0"><div class="h"><span>Документи й дозволи</span><b>0,35 млн</b></div><div class="track"><div class="fill" style="width:18%; background:var(--violet)"></div></div></div>
         </div>
       </div>
     </div>
     <div class="mini-phone">
       <div class="mini-screen">
-        <div style="font-size:12px; color:var(--muted)">Сьогодні, 25 листопада</div>
+        <div style="font-size:12px; color:var(--muted)">Сьогодні</div>
         <div style="font-size:24px; font-weight:800; margin:4px 0 12px">84 260 ₴</div>
         <div style="font-size:12px; font-weight:700; margin-bottom:6px">Останні записи</div>
         <div style="font-size:11.5px; line-height:1.4">
           <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee"><span><span class="emoji">🧱</span> Бетон М300</span><b>62 400</b></div>
-          <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee"><span><span class="emoji">⚡</span> Електрика (чек)</span><b>7 860</b></div>
+          <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee"><span><span class="emoji">🧾</span> Чек Петра</span><b>7 860</b></div>
           <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee"><span><span class="emoji">🚛</span> Вивіз сміття</span><b>5 000</b></div>
-          <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee"><span><span class="emoji">⛽</span> Паливо техніка</span><b>9 000</b></div>
+          <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee"><span><span class="emoji">📝</span> Без чека</span><b>2 100</b></div>
         </div>
-        <div style="font-size:12px; font-weight:700; margin:12px 0 6px">Задачі на сьогодні</div>
+        <div style="font-size:12px; font-weight:700; margin:12px 0 6px">Чекає вашого «так»</div>
         <div style="font-size:11.5px; line-height:1.5">
-          <div><span class="emoji">⬜</span> Лист у водоканал</div>
-          <div><span class="emoji">⬜</span> Подзвонити в Укрбуд</div>
-          <div style="color:#a33a36"><span class="emoji">🟥</span> ТУ на електрику (прострочено)</div>
+          <div><span class="emoji">🧾</span> Метал-Буд · 48 000</div>
+          <div><span class="emoji">🧾</span> Бетон-Сервіс · 31 500</div>
         </div>
         <div style="margin-top:14px; background:var(--navy); color:#fff; border-radius:10px; text-align:center; padding:9px; font-size:12px; font-weight:700;">Відкрити з Telegram</div>
       </div>
     </div>
   </div>
-  <div class="footer"><span>Особистий помічник забудовника · цифри на екрані умовні</span><span>11</span></div>
+  <div class="footer"><span>Особистий помічник забудовника · цифри на екрані умовні</span><span>13</span></div>
 </section>
 
-<!-- 12. НАДІЙНІСТЬ -->
+<!-- 14. БУДУЄМО ЯК БУДИНОК -->
 <section class="slide">
-  <div class="kicker">Чому цьому можна довіряти</div>
-  <h2>Ваші дані під контролем.<br>Останнє слово завжди за вами.</h2>
-  <div class="grid" style="grid-template-columns:repeat(2,1fr); margin-top:40px; gap:20px;">
-    <div class="card" style="display:flex; gap:18px;"><div class="icon-badge" style="background:var(--green-soft); flex-shrink:0; margin:0"><span class="emoji">🗄</span></div><div><h3>Нічого не губиться</h3><p>Кожне голосове, повідомлення й фото зберігається в оригіналі. Навіть якщо помічник щось не так зрозумів, запис залишиться, і його можна прослухати.</p></div></div>
-    <div class="card" style="display:flex; gap:18px;"><div class="icon-badge" style="background:var(--orange-soft); flex-shrink:0; margin:0"><span class="emoji">✋</span></div><div><h3>Ви все бачите й виправляєте</h3><p>Після кожного запису ви бачите, що саме записано. Виправити можна одним натиском або словами: «ні, не 10, а 12 тисяч».</p></div></div>
-    <div class="card" style="display:flex; gap:18px;"><div class="icon-badge" style="background:var(--blue-soft); flex-shrink:0; margin:0"><span class="emoji">🔐</span></div><div><h3>Доступ тільки у вас</h3><p>Помічник відповідає лише вашому Telegram. Кому ще дати доступ (бухгалтеру, помічнику) і до чого саме, вирішуєте ви.</p></div></div>
-    <div class="card" style="display:flex; gap:18px;"><div class="icon-badge" style="background:var(--violet-soft); flex-shrink:0; margin:0"><span class="emoji">🛡</span></div><div><h3>Захист і копії</h3><p>Дані зашифровані, щодня робиться резервна копія. Кожна зміна у фінансах записується в історію: хто, коли і що змінив.</p></div></div>
-  </div>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>12</span></div>
-</section>
-
-<!-- 13. ПЛАН ЗАПУСКУ -->
-<section class="slide">
-  <div class="kicker">Як запускаємо</div>
-  <h2>Три кроки до повноцінного помічника</h2>
-  <div class="grid" style="grid-template-columns:repeat(3,1fr); margin-top:40px; gap:22px;">
-    <div class="card" style="border-top:6px solid var(--orange);">
-      <div class="when">Крок 1 · ≈ 2–3 тижні</div>
-      <h3 style="font-size:24px; margin-top:6px">«Нічого не губиться»</h3>
-      <ul class="clean" style="margin-top:16px;">
-        <li style="font-size:16px"><span class="emoji">✔️</span>Помічник у Telegram: голос, текст, фото</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Витрати, підзвіти, задачі, ідеї, нотатки</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Відповіді на питання про гроші</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Вечірній підсумок і перший кабінет</li>
-      </ul>
+  <div style="display:flex; gap:60px; align-items:center; height:100%;">
+    <div style="flex:1;">
+      <div class="kicker">План</div>
+      <h2>Будуємо помічника<br>як будинок</h2>
+      <p class="lead" style="font-size:20px;">Спочатку заливаємо <b style="color:var(--orange)">фундамент</b> на одному ЖК і перевіряємо, що він тримає. Поверхи добудовуємо тільки після цього.</p>
+      <div style="margin-top:28px; display:flex; flex-direction:column; gap:12px; font-size:18px;">
+        <div><span class="emoji">🏗</span> <b>Один ЖК</b>, ви і прораб</div>
+        <div><span class="emoji">⏱</span> <b>3–4 тижні</b> до запуску</div>
+        <div><span class="emoji">🧪</span> <b>Місяць тесту</b> на реальному об'єкті</div>
+      </div>
     </div>
-    <div class="card" style="border-top:6px solid var(--blue);">
-      <div class="when" style="color:var(--blue)">Крок 2 · ≈ 2–3 тижні</div>
-      <h3 style="font-size:24px; margin-top:6px">«Помічник контролює»</h3>
-      <ul class="clean" style="margin-top:16px;">
-        <li style="font-size:16px"><span class="emoji">✔️</span>Календар і контроль зустрічей</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Ранковий план і тижневий звіт</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Кошторис: план проти факту</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Попередження про перевитрати й дублі</li>
-      </ul>
+    <div class="house">
+      <div class="roof"></div>
+      <div class="floor"><span class="emoji">🏢</span> Кілька ЖК і кілька юросіб</div>
+      <div class="floor"><span class="emoji">📐</span> Собівартість 1 м², план проти факту</div>
+      <div class="floor"><span class="emoji">🎧</span> Протокол наради з аудіозапису</div>
+      <div class="floor"><span class="emoji">🚚</span> «Оплатили, а чи привезли?» за накладними</div>
+      <div class="floor"><span class="emoji">📸</span> Фотозвіти з майданчика, терміни документів</div>
+      <div class="foundation">
+        <h3>Фундамент · пілот</h3>
+        <ul>
+          <li>✔ Голос, текст, фото чеків</li>
+          <li>✔ Гроші на руках у прораба</li>
+          <li>✔ Погодження оплат</li>
+          <li>✔ Аванси й акти підрядників</li>
+          <li>✔ Задачі, ідеї, зустрічі</li>
+          <li>✔ План, підсумок, звіт тижня</li>
+        </ul>
+      </div>
+      <div class="ground"></div>
     </div>
-    <div class="card" style="border-top:6px solid var(--green);">
-      <div class="when" style="color:var(--green)">Крок 3 · за потребою</div>
-      <h3 style="font-size:24px; margin-top:6px">«Команда і банки»</h3>
-      <ul class="clean" style="margin-top:16px;">
-        <li style="font-size:16px"><span class="emoji">✔️</span>Операції з банку підтягуються самі</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Прораби самі звітують у бот</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Доступ для бухгалтера</li>
-        <li style="font-size:16px"><span class="emoji">✔️</span>Звіти для партнерів і вивантаження в Excel</li>
-      </ul>
-    </div>
-  </div>
-  <p class="lead" style="margin-top:28px; font-size:19px;">Уже після першого кроку помічником можна користуватися щодня. Далі він тільки додає можливостей.</p>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>13</span></div>
-</section>
-
-<!-- 14. ЩО ПОТРІБНО ВІД ВАС -->
-<section class="slide">
-  <div class="kicker">Що потрібно від вас</div>
-  <h2>Зовсім небагато</h2>
-  <div class="grid" style="grid-template-columns:repeat(3,1fr); margin-top:40px; gap:22px;">
-    <div class="card"><div class="big-num">30</div><h3 style="margin-top:14px">хвилин розмови</h3><p>Розкажіть про свої об'єкти, людей, з якими працюєте, і як ви зараз ведете витрати. Решту налаштуємо ми.</p></div>
-    <div class="card"><div class="big-num">20</div><h3 style="margin-top:14px">голосових повідомлень</h3><p>Звичайних, як ви говорите щодня. На них ми навчимо помічника розуміти саме вашу мову й ваші слова.</p></div>
-    <div class="card"><div class="big-num">0</div><h3 style="margin-top:14px">нових програм</h3><p>Нічого не треба встановлювати й вивчати. Тільки Telegram, який у вас уже є.</p></div>
   </div>
   <div class="footer"><span>Особистий помічник забудовника</span><span>14</span></div>
 </section>
 
-<!-- 15. ФІНАЛ -->
+<!-- 15. ЯК ЗРОЗУМІЄМО, ЩО ПРАЦЮЄ -->
+<section class="slide">
+  <div class="kicker">Через місяць перевіряємо</div>
+  <h2>Як зрозуміти, що фундамент тримає</h2>
+  <div class="grid" style="grid-template-columns:1fr 1fr; gap:18px; margin-top:36px;">
+    <div class="metric"><div class="icon-badge" style="background:var(--orange-soft)"><span class="emoji">📱</span></div><div><h3>Помічник у руках щодня</h3><p>Ви щось записали щонайменше 20 днів із 30.</p></div></div>
+    <div class="metric"><div class="icon-badge" style="background:var(--green-soft)"><span class="emoji">💵</span></div><div><h3>Гроші сходяться</h3><p>Сума «на руках у прораба» збігається з реальністю.</p></div></div>
+    <div class="metric"><div class="icon-badge" style="background:var(--red-soft)"><span class="emoji">🏗</span></div><div><h3>Нова цифра</h3><p>Ви побачили те, чого раніше не бачили, наприклад невідпрацьовані аванси.</p></div></div>
+    <div class="metric"><div class="icon-badge" style="background:var(--blue-soft)"><span class="emoji">🔔</span></div><div><h3>Нічого не забули</h3><p>Хоча б 3 рази нагадування врятувало оплату, зустріч чи термін.</p></div></div>
+  </div>
+  <div style="margin-top:30px; background:var(--navy); color:#fff; border-radius:18px; padding:22px 28px; font-size:22px; font-weight:700; text-align:center;">
+    Головне питання: «Якщо завтра помічника вимкнути, буде шкода?» Якщо «так», будуємо поверхи.
+  </div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>15</span></div>
+</section>
+
+<!-- 16. ДОВІРА -->
+<section class="slide">
+  <div class="kicker">Чому цьому можна довіряти</div>
+  <h2>Ваші дані під контролем.<br>Останнє слово завжди за вами.</h2>
+  <div class="grid" style="grid-template-columns:repeat(2,1fr); margin-top:40px; gap:20px;">
+    <div class="card" style="display:flex; gap:18px;"><div class="icon-badge" style="background:var(--green-soft); flex-shrink:0; margin:0"><span class="emoji">🗄</span></div><div><h3>Нічого не губиться</h3><p>Кожне голосове, повідомлення й фото зберігається в оригіналі. Його завжди можна прослухати.</p></div></div>
+    <div class="card" style="display:flex; gap:18px;"><div class="icon-badge" style="background:var(--orange-soft); flex-shrink:0; margin:0"><span class="emoji">✏️</span></div><div><h3>Все можна виправити</h3><p>Одним натиском або словами: «ні, не 10, а 12 тисяч». Історія змін зберігається.</p></div></div>
+    <div class="card" style="display:flex; gap:18px;"><div class="icon-badge" style="background:var(--blue-soft); flex-shrink:0; margin:0"><span class="emoji">🔐</span></div><div><h3>Кожен бачить своє</h3><p>Ви бачите все. Прораб бачить тільки свої гроші та свої задачі.</p></div></div>
+    <div class="card" style="display:flex; gap:18px;"><div class="icon-badge" style="background:var(--violet-soft); flex-shrink:0; margin:0"><span class="emoji">🛡</span></div><div><h3>Захист і копії</h3><p>Дані зашифровані, щодня робиться резервна копія. Доступ тільки з ваших Telegram.</p></div></div>
+  </div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>16</span></div>
+</section>
+
+<!-- 17. ЩО ПОТРІБНО ВІД ВАС -->
+<section class="slide">
+  <div class="kicker">Що потрібно від вас</div>
+  <h2>Зовсім небагато</h2>
+  <div class="grid" style="grid-template-columns:repeat(4,1fr); margin-top:40px; gap:20px;">
+    <div class="card"><div class="big-num">30</div><h3 style="margin-top:14px">хвилин розмови</h3><p>Про ваш ЖК, етапи будівництва й підрядників. Решту налаштуємо ми.</p></div>
+    <div class="card"><div class="big-num">20</div><h3 style="margin-top:14px">голосових</h3><p>Звичайних, як ви говорите щодня. Помічник навчиться розуміти саме вас.</p></div>
+    <div class="card"><div class="big-num">1</div><h3 style="margin-top:14px">прораб</h3><p>З Telegram на телефоні, готовий скидати чеки в бот.</p></div>
+    <div class="card"><div class="big-num">0</div><h3 style="margin-top:14px">нових програм</h3><p>Нічого не треба встановлювати й вивчати.</p></div>
+  </div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>17</span></div>
+</section>
+
+<!-- 18. ФІНАЛ -->
 <section class="slide dark" style="justify-content:center;">
   <div style="position:absolute; left:-160px; bottom:-200px; width:640px; height:640px; border-radius:50%; background:radial-gradient(circle, rgba(242,140,40,.28), rgba(242,140,40,0) 70%);"></div>
   <div style="position:relative; max-width:1000px;">
     <div class="kicker">Наступний крок</div>
     <h1 style="font-size:56px;">Ви займаєтесь будівництвом.<br>Помічник пам'ятає все інше.</h1>
-    <p class="lead" style="font-size:23px; margin-top:28px;">Ви будете першим, хто отримає такого помічника, і першим, хто підкаже, яким він має стати. Пропонуємо почати з короткої зустрічі. За 2–3 тижні після неї у вашому Telegram уже працюватиме перша версія.</p>
+    <p class="lead" style="font-size:23px; margin-top:28px;">Ви будете першим, хто отримає такого помічника, і першим, хто підкаже, яким він має стати. Починаємо з одного ЖК: за 3–4 тижні фундамент уже працюватиме у вашому Telegram.</p>
     <div style="display:flex; gap:16px; margin-top:44px;">
       <div style="background:var(--orange); color:#fff; font-weight:800; font-size:19px; padding:16px 26px; border-radius:14px;"><span class="emoji">🤝</span>&nbsp; Зустріч на 30 хвилин</div>
-      <div style="border:2px solid #3a4c78; color:#fff; font-weight:700; font-size:19px; padding:14px 24px; border-radius:14px;"><span class="emoji">🎙</span>&nbsp; 20 голосових для навчання</div>
+      <div style="border:2px solid #3a4c78; color:#fff; font-weight:700; font-size:19px; padding:14px 24px; border-radius:14px;"><span class="emoji">🎙</span>&nbsp; Показ наживо на вашому телефоні</div>
     </div>
   </div>
-  <div class="footer"><span>Особистий помічник забудовника</span><span>15</span></div>
+  <div class="footer"><span>Особистий помічник забудовника</span><span>18</span></div>
 </section>
 
 </body>
